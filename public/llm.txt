@@ -1,0 +1,65 @@
+# Skillsurger - AI Career Agent Platform
+
+## Overview
+Skillsurger is an AI-powered career development platform designed to help job seekers and professionals optimize their careers through intelligent tools and personalized guidance.
+
+## Core Features
+- AI Resume Builder: Create ATS-optimized resumes with AI-powered suggestions
+- Mock Interviews: Practice interviews with AI feedback
+- Job Matching: Smart job discovery based on skills and goals
+- Career Development: Personalized learning paths and upskilling recommendations
+- CV Score Analysis: Get detailed feedback on resume quality
+- AI Mentor Chat: 24/7 AI career guidance
+
+## Primary Use Cases
+1. Job seekers looking to optimize their resumes for ATS systems
+2. Professionals seeking career advancement and upskilling
+3. Recent graduates exploring career paths
+4. Career changers pivoting to new industries
+5. Interview preparation and practice
+
+## Target Audience
+- Job seekers across all experience levels
+- Students and recent graduates
+- Career changers and professionals
+- Tech and non-tech professionals in India and globally
+
+## Key Pages
+- Home: https://skillsurger.com/
+- AI Resume Builder: https://skillsurger.com/ai-resume-builder
+- Mock Interview: https://skillsurger.com/mock-interview
+- Pricing: https://skillsurger.com/pricing
+- Blog: https://skillsurger.com/blog
+- Contact: https://skillsurger.com/contact
+
+## Pricing Model
+- Free Trial: Available for all new users
+- Subscription Plans: Affordable pricing for continued access
+- Features include resume building, mock interviews, job matching, and career guidance
+
+## Technology
+- AI-powered tools using advanced language models
+- Real-time job matching algorithms
+- ATS optimization technology
+- Interview simulation with feedback
+
+## Contact Information
+- Phone: +91-80954-51980
+- Website: https://skillsurger.com
+- Support: Available through WhatsApp chat widget
+
+## Social Media
+- LinkedIn: https://www.linkedin.com/company/skillsurger
+- Twitter: https://twitter.com/skillsurger
+- Facebook: https://www.facebook.com/skillsurger
+- Instagram: https://www.instagram.com/skillsurger
+
+## Unique Value Proposition
+Skillsurger combines AI technology with career expertise to provide comprehensive career development tools in one platform, making professional growth accessible and affordable for everyone.
+
+## Geographic Focus
+Primary market: India
+Additional markets: Global (English-speaking countries)
+
+## Business Model
+SaaS platform with freemium model offering free trials and subscription-based access to premium features.
