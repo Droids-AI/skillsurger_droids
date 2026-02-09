@@ -433,7 +433,7 @@ export default function Training() {
             <div className="md:w-1/2 relative">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-2xl" />
               <img
-                src="/Mentors.png"
+                src="https://media.licdn.com/dms/image/v2/D4E03AQH33hJS-NcmsQ/profile-displayphoto-crop_800_800/B4EZoukrIbKkAI-/0/1761717957907?e=1772064000&v=beta&t=r-_CRlt5vJj2RNyY5mExZRUxGnXu0g467N1LJtN4Ptk"
                 alt="Skillsurger Mentors"
                 className="relative w-full h-auto rounded-3xl border border-white/10 shadow-2xl"
               />
