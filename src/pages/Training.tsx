@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Brain, CheckCircle2, ShieldCheck, Zap, Users, Trophy, Star, ArrowRight, XCircle, CheckCircle, Target, Rocket, BookOpen, Briefcase, TrendingUp, Award, Clock, MessageSquare, ChevronRight } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
+import MasterclassModal from '../components/MasterclassModal';
 
 const tabs = [
   { id: 'strategy', label: 'Strategy', icon: Target },
@@ -190,6 +191,7 @@ export default function Training() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('strategy');
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const [isMasterclassModalOpen, setIsMasterclassModalOpen] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -251,7 +253,7 @@ export default function Training() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <button onClick={() => navigate('/login')} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+            <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
               Watch Free Masterclass
               <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
@@ -594,7 +596,7 @@ export default function Training() {
               ))}
             </div>
             <div className="mt-10 text-center">
-              <button onClick={() => navigate('/login')} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+              <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
                 Register Now for Free
                 <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
@@ -639,7 +641,7 @@ export default function Training() {
                 <p className="text-blue-100/80 mb-8 text-lg leading-relaxed">
                   Stop playing the job portal lottery. Join the elite club of professionals who attract dream offers with ease.
                 </p>
-                <button onClick={() => navigate('/login')} className="w-full py-4 bg-white text-blue-600 font-bold rounded-xl text-lg hover:bg-blue-50 transition-colors">
+                <button onClick={() => setIsMasterclassModalOpen(true)} className="w-full py-4 bg-white text-blue-600 font-bold rounded-xl text-lg hover:bg-blue-50 transition-colors">
                   Join Free Masterclass
                 </button>
                 <p className="text-blue-200/60 text-sm mt-4 text-center">
@@ -662,12 +664,18 @@ export default function Training() {
           <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
             Don't let another quarter pass by. Take the first step today.
           </p>
-          <button onClick={() => navigate('/login')} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+          <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
             Start Your Transformation
             <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
           </button>
         </div>
       </section>
+
+      {/* Masterclass Modal */}
+      <MasterclassModal
+        isOpen={isMasterclassModalOpen}
+        onClose={() => setIsMasterclassModalOpen(false)}
+      />
     </div>
   );
 }
