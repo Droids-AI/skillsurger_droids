@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, User, FileText, BarChart3, Search, Video, Briefcase, GraduationCap, MessageSquare, Info, BookOpen, DollarSign, ChevronDown, Menu } from 'lucide-react';
+import { Brain, User, FileText, BarChart3, Search, Video, Briefcase, GraduationCap, MessageSquare, Info, BookOpen, DollarSign, ChevronDown, Menu, Trophy } from 'lucide-react';
 import Button from './Button';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -63,6 +63,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     { label: 'Career Explorer', href: '/dashboard?section=career', icon: Briefcase, description: 'Discover career opportunities' },
     { label: 'Learning Paths', href: '/dashboard?section=learning', icon: GraduationCap, description: 'Personalized learning roadmaps' },
     { label: 'AI Mentorship', href: '/dashboard?section=mentorship', icon: MessageSquare, description: 'Get AI-powered career guidance' },
+    { label: 'Career Training', href: '/training', icon: Trophy, description: 'Masterclass for high-earning professionals' },
   ];
 
   const companyItems = [

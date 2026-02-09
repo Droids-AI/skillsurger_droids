@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar, Clock, ArrowRight, Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatedBlogs } from '../content/blogs.generated';
 import SEO from '../components/SEO';
 
 const Blog = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const generatedCards = generatedBlogs.map((p, index) => ({
     id: 1000 + index,
     title: p.title,
@@ -23,7 +25,7 @@ const Blog = () => {
       excerpt: "Every day, thousands of qualified candidates apply for jobs and hear nothing back. Not because they are bad—but because the process is broken. Recruiters don't read applications the way candidates think they do.",
       category: "Career Advice",
       readTime: "8 min read",
-      date: "January 20, 2025",
+      date: "February 9, 2026",
       image: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
       slug: "why-job-applications-fail-india"
     },
@@ -139,11 +141,6 @@ const Blog = () => {
     }
   ];
 
-  const blogPosts = [
-    ...generatedCards,
-    ...staticPosts,
-  ];
-
   const categories = [
     "All",
     "Resume Building",
@@ -153,6 +150,34 @@ const Blog = () => {
     "Technical Interviews",
     "Career Development"
   ];
+
+  // Get all blog posts (for total count)
+  const allBlogPosts = useMemo(() => [
+    ...generatedCards,
+    ...staticPosts,
+  ], [generatedCards, staticPosts]);
+
+  // Filter and sort blog posts based on search query, category, and date (newest first)
+  const filteredPosts = useMemo(() => {
+    // Sort by date (newest first)
+    const sortedPosts = [...allBlogPosts].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+    
+    // Filter by search and category
+    return sortedPosts.filter((post) => {
+      const matchesSearch = searchQuery === '' || 
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.category.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory, allBlogPosts]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,6 +204,8 @@ const Blog = () => {
               <input
                 type="text"
                 placeholder="Search articles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -193,8 +220,9 @@ const Blog = () => {
             {categories.map((category, index) => (
               <button
                 key={index}
+                onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                  index === 0
+                  selectedCategory === category
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -209,8 +237,22 @@ const Blog = () => {
       {/* Blog Posts Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
+          {filteredPosts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No articles found matching your search.</p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('All');
+                }}
+                className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPosts.map((post) => (
               <article
                 key={post.id}
                 className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden"
@@ -256,15 +298,17 @@ const Blog = () => {
                   </Link>
                 </div>
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           
-          {/* Load More Button */}
-          <div className="text-center mt-12">
-            <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-              Load More Articles
-            </button>
-          </div>
+          {filteredPosts.length > 0 && (
+            <div className="text-center mt-12">
+              <p className="text-gray-600 mb-4">
+                Showing {filteredPosts.length} of {allBlogPosts.length} articles
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

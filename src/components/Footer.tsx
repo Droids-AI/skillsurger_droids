@@ -37,6 +37,11 @@ export default function Footer() {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link to="/training" className="text-gray-400 hover:text-white transition-colors">
+                  Career Training
+                </Link>
+              </li>
             </ul>
           </div>
 
