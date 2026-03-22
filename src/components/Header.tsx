@@ -77,13 +77,58 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     return location.pathname.startsWith(href.split('?')[0]);
   };
 
+  const isDarkPage = location.pathname === '/training' || location.pathname === '/thank-you';
+
+  // Theme-aware class helpers
+  const headerBg = isDarkPage
+    ? 'bg-[#020420]/80 backdrop-blur-md border-white/10'
+    : 'bg-white border-gray-200 shadow-sm';
+
+  const logoText = isDarkPage ? 'text-white' : 'text-gray-900';
+  const logoIcon = isDarkPage ? 'text-blue-400' : 'text-blue-600';
+
+  const navLink = (active: boolean) =>
+    isDarkPage
+      ? active
+        ? 'text-blue-400 bg-white/10'
+        : 'text-gray-300 hover:text-white hover:bg-white/10'
+      : active
+        ? 'text-blue-600 bg-blue-50'
+        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50';
+
+  const dropdownBg = isDarkPage
+    ? 'bg-[#0a0f2c] border-white/10'
+    : 'bg-white border-gray-200';
+
+  const dropdownItem = isDarkPage
+    ? 'hover:bg-white/10 group'
+    : 'hover:bg-blue-50 group';
+
+  const dropdownIcon = isDarkPage
+    ? 'bg-white/5 group-hover:bg-white/10'
+    : 'bg-gray-100 group-hover:bg-blue-100';
+
+  const dropdownIconColor = isDarkPage
+    ? 'text-gray-400 group-hover:text-blue-400'
+    : 'text-gray-600 group-hover:text-blue-600';
+
+  const dropdownLabel = isDarkPage
+    ? 'text-gray-200 group-hover:text-blue-400'
+    : 'text-gray-900 group-hover:text-blue-600';
+
+  const dropdownDesc = isDarkPage ? 'text-gray-500' : 'text-gray-500';
+
+  const mobileMenuBtn = isDarkPage
+    ? 'hover:bg-white/10 text-gray-300'
+    : 'hover:bg-gray-100 text-gray-700';
+
   if (loading) {
     return (
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
+      <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerBg}`}>
         <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <Brain className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-bold">Skillsurger</span>
+            <Brain className={`w-8 h-8 ${logoIcon}`} />
+            <span className={`text-xl font-bold ${logoText}`}>Skillsurger</span>
           </Link>
         </nav>
       </header>
@@ -91,21 +136,17 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b transition-colors duration-300 ${headerBg}`}>
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between relative">
         <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-          <Brain className="w-8 h-8 text-blue-600" />
-          <span className="text-xl font-bold">Skillsurger</span>
+          <Brain className={`w-8 h-8 ${logoIcon}`} />
+          <span className={`text-xl font-bold ${logoText}`}>Skillsurger</span>
         </Link>
-        
+
         <nav ref={menuRef} className="hidden md:flex items-center space-x-1 flex-1 justify-center">
           <Link
             to="/"
-            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
-              isActive('/') 
-                ? 'text-blue-600 bg-blue-50' 
-                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-            }`}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${navLink(isActive('/'))}`}
           >
             Home
           </Link>
@@ -114,17 +155,13 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="relative">
             <button
               onClick={() => toggleMenu('tools')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${
-                openMenu === 'tools'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'tools')}`}
             >
               Tools
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'tools' ? 'rotate-180' : ''}`} />
             </button>
             {openMenu === 'tools' && (
-              <div className="absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+              <div className={`absolute left-0 mt-2 w-80 rounded-lg shadow-xl border overflow-hidden z-50 ${dropdownBg}`}>
                 <div className="py-2">
                   {toolsItems.map((item, index) => {
                     const Icon = item.icon;
@@ -133,17 +170,17 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
                         key={index}
                         to={item.href}
                         onClick={() => setOpenMenu(null)}
-                        className="flex items-start gap-4 px-4 py-3 hover:bg-blue-50 transition-colors group"
+                        className={`flex items-start gap-4 px-4 py-3 transition-colors ${dropdownItem}`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-                          <Icon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${dropdownIcon}`}>
+                          <Icon className={`w-5 h-5 ${dropdownIconColor}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                          <div className={`text-sm font-semibold ${dropdownLabel}`}>
                             {item.label}
                           </div>
                           {item.description && (
-                            <div className="text-xs text-gray-500 mt-0.5">
+                            <div className={`text-xs mt-0.5 ${dropdownDesc}`}>
                               {item.description}
                             </div>
                           )}
@@ -160,17 +197,13 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="relative">
             <button
               onClick={() => toggleMenu('services')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${
-                openMenu === 'services'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'services')}`}
             >
               Services
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'services' ? 'rotate-180' : ''}`} />
             </button>
             {openMenu === 'services' && (
-              <div className="absolute left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+              <div className={`absolute left-0 mt-2 w-80 rounded-lg shadow-xl border overflow-hidden z-50 ${dropdownBg}`}>
                 <div className="py-2">
                   {servicesItems.map((item, index) => {
                     const Icon = item.icon;
@@ -179,17 +212,17 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
                         key={index}
                         to={item.href}
                         onClick={() => setOpenMenu(null)}
-                        className="flex items-start gap-4 px-4 py-3 hover:bg-blue-50 transition-colors group"
+                        className={`flex items-start gap-4 px-4 py-3 transition-colors ${dropdownItem}`}
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-                          <Icon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${dropdownIcon}`}>
+                          <Icon className={`w-5 h-5 ${dropdownIconColor}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                          <div className={`text-sm font-semibold ${dropdownLabel}`}>
                             {item.label}
                           </div>
                           {item.description && (
-                            <div className="text-xs text-gray-500 mt-0.5">
+                            <div className={`text-xs mt-0.5 ${dropdownDesc}`}>
                               {item.description}
                             </div>
                           )}
@@ -206,17 +239,13 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="relative">
             <button
               onClick={() => toggleMenu('company')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${
-                openMenu === 'company'
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'company')}`}
             >
               Company
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'company' ? 'rotate-180' : ''}`} />
             </button>
             {openMenu === 'company' && (
-              <div className="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+              <div className={`absolute left-0 mt-2 w-64 rounded-lg shadow-xl border overflow-hidden z-50 ${dropdownBg}`}>
                 <div className="py-2">
                   {companyItems.map((item, index) => {
                     const Icon = item.icon;
@@ -225,10 +254,10 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
                         key={index}
                         to={item.href}
                         onClick={() => setOpenMenu(null)}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors group"
+                        className={`flex items-center gap-3 px-4 py-3 transition-colors ${dropdownItem}`}
                       >
-                        <Icon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
-                        <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600">
+                        <Icon className={`w-5 h-5 ${dropdownIconColor}`} />
+                        <span className={`text-sm font-semibold ${dropdownLabel}`}>
                           {item.label}
                         </span>
                       </Link>
@@ -245,7 +274,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <Link to="/dashboard">
-                <Button variant="outline" className="flex items-center space-x-2">
+                <Button variant={isDarkPage ? 'primary' : 'outline'} className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
                   <span>Dashboard</span>
                 </Button>
@@ -253,7 +282,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="outline">Log in</Button>
+                  <Button variant="outline" className={isDarkPage ? 'border-white/20 text-white hover:bg-white/10' : ''}>Log in</Button>
                 </Link>
                 <Link to="/signup">
                   <Button>Get Started</Button>
@@ -261,15 +290,15 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
               </>
             )}
           </div>
-          
+
           {/* Mobile Menu Button - Only show when user is NOT logged in */}
           {onMobileMenuToggle && !user && (
             <button
               onClick={onMobileMenuToggle}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              className={`md:hidden p-2 rounded-lg transition-colors flex-shrink-0 ${mobileMenuBtn}`}
               aria-label="Open mobile menu"
             >
-              <Menu className="w-6 h-6 text-gray-700" />
+              <Menu className="w-6 h-6" />
             </button>
           )}
         </div>

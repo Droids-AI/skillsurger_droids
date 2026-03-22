@@ -36,6 +36,7 @@ import Onboarding from './pages/Onboarding';
 import OnboardingModal from './components/OnboardingModal';
 import ScrollToTop from './components/ScrollToTop';
 import Training from './pages/Training';
+import ThankYouPage from './pages/ThankYouPage';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -127,6 +128,7 @@ function App() {
               <Route path="/user-type-selection" element={<UserTypeSelection />} />
               <Route path="/onboarding" element={<OnboardingForm />} />
               <Route path="/training" element={<Training />} />
+              <Route path="/thank-you" element={<ThankYouPage />} />
 
               {/* 404 Not Found - Must be last */}
               <Route path="*" element={<NotFound />} />

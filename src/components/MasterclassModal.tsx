@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { submitToGoogleSheets } from '../lib/googleSheets';
 
@@ -31,6 +32,7 @@ const countryCodes = [
 ];
 
 export default function MasterclassModal({ isOpen, onClose }: MasterclassModalProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -138,11 +140,12 @@ export default function MasterclassModal({ isOpen, onClose }: MasterclassModalPr
         phonenumber: '',
       });
 
-      // Close modal after 2 seconds
+      // Redirect to thank you page after a brief delay
       setTimeout(() => {
         setSubmitSuccess(false);
         onClose();
-      }, 2000);
+        navigate('/thank-you');
+      }, 800);
     } catch (error) {
       console.error('Error submitting form:', error);
       setErrors({ submit: 'Failed to submit. Please try again.' });

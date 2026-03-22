@@ -1,9 +1,52 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Brain, CheckCircle2, ShieldCheck, Zap, Users, Trophy, Star, ArrowRight, XCircle, CheckCircle, Target, Rocket, BookOpen, Briefcase, TrendingUp, Award, Clock, MessageSquare, ChevronRight } from 'lucide-react';
+import { Brain, CheckCircle2, ShieldCheck, Zap, Users, Trophy, Star, ArrowRight, XCircle, CheckCircle, Target, Rocket, BookOpen, Briefcase, TrendingUp, Award, Clock, MessageSquare, ChevronRight, AlertCircle, Timer } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
 import MasterclassModal from '../components/MasterclassModal';
+
+const WEBINAR_DATE = new Date('2026-03-29T14:00:00+05:30'); // March 29, 2 PM IST
+const SEATS_LEFT = 18;
+
+function HeroCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = WEBINAR_DATE.getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
+      setTimeLeft({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <div className="flex gap-3 justify-center">
+      {[
+        { label: 'Days', value: timeLeft.days },
+        { label: 'Hrs', value: timeLeft.hours },
+        { label: 'Mins', value: timeLeft.minutes },
+        { label: 'Secs', value: timeLeft.seconds },
+      ].map(({ label, value }) => (
+        <div key={label} className="flex flex-col items-center">
+          <div className="w-14 h-14 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center text-xl font-bold tabular-nums text-white">
+            {pad(value)}
+          </div>
+          <span className="text-xs text-blue-300 mt-1">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const tabs = [
   { id: 'strategy', label: 'Strategy', icon: Target },
@@ -236,29 +279,57 @@ export default function Training() {
         </div>
 
         <div className="container relative mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full backdrop-blur-sm animate-fade-in">
-            <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-            Free Masterclass — Limited Seats
+          {/* Scarcity / urgency badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold text-orange-300 bg-orange-500/10 border border-orange-500/30 rounded-full backdrop-blur-sm animate-fade-in">
+            <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse" />
+            Next batch starts April 1 — Only {SEATS_LEFT} seats left
+          </div>
+
+          {/* Social proof row */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8 animate-fade-in">
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span className="text-yellow-400 font-bold text-base">★★★★★</span>
+              <span className="font-semibold text-white">4.8/5</span>
+              <span>from 1,250+ professionals</span>
+            </div>
+            <span className="text-gray-600 hidden sm:block">•</span>
+            <div className="text-sm text-gray-400">
+              <span className="font-bold text-white text-base">3x</span> average interview call volume
+            </div>
+            <span className="text-gray-600 hidden sm:block">•</span>
+            <div className="text-sm text-gray-400">
+              <span className="font-bold text-white text-base">1,250+</span> professionals helped
+            </div>
           </div>
 
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight tracking-tight">
-            Stop Chasing Jobs.{' '}
+            Land More Interviews{' '}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Let Them Chase You.
-            </span>
+              in 30 Days
+            </span>{' '}
+            Using AI
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
             The proven system that helps professionals earning 15+ LPA land 3-7 dream offers with 50-200% salary hikes — in under 90 days.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          {/* Countdown to webinar */}
+          <div className="mb-6">
+            <p className="text-gray-500 text-sm mb-3 flex items-center justify-center gap-2">
+              <Timer className="w-4 h-4 text-orange-400" />
+              Free Masterclass — 29th March, 2 PM IST — Seats filling fast
+            </p>
+            <HeroCountdown />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
-              Watch Free Masterclass
+              Reserve My Free Seat
               <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
             </button>
-            <span className="text-sm text-gray-500">No credit card required</span>
+            <span className="text-sm text-gray-500">No credit card • {SEATS_LEFT} seats left</span>
           </div>
 
           {/* Stats bar */}
@@ -271,6 +342,42 @@ export default function Training() {
                 <div className="text-xs md:text-sm text-gray-500 mt-1">{stat.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pain Section */}
+      <section className="py-16 relative">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-white">
+              Sound Familiar?
+            </h2>
+            <p className="text-gray-400">You're not alone. These are real stories from professionals before they found Skillsurger.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              '"Applied to 100+ jobs over 4 months. Zero callbacks."',
+              '"ATS kept auto-rejecting my resume. I never made it past the bots."',
+              '"Recruiters viewed my LinkedIn and disappeared. Ghosted every time."',
+              '"Got multiple interviews but always lost out at the salary discussion."',
+              '"Spent 3 hours tailoring each application. Still heard nothing."',
+              '"My experience is strong but I don\'t know how to package it right."',
+            ].map((quote, i) => (
+              <div key={i} className="flex items-start gap-3 p-4 bg-red-500/5 border border-red-500/15 rounded-xl">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-gray-400 text-sm italic leading-relaxed">{quote}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <p className="text-gray-300 text-lg font-medium mb-6">
+              What if you could flip the script — and have <span className="text-blue-400 font-bold">recruiters chasing you</span>?
+            </p>
+            <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+              Reserve My Free Seat
+              <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </button>
           </div>
         </div>
       </section>
@@ -425,43 +532,67 @@ export default function Training() {
         </div>
       </section>
 
-      {/* Mentor Section */}
+      {/* Instructor Section — Sachin Agarwal */}
       <section id="mentor-section" data-animate className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-950/30 to-transparent" />
         <div className="container relative mx-auto px-4">
+          {/* Top-rated badge */}
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+              <Star className="w-4 h-4 fill-current" />
+              Top Rated Instructor
+            </span>
+          </div>
+
           <div className={`flex flex-col md:flex-row items-center gap-12 max-w-5xl mx-auto transition-all duration-700 ${isVisible('mentor-section') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="md:w-1/2 relative">
+            <div className="md:w-1/2 relative flex-shrink-0">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-3xl blur-2xl" />
               <img
-                src="https://media.licdn.com/dms/image/v2/D4E03AQH33hJS-NcmsQ/profile-displayphoto-crop_800_800/B4EZoukrIbKkAI-/0/1761717957907?e=1772064000&v=beta&t=r-_CRlt5vJj2RNyY5mExZRUxGnXu0g467N1LJtN4Ptk"
-                alt="Skillsurger Mentors"
+                src="https://media.licdn.com/dms/image/v2/D4E03AQH33hJS-NcmsQ/profile-displayphoto-scale_400_400/B4EZoukrIbKkAg-/0/1761717957988?e=1775692800&v=beta&t=Ri02rbTYmp1t9I89jzh2EdU1Hn5UZAStpOSh5VNYmBM"
+                alt="Sachin Agarwal — Top Rated Instructor at Skillsurger"
                 className="relative w-full h-auto rounded-3xl border border-white/10 shadow-2xl"
               />
+              {/* Name plate */}
+              <div className="absolute bottom-4 left-4 right-4 bg-[#020420]/90 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-4">
+                <p className="text-white font-bold text-lg">Sachin Agarwal</p>
+                <p className="text-blue-400 text-sm">Senior Leader in MNC</p>
+                <div className="flex items-center gap-1 mt-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+                  ))}
+                  <span className="text-gray-400 text-xs ml-1">4.9 / 5</span>
+                </div>
+              </div>
             </div>
             <div className="md:w-1/2">
-              <span className="text-blue-400 font-semibold text-sm uppercase tracking-wider">Meet your Mentors</span>
+              <span className="text-blue-400 font-semibold text-sm uppercase tracking-wider">Your Masterclass Host</span>
               <h2 className="text-3xl md:text-4xl font-bold mt-3 mb-6">
-                Industry Experts Dedicated to{' '}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Your Success</span>
+                Learn Directly from a{' '}
+                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Senior MNC Leader</span>
               </h2>
               <div className="space-y-4 text-gray-400 leading-relaxed">
                 <p>
-                  "Our mission? Get India's top professionals multiple offers, faster than they imagined — and with 2-4X hikes."
+                  "I've sat on both sides of the hiring table. I know exactly what makes a candidate irresistible — and most professionals are getting it completely wrong."
                 </p>
                 <p>
-                  At Skillsurger, we've brought together veterans who have co-founded tech startups and built hiring tools used by hundreds of global companies.
+                  Sachin has spent 15+ years leading large teams at Fortune 500 companies and has personally hired hundreds of mid-to-senior professionals across India and globally.
                 </p>
                 <p>
-                  During the pandemic, our experts helped over 20,000 professionals navigate career chaos and land their dream roles.
-                </p>
-                <p>
-                  Now, we've reverse-engineered hiring algorithms to empower mid and senior professionals to land 3-5 job offers with higher salaries.
+                  In this free masterclass, he'll reveal the insider playbook that top candidates use to command 2-4X salary hikes — and how AI tools can supercharge your entire job search.
                 </p>
               </div>
-              <button className="mt-8 flex items-center gap-2 text-blue-400 font-medium hover:text-blue-300 transition-colors group">
-                Learn more about our team
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </button>
+              <div className="mt-8 grid grid-cols-3 gap-4">
+                {[
+                  { value: '15+', label: 'Years Experience' },
+                  { value: '500+', label: 'Hires Made' },
+                  { value: '4.9★', label: 'Instructor Rating' },
+                ].map((s) => (
+                  <div key={s.label} className="text-center bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div className="text-xl font-bold text-white">{s.value}</div>
+                    <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -597,9 +728,10 @@ export default function Training() {
             </div>
             <div className="mt-10 text-center">
               <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
-                Register Now for Free
+                Reserve My Free Seat
                 <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
+              <p className="text-gray-500 text-sm mt-3">Only {SEATS_LEFT} seats remaining — 29th March, 2 PM IST</p>
             </div>
           </div>
         </div>
@@ -642,10 +774,10 @@ export default function Training() {
                   Stop playing the job portal lottery. Join the elite club of professionals who attract dream offers with ease.
                 </p>
                 <button onClick={() => setIsMasterclassModalOpen(true)} className="w-full py-4 bg-white text-blue-600 font-bold rounded-xl text-lg hover:bg-blue-50 transition-colors">
-                  Join Free Masterclass
+                  Reserve My Free Seat
                 </button>
                 <p className="text-blue-200/60 text-sm mt-4 text-center">
-                  Join 1000+ professionals who transformed their careers
+                  Only {SEATS_LEFT} seats left — 29th March, 2 PM IST
                 </p>
               </div>
             </div>
@@ -665,9 +797,10 @@ export default function Training() {
             Don't let another quarter pass by. Take the first step today.
           </p>
           <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
-            Start Your Transformation
+            Reserve My Free Seat
             <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
           </button>
+          <p className="text-gray-500 text-sm mt-4">Only {SEATS_LEFT} seats remaining — 29th March, 2 PM IST</p>
         </div>
       </section>
 
