@@ -3,7 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Brain, CheckCircle2, ShieldCheck, Zap, Users, Trophy, Star, ArrowRight, XCircle, CheckCircle, Target, Rocket, BookOpen, Briefcase, TrendingUp, Award, Clock, MessageSquare, ChevronRight, AlertCircle, Timer } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
-import MasterclassModal from '../components/MasterclassModal';
+import { submitToGoogleSheets } from '../lib/googleSheets';
+
+const countryCodes = [
+  { value: '+91', label: 'IN (+91)' },
+  { value: '+1', label: 'US (+1)' },
+  { value: '+44', label: 'UK (+44)' },
+  { value: '+61', label: 'AU (+61)' },
+  { value: '+65', label: 'SG (+65)' },
+  { value: '+971', label: 'UAE (+971)' },
+  { value: '+49', label: 'DE (+49)' },
+  { value: '+33', label: 'FR (+33)' },
+  { value: '+81', label: 'JP (+81)' },
+  { value: '+86', label: 'CN (+86)' },
+  { value: '+55', label: 'BR (+55)' },
+  { value: '+27', label: 'ZA (+27)' },
+  { value: '+7', label: 'RU (+7)' },
+  { value: '+52', label: 'MX (+52)' },
+];
 
 const WEBINAR_DATE = new Date('2026-03-29T14:00:00+05:30'); // March 29, 2 PM IST
 const SEATS_LEFT = 18;
@@ -234,7 +251,54 @@ export default function Training() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('strategy');
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
-  const [isMasterclassModalOpen, setIsMasterclassModalOpen] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+  const [formData, setFormData] = useState({ name: '', email: '', countryCode: '+91', phonenumber: '' });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formErrors[name]) setFormErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!formData.name.trim()) errs.name = 'Name is required';
+    if (!formData.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.email = 'Enter a valid email';
+    if (!formData.phonenumber.trim()) errs.phonenumber = 'Phone is required';
+    else if (!/^\d+$/.test(formData.phonenumber)) errs.phonenumber = 'Enter a valid phone number';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsSubmitting(true);
+    setFormErrors({});
+    try {
+      await submitToGoogleSheets({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phoneNumber: `${formData.countryCode}${formData.phonenumber}`,
+        timestamp: new Date().toISOString(),
+      });
+      setSubmitSuccess(true);
+      setFormData({ name: '', email: '', countryCode: '+91', phonenumber: '' });
+      setTimeout(() => { navigate('/thank-you'); }, 800);
+    } catch {
+      setFormErrors({ submit: 'Failed to submit. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -323,13 +387,75 @@ export default function Training() {
             <HeroCountdown />
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
-              Reserve My Free Seat
-              <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 opacity-0 group-hover:opacity-100 blur-xl transition-opacity -z-10" />
-            </button>
-            <span className="text-sm text-gray-500">No credit card • {SEATS_LEFT} seats left</span>
+          {/* Inline registration form */}
+          <div ref={formRef} className="mb-12 max-w-lg mx-auto w-full">
+            {submitSuccess ? (
+              <div className="text-center py-6 bg-green-500/10 border border-green-500/30 rounded-2xl">
+                <div className="text-green-400 text-lg font-semibold mb-1">You're registered!</div>
+                <div className="text-gray-400 text-sm">Redirecting to your confirmation page...</div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col gap-3">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      name="name"
+                      placeholder="Your name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full bg-[#0a0f2c] text-white border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    {formErrors.name && <p className="text-red-400 text-xs mt-1">{formErrors.name}</p>}
+                  </div>
+                  <div>
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="Work or personal email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full bg-[#0a0f2c] text-white border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    {formErrors.email && <p className="text-red-400 text-xs mt-1">{formErrors.email}</p>}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex">
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleChange}
+                      className="bg-[#0a0f2c] text-white border border-white/10 rounded-l-xl px-3 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors border-r-0"
+                    >
+                      {countryCodes.map((c) => (
+                        <option key={c.value + c.label} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      name="phonenumber"
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="Phone number"
+                      value={formData.phonenumber}
+                      onChange={handleChange}
+                      className="flex-1 bg-[#0a0f2c] text-white border border-white/10 rounded-r-xl px-4 py-3 text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors border-l-0"
+                    />
+                  </div>
+                  {formErrors.phonenumber && <p className="text-red-400 text-xs mt-1">{formErrors.phonenumber}</p>}
+                </div>
+                {formErrors.submit && <p className="text-red-400 text-sm text-center">{formErrors.submit}</p>}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group relative w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-base font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Reserve My Free Seat'}
+                  {!isSubmitting && <ArrowRight className="inline-block ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />}
+                </button>
+                <p className="text-center text-xs text-gray-500">No credit card required • {SEATS_LEFT} seats left</p>
+              </form>
+            )}
           </div>
 
           {/* Stats bar */}
@@ -374,7 +500,7 @@ export default function Training() {
             <p className="text-gray-300 text-lg font-medium mb-6">
               What if you could flip the script — and have <span className="text-blue-400 font-bold">recruiters chasing you</span>?
             </p>
-            <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+            <button onClick={scrollToForm} className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
               Reserve My Free Seat
               <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
@@ -727,7 +853,7 @@ export default function Training() {
               ))}
             </div>
             <div className="mt-10 text-center">
-              <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+              <button onClick={scrollToForm} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
                 Reserve My Free Seat
                 <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
@@ -773,7 +899,7 @@ export default function Training() {
                 <p className="text-blue-100/80 mb-8 text-lg leading-relaxed">
                   Stop playing the job portal lottery. Join the elite club of professionals who attract dream offers with ease.
                 </p>
-                <button onClick={() => setIsMasterclassModalOpen(true)} className="w-full py-4 bg-white text-blue-600 font-bold rounded-xl text-lg hover:bg-blue-50 transition-colors">
+                <button onClick={scrollToForm} className="w-full py-4 bg-white text-blue-600 font-bold rounded-xl text-lg hover:bg-blue-50 transition-colors">
                   Reserve My Free Seat
                 </button>
                 <p className="text-blue-200/60 text-sm mt-4 text-center">
@@ -796,7 +922,7 @@ export default function Training() {
           <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
             Don't let another quarter pass by. Take the first step today.
           </p>
-          <button onClick={() => setIsMasterclassModalOpen(true)} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
+          <button onClick={scrollToForm} className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-lg font-semibold transition-all hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-105">
             Reserve My Free Seat
             <ArrowRight className="inline-block ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
           </button>
@@ -804,11 +930,6 @@ export default function Training() {
         </div>
       </section>
 
-      {/* Masterclass Modal */}
-      <MasterclassModal
-        isOpen={isMasterclassModalOpen}
-        onClose={() => setIsMasterclassModalOpen(false)}
-      />
     </div>
   );
 }
