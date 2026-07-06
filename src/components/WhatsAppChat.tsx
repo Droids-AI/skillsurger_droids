@@ -1,4 +1,5 @@
 import React from 'react';
+import { trackEvent, EVENTS } from '../lib/analytics';
 
 interface WhatsAppChatProps {
   phoneNumber?: string;
@@ -12,6 +13,7 @@ const WhatsAppChat: React.FC<WhatsAppChatProps> = ({
   className = ""
 }) => {
   const handleWhatsAppClick = () => {
+    trackEvent(EVENTS.WHATSAPP_CLICKED);
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\s/g, '')}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');

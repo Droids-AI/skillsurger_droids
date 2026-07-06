@@ -31,6 +31,9 @@ import PainValidationCards from "../components/landing/PainValidationCards";
 import HowItWorks from "../components/landing/HowItWorks";
 import TrustSignals from "../components/landing/TrustSignals";
 import FAQSection from "../components/landing/FAQSection";
+import CTASection from "../components/landing/CTASection";
+import RoleTrackCard from "../components/roleTracks/RoleTrackCard";
+import { roleTracks } from "../lib/constants/roleTracks";
 
 const features = [
   {
@@ -121,7 +124,7 @@ const pricingPlans = [
   },
   {
     name: "Monthly Pro",
-    price: "10",
+    price: "799",
     period: "month",
     description: "Full access to your AI career agent",
     features: [
@@ -143,12 +146,12 @@ const pricingPlans = [
   },
   {
     name: "Yearly Pro",
-    price: "100",
+    price: "7,999",
     period: "year",
     description: "Best value for serious career growth",
     features: [
       "Everything in Monthly Pro",
-      "2 months free (save $20)",
+      "2 months free (save ₹1,589)",
       "Priority feature access",
       "Advanced analytics",
       "Career strategy sessions",
@@ -597,7 +600,7 @@ export default function LandingPage() {
                   <p className="text-gray-600 mb-4">{plan.description}</p>
                   <div className="flex items-baseline justify-center">
                     <span className="text-5xl font-bold text-gray-900">
-                      ${plan.price}
+                      ₹{plan.price}
                     </span>
                     <span className="text-gray-600 ml-2">/{plan.period}</span>
                   </div>
@@ -652,6 +655,82 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Job Switch Copilot: Built for Indian Tech Job Switchers */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Built for tech professionals switching to better roles
+            </h2>
+            <p className="text-xl text-gray-600">
+              Skillsurger helps Indian tech professionals structure their job search across resume
+              improvement, applications, recruiter outreach, and interview readiness.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {roleTracks.slice(0, 3).map((track) => (
+              <RoleTrackCard key={track.id} track={track} />
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link to="/job-switch-copilot">
+              <Button size="lg">
+                Explore Job Switch Copilot
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Job Switch Copilot: Why Generic Applications Fail + Product Modules */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-0 max-w-6xl mx-auto">
+            <div className="text-center md:pr-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                More applications do not always mean better outcomes
+              </h2>
+              <p className="text-lg text-gray-600 mb-8">
+                Most job seekers apply with the same resume, weak positioning, no tracking, and no
+                follow-up system. Skillsurger helps you turn job search into a structured pipeline.
+              </p>
+              <Link to="/free-resume-audit">
+                <Button size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
+                  Get Free Resume Audit
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="text-center md:pl-12 md:border-l md:border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Product Modules</h2>
+              <p className="text-lg text-gray-600 mb-8">
+                Resume Audit, Resume Tailoring, Role-Fit Matching, Application Tracker, Recruiter
+                Outreach, Mock Interview Prep, and Career Diagnosis — all part of one system.
+              </p>
+              <Link to="/job-switch-copilot">
+                <Button size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
+                  View Plans
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Job Switch Copilot: Final CTA */}
+      <CTASection
+        title="Stop applying randomly. Build a structured job-search system."
+        subtitle="Start with a free resume audit and understand what is blocking your job search."
+        ctaLabel="Get Free Resume Audit"
+        ctaHref="/free-resume-audit"
+        footnote="No guaranteed outcomes — just a structured system to improve your job search."
+      />
 
       {/* Contact Section */}
       <section id="contact" className="py-20 bg-gray-50">

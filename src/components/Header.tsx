@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, User, FileText, BarChart3, Search, Video, Briefcase, GraduationCap, MessageSquare, Info, BookOpen, DollarSign, ChevronDown, Menu, Trophy } from 'lucide-react';
+import { Brain, User, FileText, BarChart3, Search, Video, Briefcase, GraduationCap, MessageSquare, Info, BookOpen, DollarSign, ChevronDown, Menu, Trophy, Rocket, ClipboardCheck, Star, Building2, Handshake } from 'lucide-react';
 import Button from './Button';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
@@ -57,6 +57,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     { label: 'Free Job Readiness Score', href: '/job-readiness-index', icon: BarChart3, description: 'Check your job readiness' },
     { label: 'Free Job Search', href: '/job-search', icon: Search, description: 'Search for job opportunities' },
     { label: 'Mock Interviews', href: '/mock-interview', icon: Video, description: 'Practice with AI interviews' },
+    { label: 'Free Resume Audit', href: '/free-resume-audit', icon: ClipboardCheck, description: 'Get a free ATS and role-fit audit' },
   ];
 
   const servicesItems = [
@@ -64,12 +65,16 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     { label: 'Learning Paths', href: '/dashboard?section=learning', icon: GraduationCap, description: 'Personalized learning roadmaps' },
     { label: 'AI Mentorship', href: '/dashboard?section=mentorship', icon: MessageSquare, description: 'Get AI-powered career guidance' },
     { label: 'Career Training', href: '/training', icon: Trophy, description: 'Masterclass for high-earning professionals' },
+    { label: 'Job Switch Copilot', href: '/job-switch-copilot', icon: Rocket, description: 'Structured job-search system for tech professionals' },
   ];
 
   const companyItems = [
     { label: 'About', href: '/about', icon: Info },
     { label: 'Blog', href: '/blog', icon: BookOpen },
     { label: 'Pricing', href: '/pricing', icon: DollarSign },
+    { label: 'Success Stories', href: '/success-stories', icon: Star },
+    { label: 'For Colleges', href: '/for-colleges', icon: Building2 },
+    { label: 'For EdTech Partners', href: '/for-edtech-partners', icon: Handshake },
   ];
 
   const isActive = (href: string) => {

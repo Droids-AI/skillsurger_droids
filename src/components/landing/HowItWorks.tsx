@@ -1,29 +1,41 @@
-import { Upload, Edit, Video, TrendingUp } from 'lucide-react';
+import { Upload, ClipboardCheck, Edit, Mail, Video, TrendingUp } from 'lucide-react';
 import StepIndicator from '../ui/StepIndicator';
 
 const steps = [
   {
     number: '01',
-    title: 'Scan',
-    description: 'Upload your CV and get an instant score',
+    title: 'Upload',
+    description: 'Upload your resume for a free audit',
     icon: Upload,
   },
   {
     number: '02',
-    title: 'Tailor',
-    description: 'Fix weak spots and add keywords',
-    icon: Edit,
+    title: 'Audit',
+    description: 'See ATS gaps, role-fit, and keyword issues',
+    icon: ClipboardCheck,
   },
   {
     number: '03',
-    title: 'Mock',
-    description: 'Practice interviews and get feedback',
-    icon: Video,
+    title: 'Tailor',
+    description: 'Tailor your resume and track applications',
+    icon: Edit,
   },
   {
     number: '04',
+    title: 'Outreach',
+    description: 'Message recruiters with proven templates',
+    icon: Mail,
+  },
+  {
+    number: '05',
+    title: 'Interview',
+    description: 'Role-specific mock interview prep',
+    icon: Video,
+  },
+  {
+    number: '06',
     title: 'Improve',
-    description: 'Track progress and land jobs',
+    description: 'Iterate every week with a clear pipeline',
     icon: TrendingUp,
   },
 ];
@@ -37,12 +49,12 @@ export default function HowItWorks() {
             How Skillsurger Works
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Get job-ready in 4 simple steps
+            Get job-ready in 6 simple steps
           </p>
         </div>
 
-        {/* Desktop: Horizontal timeline */}
-        <div className="hidden md:grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+        {/* Desktop: single-row horizontal timeline */}
+        <div className="hidden md:grid md:grid-cols-6 gap-4 max-w-6xl mx-auto">
           {steps.map((step, index) => (
             <StepIndicator
               key={index}

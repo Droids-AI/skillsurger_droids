@@ -4,6 +4,7 @@ export interface Testimonial {
   company: string;
   quote: string;
   rating: number;
+  isPlaceholder?: boolean;
 }
 
 export const testimonials: Testimonial[] = [

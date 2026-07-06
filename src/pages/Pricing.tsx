@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Shield, Clock, Download, BarChart3, Check, RefreshCcw, CheckCircle } from "lucide-react";
 import Button from "../components/Button";
 import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
+import { trackEvent, EVENTS } from "../lib/analytics";
+import PricingTiers from "../components/jobSwitchCopilot/PricingTiers";
 
 const pricingPlans = [
   {
@@ -26,7 +29,7 @@ const pricingPlans = [
   },
   {
     name: "Monthly Pro",
-    price: "10",
+    price: "799",
     period: "month",
     description: "Full access to your AI career agent",
     features: [
@@ -48,12 +51,12 @@ const pricingPlans = [
   },
   {
     name: "Yearly Pro",
-    price: "100",
+    price: "7,999",
     period: "year",
     description: "Best value for serious career growth",
     features: [
       "Everything in Monthly Pro",
-      "2 months free (save $20)",
+      "2 months free (save ₹1,589)",
       "Priority feature access",
       "Advanced analytics",
       "Career strategy sessions",
@@ -73,12 +76,16 @@ const pricingPlans = [
 ];
 
 const Pricing = () => {
+  useEffect(() => {
+    trackEvent(EVENTS.PRICING_VIEWED);
+  }, []);
+
   return (
     <section id="pricing" className="py-20 bg-white">
-      <SEO 
+      <SEO
         title="Pricing Plans | Skillsurger AI Career Coach"
-        description="Choose the best plan for your career growth. Start with a free 7-day trial. Affordable AI-powered career coaching from just $10/month."
-        keywords="AI career coach pricing, resume builder cost, career development pricing, job search tools pricing"
+        description="Choose the best plan for your career growth. Start with a free 7-day trial. Affordable AI-powered career coaching from just ₹799/month."
+        keywords="AI career coach pricing India, resume builder cost, career development pricing, job search tools pricing India"
         canonicalUrl="/pricing"
       />
       <div className="container mx-auto px-4">
@@ -146,7 +153,7 @@ const Pricing = () => {
                 <p className="text-gray-600 mb-4">{plan.description}</p>
                 <div className="flex items-baseline justify-center">
                   <span className="text-5xl font-bold text-gray-900">
-                    ${plan.price}
+                    ₹{plan.price}
                   </span>
                   <span className="text-gray-600 ml-2">/{plan.period}</span>
                 </div>
@@ -161,7 +168,16 @@ const Pricing = () => {
                 ))}
               </ul>
 
-              <Link to={plan.url} className="block">
+              <Link
+                to={plan.url}
+                className="block"
+                onClick={() => {
+                  trackEvent(EVENTS.PLAN_SELECTED, { plan: plan.name });
+                  if (plan.url.startsWith('http')) {
+                    trackEvent(EVENTS.PAYMENT_INITIATED, { plan: plan.name });
+                  }
+                }}
+              >
                 <Button
                   className={`w-full py-3 ${
                     plan.popular
@@ -204,6 +220,22 @@ const Pricing = () => {
               <BarChart3 className="w-4 h-4 mr-1" /> Analytics
             </span>
           </div>
+        </div>
+
+        {/* Job Switch Copilot Plans */}
+        <div className="mt-20 pt-16 border-t border-gray-200">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Job Switch Copilot Plans</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              A separate, structured job-search system for tech professionals actively switching roles —
+              from a free resume audit to a focused 30-day recovery sprint.
+            </p>
+          </div>
+          <PricingTiers />
+          <p className="text-center text-sm text-gray-500 mt-8">
+            No guaranteed placement, interviews, or salary outcomes — these plans improve the quality and
+            consistency of your job search.
+          </p>
         </div>
 
         {/* FAQ Section */}

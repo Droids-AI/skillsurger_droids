@@ -28,12 +28,14 @@
  * 
  * 4. Deploy as Web App (Execute as: Me, Who has access: Anyone)
  * 5. Copy the Web App URL and set it as VITE_GOOGLE_SHEETS_WEBHOOK_URL in .env
- * 
+ *
  * Option 2: Using Backend API
  * 1. Set up a backend endpoint at /api/v1/masterclass/submit
  * 2. The endpoint should accept POST requests with { name, email, phoneNumber, timestamp }
  * 3. The backend should handle writing to Google Sheets using Google Sheets API
  */
+
+import { supabase } from './supabase';
 
 interface MasterclassSubmission {
   name: string;
@@ -97,6 +99,49 @@ export async function submitToGoogleSheets(data: MasterclassSubmission): Promise
   } catch (error) {
     console.error('Backend API failed:', error);
     throw error;
+  }
+}
+
+/**
+ * Generic lead submission for new Job Switch Copilot forms (resume audit,
+ * diagnosis booking, etc). Kept separate from submitToGoogleSheets so the
+ * existing masterclass form/webhook contract is never altered.
+ *
+ * Persistence order:
+ * 1. Google Apps Script webhook, if VITE_GOOGLE_SHEETS_WEBHOOK_URL is set.
+ * 2. Supabase `leads` table (see migration 20260706071747_add_leads_table.sql)
+ *    — this is the reliable path, since Supabase is already configured and
+ *    reachable in this repo, unlike the external backend, which has no
+ *    matching /leads/submit route.
+ */
+export async function submitLead(payload: Record<string, unknown>, formType: string): Promise<void> {
+  const webhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
+  const body = { ...payload, formType, timestamp: new Date().toISOString() };
+
+  if (webhookUrl) {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          return;
+        }
+      }
+      console.error('Google Apps Script webhook did not succeed, falling back to Supabase');
+    } catch (error) {
+      console.error('Google Apps Script webhook failed, falling back to Supabase:', error);
+    }
+  }
+
+  const { error } = await supabase.from('leads').insert({ form_type: formType, payload: body });
+
+  if (error) {
+    throw new Error(`Failed to save lead: ${error.message}`);
   }
 }
 

@@ -42,6 +42,21 @@ export default function Footer() {
                   Career Training
                 </Link>
               </li>
+              <li>
+                <Link to="/job-switch-copilot" className="text-gray-400 hover:text-white transition-colors">
+                  Job Switch Copilot
+                </Link>
+              </li>
+              <li>
+                <Link to="/free-resume-audit" className="text-gray-400 hover:text-white transition-colors">
+                  Free Resume Audit
+                </Link>
+              </li>
+              <li>
+                <Link to="/success-stories" className="text-gray-400 hover:text-white transition-colors">
+                  Success Stories
+                </Link>
+              </li>
             </ul>
           </div>
 

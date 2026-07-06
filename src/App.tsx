@@ -37,6 +37,14 @@ import OnboardingModal from './components/OnboardingModal';
 import ScrollToTop from './components/ScrollToTop';
 import Training from './pages/Training';
 import ThankYouPage from './pages/ThankYouPage';
+import JobSwitchCopilot from './pages/JobSwitchCopilot';
+import FreeResumeAudit from './pages/FreeResumeAudit';
+import SuccessStories from './pages/SuccessStories';
+import ResumeExamples from './pages/ResumeExamples';
+import ForColleges from './pages/ForColleges';
+import ForEdtechPartners from './pages/ForEdtechPartners';
+import BookACall from './pages/BookACall';
+import SEOLandingPage from './pages/seo/SEOLandingPage';
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -129,6 +137,22 @@ function App() {
               <Route path="/onboarding" element={<OnboardingForm />} />
               <Route path="/training" element={<Training />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
+
+              {/* Job Switch Copilot — additive product line */}
+              <Route path="/job-switch-copilot" element={<JobSwitchCopilot />} />
+              <Route path="/free-resume-audit" element={<FreeResumeAudit />} />
+              <Route path="/success-stories" element={<SuccessStories />} />
+              <Route path="/resume-examples" element={<ResumeExamples />} />
+              <Route path="/for-colleges" element={<ForColleges />} />
+              <Route path="/for-edtech-partners" element={<ForEdtechPartners />} />
+              <Route path="/book-a-call" element={<BookACall />} />
+
+              {/* SEO landing pages — single template, data-driven */}
+              <Route path="/software-engineer-resume" element={<SEOLandingPage slug="software-engineer-resume" />} />
+              <Route path="/devops-resume" element={<SEOLandingPage slug="devops-resume" />} />
+              <Route path="/data-engineer-resume" element={<SEOLandingPage slug="data-engineer-resume" />} />
+              <Route path="/job-search-after-layoff" element={<SEOLandingPage slug="job-search-after-layoff" />} />
+              <Route path="/ats-resume-checker-india" element={<SEOLandingPage slug="ats-resume-checker-india" />} />
 
               {/* 404 Not Found - Must be last */}
               <Route path="*" element={<NotFound />} />

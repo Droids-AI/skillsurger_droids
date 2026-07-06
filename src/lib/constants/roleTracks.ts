@@ -1,0 +1,143 @@
+import {
+  Code2,
+  Server,
+  Layout,
+  Layers,
+  Database,
+  Cloud,
+  Cog,
+  Brain,
+  ClipboardList,
+  LineChart,
+  Bug,
+  LucideIcon,
+} from 'lucide-react';
+
+export interface RoleTrack {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  resumeKeywords: string[];
+  interviewFocusAreas: string[];
+  mockInterviewType: string;
+  resumeExampleHighlights: string[];
+  jobSwitchPlanSummary: string;
+  seoLandingSlug?: string;
+}
+
+export const roleTracks: RoleTrack[] = [
+  {
+    id: 'software-engineer',
+    title: 'Software Engineer',
+    icon: Code2,
+    resumeKeywords: ['data structures', 'system design', 'REST APIs', 'microservices', 'CI/CD', 'unit testing'],
+    interviewFocusAreas: ['DSA problem-solving', 'low-level design', 'debugging', 'code quality'],
+    mockInterviewType: 'DSA + system design mock interview',
+    resumeExampleHighlights: ['Quantified latency/throughput improvements', 'Ownership of a service end-to-end', 'Cross-team collaboration wins'],
+    jobSwitchPlanSummary: 'Tighten DSA fundamentals, rebuild resume around measurable impact, target mid-to-senior IC roles.',
+    seoLandingSlug: 'software-engineer-resume',
+  },
+  {
+    id: 'backend-engineer',
+    title: 'Backend Engineer',
+    icon: Server,
+    resumeKeywords: ['API design', 'databases', 'caching', 'message queues', 'scalability', 'system design'],
+    interviewFocusAreas: ['system design', 'database schema design', 'concurrency', 'API design'],
+    mockInterviewType: 'Backend system design mock interview',
+    resumeExampleHighlights: ['Scaling a service under load', 'Reducing infra cost', 'Designing a data model from scratch'],
+    jobSwitchPlanSummary: 'Position around ownership of services and scale, prep system design deeply for ₹25L+ roles.',
+  },
+  {
+    id: 'frontend-engineer',
+    title: 'Frontend Engineer',
+    icon: Layout,
+    resumeKeywords: ['React', 'TypeScript', 'performance optimization', 'accessibility', 'design systems', 'state management'],
+    interviewFocusAreas: ['JS fundamentals', 'component architecture', 'performance', 'accessibility'],
+    mockInterviewType: 'Frontend coding + architecture mock interview',
+    resumeExampleHighlights: ['Core Web Vitals improvements', 'Design system contributions', 'A/B tested feature ownership'],
+    jobSwitchPlanSummary: 'Showcase measurable UX/performance impact, prep JS fundamentals and component design rounds.',
+  },
+  {
+    id: 'full-stack-developer',
+    title: 'Full Stack Developer',
+    icon: Layers,
+    resumeKeywords: ['React', 'Node.js', 'databases', 'API integration', 'cloud deployment', 'end-to-end ownership'],
+    interviewFocusAreas: ['full-stack system design', 'DSA', 'API design', 'trade-off discussions'],
+    mockInterviewType: 'Full-stack system design mock interview',
+    resumeExampleHighlights: ['Shipped a feature end-to-end', 'Owned both frontend and backend for a product', 'Reduced release cycle time'],
+    jobSwitchPlanSummary: 'Frame resume around end-to-end ownership, prep both DSA and full-stack design rounds.',
+  },
+  {
+    id: 'data-engineer',
+    title: 'Data Engineer',
+    icon: Database,
+    resumeKeywords: ['ETL pipelines', 'Spark', 'Airflow', 'data warehousing', 'SQL', 'streaming data'],
+    interviewFocusAreas: ['pipeline design', 'SQL optimization', 'data modeling', 'system design for data'],
+    mockInterviewType: 'Data pipeline system design mock interview',
+    resumeExampleHighlights: ['Pipeline reliability improvements', 'Data volume/cost metrics', 'Cross-functional data platform work'],
+    jobSwitchPlanSummary: 'Rebuild resume around pipeline scale and reliability, prep SQL and data-system design rounds.',
+    seoLandingSlug: 'data-engineer-resume',
+  },
+  {
+    id: 'devops-engineer',
+    title: 'DevOps Engineer',
+    icon: Cog,
+    resumeKeywords: ['CI/CD', 'Kubernetes', 'Terraform', 'monitoring', 'incident response', 'automation'],
+    interviewFocusAreas: ['infrastructure design', 'troubleshooting scenarios', 'automation', 'reliability'],
+    mockInterviewType: 'Infrastructure & incident-response mock interview',
+    resumeExampleHighlights: ['Deployment time reduction', 'Uptime/reliability improvements', 'Cost optimization via automation'],
+    jobSwitchPlanSummary: 'Position around reliability and automation wins, prep infra design and incident scenarios.',
+    seoLandingSlug: 'devops-resume',
+  },
+  {
+    id: 'cloud-engineer',
+    title: 'Cloud Engineer',
+    icon: Cloud,
+    resumeKeywords: ['AWS/Azure/GCP', 'cloud architecture', 'security', 'cost optimization', 'IaC', 'networking'],
+    interviewFocusAreas: ['cloud architecture design', 'security best practices', 'cost trade-offs', 'networking'],
+    mockInterviewType: 'Cloud architecture mock interview',
+    resumeExampleHighlights: ['Migration project ownership', 'Cost savings delivered', 'Security posture improvements'],
+    jobSwitchPlanSummary: 'Highlight migration/cost-optimization outcomes, prep cloud architecture design rounds.',
+  },
+  {
+    id: 'ai-ml-engineer',
+    title: 'AI/ML Engineer',
+    icon: Brain,
+    resumeKeywords: ['machine learning', 'model deployment', 'MLOps', 'Python', 'data pipelines', 'LLMs'],
+    interviewFocusAreas: ['ML system design', 'model evaluation', 'coding', 'applied ML case studies'],
+    mockInterviewType: 'ML system design mock interview',
+    resumeExampleHighlights: ['Model performance metrics', 'Production deployment ownership', 'Business impact of a model'],
+    jobSwitchPlanSummary: 'Anchor resume in production ML impact, prep ML system design and applied case studies.',
+    seoLandingSlug: 'ai-ml-engineer-resume',
+  },
+  {
+    id: 'product-manager',
+    title: 'Product Manager',
+    icon: ClipboardList,
+    resumeKeywords: ['product strategy', 'roadmap', 'stakeholder management', 'metrics-driven', 'user research', 'A/B testing'],
+    interviewFocusAreas: ['product sense', 'metrics/analytics', 'execution', 'stakeholder scenarios'],
+    mockInterviewType: 'Product sense + execution mock interview',
+    resumeExampleHighlights: ['Metric-driven product outcomes', 'Cross-functional launch ownership', 'User research to roadmap link'],
+    jobSwitchPlanSummary: 'Reframe resume around outcomes and metrics, prep product-sense and execution case interviews.',
+  },
+  {
+    id: 'business-analyst',
+    title: 'Business Analyst',
+    icon: LineChart,
+    resumeKeywords: ['SQL', 'data analysis', 'dashboards', 'stakeholder communication', 'process improvement', 'requirements gathering'],
+    interviewFocusAreas: ['case studies', 'SQL/Excel skills', 'stakeholder scenarios', 'business judgement'],
+    mockInterviewType: 'Case study + analytics mock interview',
+    resumeExampleHighlights: ['Process improvements with measurable impact', 'Dashboards/reporting built', 'Stakeholder-facing project ownership'],
+    jobSwitchPlanSummary: 'Lead with quantified business impact, prep case studies and SQL/analytics rounds.',
+  },
+  {
+    id: 'qa-automation-engineer',
+    title: 'QA Automation Engineer',
+    icon: Bug,
+    resumeKeywords: ['test automation', 'Selenium', 'CI/CD', 'test strategy', 'API testing', 'quality metrics'],
+    interviewFocusAreas: ['automation framework design', 'test strategy', 'coding', 'debugging'],
+    mockInterviewType: 'Automation framework design mock interview',
+    resumeExampleHighlights: ['Test coverage improvements', 'Automation framework built from scratch', 'Reduced release defects'],
+    jobSwitchPlanSummary: 'Highlight framework ownership and defect-reduction metrics, prep automation design rounds.',
+  },
+];

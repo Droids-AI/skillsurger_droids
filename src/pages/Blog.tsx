@@ -3,6 +3,8 @@ import { Calendar, Clock, ArrowRight, Search, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatedBlogs } from '../content/blogs.generated';
 import SEO from '../components/SEO';
+import { blogCategories } from '../lib/constants/blogCategories';
+import { trackEvent, EVENTS } from '../lib/analytics';
 
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -291,6 +293,7 @@ const Blog = () => {
                   
                   <Link
                     to={`/blog/${post.slug}`}
+                    onClick={() => trackEvent(EVENTS.BLOG_CTA_CLICKED, { slug: post.slug })}
                     className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
                   >
                     Read More
@@ -309,6 +312,40 @@ const Blog = () => {
               </p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* More Categories Coming Soon (Job Switch Copilot content areas) */}
+      <section className="py-16 bg-white border-t">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">More Categories Coming Soon</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              We're expanding into more Job Switch Copilot-focused content. Here's what's on the way.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {blogCategories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <div
+                  key={category.name}
+                  className="border border-dashed border-gray-300 rounded-xl p-5 flex items-start gap-3"
+                >
+                  <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{category.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
