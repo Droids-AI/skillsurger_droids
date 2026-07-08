@@ -334,9 +334,9 @@ const Blog = () => {
                 >
                   <Icon className="w-6 h-6 text-blue-600 flex-shrink-0" />
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
                       <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                         Coming Soon
                       </span>
                     </div>

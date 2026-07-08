@@ -98,6 +98,7 @@ export const roleTracks: RoleTrack[] = [
     mockInterviewType: 'Cloud architecture mock interview',
     resumeExampleHighlights: ['Migration project ownership', 'Cost savings delivered', 'Security posture improvements'],
     jobSwitchPlanSummary: 'Highlight migration/cost-optimization outcomes, prep cloud architecture design rounds.',
+    seoLandingSlug: 'cloud-engineer-resume',
   },
   {
     id: 'ai-ml-engineer',
@@ -119,6 +120,7 @@ export const roleTracks: RoleTrack[] = [
     mockInterviewType: 'Product sense + execution mock interview',
     resumeExampleHighlights: ['Metric-driven product outcomes', 'Cross-functional launch ownership', 'User research to roadmap link'],
     jobSwitchPlanSummary: 'Reframe resume around outcomes and metrics, prep product-sense and execution case interviews.',
+    seoLandingSlug: 'product-manager-resume',
   },
   {
     id: 'business-analyst',
@@ -129,6 +131,7 @@ export const roleTracks: RoleTrack[] = [
     mockInterviewType: 'Case study + analytics mock interview',
     resumeExampleHighlights: ['Process improvements with measurable impact', 'Dashboards/reporting built', 'Stakeholder-facing project ownership'],
     jobSwitchPlanSummary: 'Lead with quantified business impact, prep case studies and SQL/analytics rounds.',
+    seoLandingSlug: 'business-analyst-resume',
   },
   {
     id: 'qa-automation-engineer',

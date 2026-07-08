@@ -102,9 +102,9 @@ export default function SuccessStories() {
                     <category.icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
                       <h3 className="font-semibold text-gray-900">{category.title}</h3>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                         Coming Soon
                       </span>
                     </div>

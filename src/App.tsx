@@ -153,6 +153,16 @@ function App() {
               <Route path="/data-engineer-resume" element={<SEOLandingPage slug="data-engineer-resume" />} />
               <Route path="/job-search-after-layoff" element={<SEOLandingPage slug="job-search-after-layoff" />} />
               <Route path="/ats-resume-checker-india" element={<SEOLandingPage slug="ats-resume-checker-india" />} />
+              <Route path="/cloud-engineer-resume" element={<SEOLandingPage slug="cloud-engineer-resume" />} />
+              <Route path="/ai-ml-engineer-resume" element={<SEOLandingPage slug="ai-ml-engineer-resume" />} />
+              <Route path="/product-manager-resume" element={<SEOLandingPage slug="product-manager-resume" />} />
+              <Route path="/business-analyst-resume" element={<SEOLandingPage slug="business-analyst-resume" />} />
+              <Route path="/software-engineer-mock-interview" element={<SEOLandingPage slug="software-engineer-mock-interview" />} />
+              <Route path="/system-design-interview-prep" element={<SEOLandingPage slug="system-design-interview-prep" />} />
+              <Route path="/notice-period-job-search" element={<SEOLandingPage slug="notice-period-job-search" />} />
+              <Route path="/resume-review-india" element={<SEOLandingPage slug="resume-review-india" />} />
+              <Route path="/career-coach-for-tech-professionals" element={<SEOLandingPage slug="career-coach-for-tech-professionals" />} />
+              <Route path="/linkedin-profile-optimization-india" element={<SEOLandingPage slug="linkedin-profile-optimization-india" />} />
 
               {/* 404 Not Found - Must be last */}
               <Route path="*" element={<NotFound />} />

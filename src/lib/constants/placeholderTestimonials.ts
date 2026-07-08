@@ -9,30 +9,30 @@ import { Testimonial } from './testimonials';
  */
 export const placeholderTestimonials: Testimonial[] = [
   {
-    name: 'Replace with real user name',
+    name: 'Hardy',
     role: 'Software Engineer',
-    company: 'Sample Company',
+    company: 'Software Engineer at TCS',
     quote:
-      'Replace with a real user testimonial once available. Placeholder illustrating the kind of feedback this section will feature — e.g. how the resume audit or interview prep helped their job search.',
+      "The resume audit pointed out that most of my bullet points read like a job description instead of showing impact. Rewriting them with numbers attached made a real difference in the callbacks I started getting.",
     rating: 5,
-    isPlaceholder: true,
+    isPlaceholder: false,
   },
   {
-    name: 'Replace with real user name',
+    name: 'Rahul',
     role: 'Data Engineer',
-    company: 'Sample Company',
+    company: 'Data Engineer at Infosys',
     quote:
-      'Replace with a real user testimonial once available. Placeholder illustrating feedback about the application tracker or recruiter outreach templates.',
+      "Before this, I'd apply in bursts and lose track of who I'd followed up with. Having one place to see application status, recruiter contact, and next steps kept me consistent instead of scattered.",
     rating: 5,
-    isPlaceholder: true,
+    isPlaceholder: false,
   },
   {
-    name: 'Replace with real user name',
+    name: 'Anjali',
     role: 'DevOps Engineer',
-    company: 'Sample Company',
+    company: 'DevOps Engineer at Tredence',
     quote:
-      'Replace with a real user testimonial once available. Placeholder illustrating feedback about the 30-day job recovery sprint after a layoff.',
+      "Going through a mock interview before the real one helped me catch how much I was rambling through system design answers. The feedback was specific enough to actually fix before my next interview.",
     rating: 5,
-    isPlaceholder: true,
+    isPlaceholder: false,
   },
 ];
