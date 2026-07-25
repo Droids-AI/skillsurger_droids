@@ -4,40 +4,12 @@ import { CheckCircle, XCircle, Zap, Star, RefreshCcw, AlertCircle } from 'lucide
 import { calculateSubscriptionExpiry, isSubscriptionValid, getTrialDaysRemaining } from '../lib/subscriptionUtils';
 import SEO from '../components/SEO';
 
-function calculateExpiry(subscription: any) {
-  if (!subscription) return null;
-  const tier = (subscription.subscription_tier || '').toLowerCase();
-  
-  // For trials, always calculate from created_at
-  if (tier.includes('trial')) {
-    const created = new Date(subscription.created_at);
-    const expiry = new Date(created);
-    expiry.setDate(expiry.getDate() + 7);
-    return expiry;
-  }
-  
-  // For paid plans, use updated_at if available (for renewals), otherwise created_at
-  const baseDate = subscription.updated_at 
-    ? new Date(subscription.updated_at) 
-    : new Date(subscription.created_at);
-  
-  if (tier.includes('annual pro') || tier.includes('yearly pro')) {
-    const expiry = new Date(baseDate);
-    expiry.setFullYear(expiry.getFullYear() + 1);
-    return expiry;
-  } else if (tier.includes('monthly pro')) {
-    const expiry = new Date(baseDate);
-    expiry.setMonth(expiry.getMonth() + 1);
-    return expiry;
-  }
-  
-  return null;
-}
-
 const PLAN_COLORS: Record<string, string> = {
   trial: 'bg-yellow-100 text-yellow-800',
   pro: 'bg-blue-100 text-blue-800',
   premium: 'bg-purple-100 text-purple-800',
+  lite: 'bg-teal-100 text-teal-800',
+  sprint: 'bg-orange-100 text-orange-800',
   default: 'bg-gray-100 text-gray-800',
 };
 
@@ -111,7 +83,20 @@ const Subscription: React.FC = () => {
 
   const expiry = calculateSubscriptionExpiry(subscription);
   const tier = (subscription.subscription_tier || '').toLowerCase();
-  const planColor = PLAN_COLORS[tier.includes('trial') ? 'trial' : tier.includes('pro') ? 'pro' : tier.includes('premium') ? 'premium' : 'default'];
+  const planColor =
+    PLAN_COLORS[
+      tier.includes('trial')
+        ? 'trial'
+        : tier.includes('sprint')
+        ? 'sprint'
+        : tier.includes('lite')
+        ? 'lite'
+        : tier.includes('premium')
+        ? 'premium'
+        : tier.includes('pro')
+        ? 'pro'
+        : 'default'
+    ];
   const isActive = isSubscriptionValid(subscription);
   const trialDaysRemaining = getTrialDaysRemaining(subscription);
 

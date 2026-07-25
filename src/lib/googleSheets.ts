@@ -107,41 +107,32 @@ export async function submitToGoogleSheets(data: MasterclassSubmission): Promise
  * diagnosis booking, etc). Kept separate from submitToGoogleSheets so the
  * existing masterclass form/webhook contract is never altered.
  *
- * Persistence order:
- * 1. Google Apps Script webhook, if VITE_GOOGLE_SHEETS_WEBHOOK_URL is set.
- * 2. Supabase `leads` table (see migration 20260706071747_add_leads_table.sql)
- *    — this is the reliable path, since Supabase is already configured and
- *    reachable in this repo, unlike the external backend, which has no
- *    matching /leads/submit route.
+ * Persistence:
+ * 1. Supabase `leads` table (see migration 20260706071747_add_leads_table.sql)
+ *    — always written, and the only path the caller waits on/can fail from.
+ * 2. Google Apps Script webhook, if VITE_GOOGLE_SHEETS_WEBHOOK_URL is set —
+ *    appends the row to Google Sheets and emails a notification (see
+ *    scripts/google-apps-script/book-a-call-webhook.gs). Fired best-effort
+ *    so a Google-side hiccup never blocks or fails the user's submission.
  */
 export async function submitLead(payload: Record<string, unknown>, formType: string): Promise<void> {
   const webhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
   const body = { ...payload, formType, timestamp: new Date().toISOString() };
 
-  if (webhookUrl) {
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          return;
-        }
-      }
-      console.error('Google Apps Script webhook did not succeed, falling back to Supabase');
-    } catch (error) {
-      console.error('Google Apps Script webhook failed, falling back to Supabase:', error);
-    }
-  }
-
   const { error } = await supabase.from('leads').insert({ form_type: formType, payload: body });
 
   if (error) {
     throw new Error(`Failed to save lead: ${error.message}`);
+  }
+
+  if (webhookUrl) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch((error) => {
+      console.error('Google Sheets/email webhook failed (lead was still saved to Supabase):', error);
+    });
   }
 }
 

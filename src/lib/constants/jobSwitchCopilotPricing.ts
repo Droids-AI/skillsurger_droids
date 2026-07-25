@@ -25,7 +25,7 @@ export const jobSwitchCopilotPricing: JobSwitchCopilotTier[] = [
     period: '/month',
     bestFor: 'Users who want AI-assisted resume and interview support.',
     ctaLabel: 'Start AI Career Pro',
-    ctaHref: '/book-a-call',
+    ctaHref: import.meta.env.VITE_DODO_LINK_AI_CAREER_PRO || '/book-a-call',
     objectionHandling: 'Cancel anytime.',
   },
   {
@@ -34,7 +34,7 @@ export const jobSwitchCopilotPricing: JobSwitchCopilotTier[] = [
     period: '/month',
     bestFor: 'Active job seekers who want a structured job-search system.',
     ctaLabel: 'Start Lite',
-    ctaHref: '/book-a-call',
+    ctaHref: import.meta.env.VITE_DODO_LINK_JSC_LITE || '/book-a-call',
     objectionHandling: 'Best for self-driven users.',
     popular: true,
   },
@@ -44,7 +44,7 @@ export const jobSwitchCopilotPricing: JobSwitchCopilotTier[] = [
     period: '/month',
     bestFor: 'Users who want deeper guidance, resume tailoring, outreach support, and interview prep.',
     ctaLabel: 'Apply for Premium',
-    ctaHref: '/book-a-call',
+    ctaHref: import.meta.env.VITE_DODO_LINK_JSC_PREMIUM || '/book-a-call',
     objectionHandling: 'Built for serious job switchers.',
   },
   {
@@ -53,7 +53,7 @@ export const jobSwitchCopilotPricing: JobSwitchCopilotTier[] = [
     period: '/30 days',
     bestFor: 'Laid-off professionals or people on notice period who need an intensive 30-day job-search sprint.',
     ctaLabel: 'Join 30-Day Sprint',
-    ctaHref: '/book-a-call',
+    ctaHref: import.meta.env.VITE_DODO_LINK_JOB_RECOVERY_SPRINT || '/book-a-call',
     objectionHandling: 'Focused sprint, not a guaranteed job promise.',
   },
 ];

@@ -20,20 +20,31 @@ export function calculateSubscriptionExpiry(subscription: SubscriptionData): Dat
   
   // For paid plans (Monthly/Yearly Pro), use updated_at if available for renewal handling
   // Otherwise fall back to created_at
-  const baseDate = subscription.updated_at 
-    ? new Date(subscription.updated_at) 
+  const baseDate = subscription.updated_at
+    ? new Date(subscription.updated_at)
     : new Date(subscription.created_at);
-  
+
   if (tier.includes('annual pro') || tier.includes('yearly pro')) {
     const expiry = new Date(baseDate);
     expiry.setFullYear(expiry.getFullYear() + 1);
     return expiry;
-  } else if (tier.includes('monthly pro')) {
+  } else if (
+    tier.includes('monthly pro') ||
+    tier.includes('ai career pro') ||
+    tier.includes('job switch copilot lite') ||
+    tier.includes('job switch copilot premium')
+  ) {
+    // Monthly-billed Job Switch Copilot plans renew the same way as Monthly Pro.
     const expiry = new Date(baseDate);
     expiry.setMonth(expiry.getMonth() + 1);
     return expiry;
+  } else if (tier.includes('job recovery sprint')) {
+    // One-time 30-day program, not a recurring subscription.
+    const expiry = new Date(baseDate);
+    expiry.setDate(expiry.getDate() + 30);
+    return expiry;
   }
-  
+
   return null;
 }
 
@@ -48,9 +59,17 @@ export function isSubscriptionValid(subscription: SubscriptionData | null): bool
   
   const tier = (subscription.subscription_tier || '').toLowerCase();
   
-  // For paid plans (Monthly/Yearly Pro), if status is active, trust the backend
+  // For paid plans, if status is active, trust the backend
   // The backend should handle renewals and update the status accordingly
-  if (tier.includes('monthly pro') || tier.includes('yearly pro') || tier.includes('annual pro')) {
+  if (
+    tier.includes('monthly pro') ||
+    tier.includes('yearly pro') ||
+    tier.includes('annual pro') ||
+    tier.includes('ai career pro') ||
+    tier.includes('job switch copilot lite') ||
+    tier.includes('job switch copilot premium') ||
+    tier.includes('job recovery sprint')
+  ) {
     // Only check expires_on if it exists and is valid
     if (subscription.expires_on) {
       try {
