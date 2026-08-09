@@ -82,7 +82,11 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     return location.pathname.startsWith(href.split('?')[0]);
   };
 
-  const isDarkPage = location.pathname === '/training' || location.pathname === '/thank-you';
+  const isParameterizedThankYou =
+    location.pathname === '/thank-you' && new URLSearchParams(location.search).has('type');
+  const isDarkPage =
+    location.pathname === '/training' ||
+    (location.pathname === '/thank-you' && !isParameterizedThankYou);
 
   // Theme-aware class helpers
   const headerBg = isDarkPage
