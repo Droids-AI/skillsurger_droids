@@ -1,14 +1,14 @@
 // Google Apps Script Web App used by src/lib/googleSheets.ts (submitLead).
 //
 // Handles every lead form on the site that calls submitLead() — currently
-// /book-a-call (DiagnosisBookingForm) and the Free Resume Audit form
-// (ResumeAuditForm) — by appending a row to this Sheet and emailing a
+// /book-a-call (DiagnosisBookingForm) and /free-resume-audit (ResumeAuditForm)
+// — by appending a row to a form-specific tab in this Sheet and emailing a
 // notification. Supabase is always written first by the app itself; this
 // script is the secondary Sheets + email path and is best-effort from the
 // app's point of view (a failure here never blocks a submission).
 //
 // Deployment:
-// 1. Create/open the Google Sheet you want leads to land in.
+// 1. Open the Google Sheet you want leads to land in.
 // 2. Extensions > Apps Script, delete any starter code, paste this file.
 // 3. Deploy > New deployment > type "Web app".
 //    - Execute as: Me
@@ -20,34 +20,42 @@
 // The first time it runs it will prompt you (the script owner) to authorize
 // Gmail/Sheets access — approve it once.
 
-var SHEET_NAME = 'Leads';
 var NOTIFY_EMAIL = 'sauravemail@gmail.com';
-var SITE_URL = 'https://skillsurger.com/book-a-call';
+var SITE_URL = 'https://skillsurger.com';
 
-var COLUMNS = [
-  'receivedAt', 'formType', 'name', 'email', 'phoneNumber', 'currentRole',
-  'targetRole', 'yearsOfExperience', 'currentJobStatus', 'preferredSlot',
-  'biggestChallenge', 'submittedAt'
-];
+// Each known formType gets its own tab with a fixed, matching column set.
+// Any formType not listed here falls back to a generic tab whose columns
+// are derived from whatever keys are present on the payload.
+var SHEET_CONFIG = {
+  diagnosis_booking: {
+    sheetName: 'Book a Call',
+    columns: [
+      'receivedAt', 'name', 'email', 'phoneNumber', 'currentRole',
+      'targetRole', 'yearsOfExperience', 'currentJobStatus', 'preferredSlot',
+      'biggestChallenge', 'timestamp'
+    ]
+  },
+  resume_audit: {
+    sheetName: 'Resume Audit',
+    columns: [
+      'receivedAt', 'fullName', 'email', 'phoneNumber', 'currentRole',
+      'targetRole', 'yearsOfExperience', 'currentCTC', 'expectedCTC',
+      'noticePeriodStatus', 'linkedinUrl', 'jobDescription',
+      'resumeStoragePath', 'timestamp'
+    ]
+  }
+};
 
 function doPost(e) {
   var data = JSON.parse(e.postData.contents);
-  var sheet = getOrCreateSheet();
+  var config = SHEET_CONFIG[data.formType] || genericConfig(data);
+  var sheet = getOrCreateSheet(config.sheetName, config.columns);
 
-  sheet.appendRow([
-    new Date(),
-    data.formType || '',
-    data.name || '',
-    data.email || '',
-    data.phoneNumber || '',
-    data.currentRole || '',
-    data.targetRole || '',
-    data.yearsOfExperience || '',
-    data.currentJobStatus || '',
-    data.preferredSlot || '',
-    data.biggestChallenge || '',
-    data.timestamp || ''
-  ]);
+  var row = config.columns.map(function (col) {
+    if (col === 'receivedAt') return new Date();
+    return data[col] !== undefined && data[col] !== null ? data[col] : '';
+  });
+  sheet.appendRow(row);
 
   try {
     sendNotificationEmail(data);
@@ -61,37 +69,40 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function getOrCreateSheet() {
+// Fallback for any formType we don't have an explicit column layout for,
+// so future/unknown lead forms still land somewhere instead of failing.
+function genericConfig(data) {
+  var keys = Object.keys(data).filter(function (k) {
+    return k !== 'formType';
+  });
+  return {
+    sheetName: 'Other Leads',
+    columns: ['receivedAt', 'formType'].concat(keys)
+  };
+}
+
+function getOrCreateSheet(sheetName, columns) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_NAME);
+  var sheet = ss.getSheetByName(sheetName);
 
   if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(COLUMNS);
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(columns);
   }
 
   return sheet;
 }
 
 function sendNotificationEmail(data) {
-  var subject = 'New ' + (data.formType || 'lead') + ' submission: ' + (data.name || 'Unknown');
+  var subject = 'New ' + (data.formType || 'lead') + ' submission: ' +
+    (data.name || data.fullName || 'Unknown');
 
-  var body = [
-    'A new lead was submitted from ' + SITE_URL,
-    '',
-    'Form: ' + (data.formType || '-'),
-    'Name: ' + (data.name || '-'),
-    'Email: ' + (data.email || '-'),
-    'Phone: ' + (data.phoneNumber || '-'),
-    'Current role: ' + (data.currentRole || '-'),
-    'Target role: ' + (data.targetRole || '-'),
-    'Years of experience: ' + (data.yearsOfExperience || '-'),
-    'Current job status: ' + (data.currentJobStatus || '-'),
-    'Preferred slot: ' + (data.preferredSlot || '-'),
-    'Biggest challenge: ' + (data.biggestChallenge || '-'),
-    '',
-    'Submitted at: ' + (data.timestamp || new Date().toISOString())
-  ].join('\n');
+  var lines = ['A new lead was submitted from ' + SITE_URL, '', 'Form: ' + (data.formType || '-')];
 
-  MailApp.sendEmail(NOTIFY_EMAIL, subject, body);
+  Object.keys(data).forEach(function (key) {
+    if (key === 'formType') return;
+    lines.push(key + ': ' + data[key]);
+  });
+
+  MailApp.sendEmail(NOTIFY_EMAIL, subject, lines.join('\n'));
 }

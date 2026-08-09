@@ -17,6 +17,12 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+
+# Google service account keys (never commit real credentials)
+wisedroids-*.json
+
+# Supabase CLI local cache
+supabase/.temp/
 *.suo
 *.ntvs*
 *.njsproj
