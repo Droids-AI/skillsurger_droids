@@ -1,16 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, User, FileText, BarChart3, Search, Video, Briefcase, GraduationCap, MessageSquare, Info, BookOpen, DollarSign, ChevronDown, Menu, Trophy, Rocket, ClipboardCheck, Star, Building2, Handshake } from 'lucide-react';
+import { Brain, User, ChevronDown, Menu } from 'lucide-react';
+import { toolsItems, platformItems, companyItems } from '../lib/constants/navigation';
 import Button from './Button';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import type { User as AuthUser } from '@supabase/supabase-js';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
 }
 
 export default function Header({ onMobileMenuToggle }: HeaderProps = {} as HeaderProps) {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const location = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -19,7 +21,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
-      setLoading(false);
+
     });
 
     // Listen for auth changes
@@ -47,35 +49,11 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     };
   }, [openMenu]);
 
+  useEffect(() => { setOpenMenu(null); }, [location.pathname, location.search]);
+
   const toggleMenu = (menuName: string) => {
     setOpenMenu(openMenu === menuName ? null : menuName);
   };
-
-  const toolsItems = [
-    { label: 'AI Resume Builder', href: '/ai-resume-builder', icon: FileText, description: 'Build your resume with AI' },
-    { label: 'CV Score', href: '/dashboard?section=cv-scoring', icon: BarChart3, description: 'Get your CV score and insights' },
-    { label: 'Free Job Readiness Score', href: '/job-readiness-index', icon: BarChart3, description: 'Check your job readiness' },
-    { label: 'Free Job Search', href: '/job-search', icon: Search, description: 'Search for job opportunities' },
-    { label: 'Mock Interviews', href: '/mock-interview', icon: Video, description: 'Practice with AI interviews' },
-    { label: 'Free Resume Audit', href: '/free-resume-audit', icon: ClipboardCheck, description: 'Get a free ATS and role-fit audit' },
-  ];
-
-  const servicesItems = [
-    { label: 'Career Explorer', href: '/dashboard?section=career', icon: Briefcase, description: 'Discover career opportunities' },
-    { label: 'Learning Paths', href: '/dashboard?section=learning', icon: GraduationCap, description: 'Personalized learning roadmaps' },
-    { label: 'AI Mentorship', href: '/dashboard?section=mentorship', icon: MessageSquare, description: 'Get AI-powered career guidance' },
-    { label: 'Career Training', href: '/training', icon: Trophy, description: 'Masterclass for high-earning professionals' },
-    { label: 'Job Switch Copilot', href: '/job-switch-copilot', icon: Rocket, description: 'Structured job-search system for tech professionals' },
-  ];
-
-  const companyItems = [
-    { label: 'About', href: '/about', icon: Info },
-    { label: 'Blog', href: '/blog', icon: BookOpen },
-    { label: 'Pricing', href: '/pricing', icon: DollarSign },
-    { label: 'Success Stories', href: '/success-stories', icon: Star },
-    { label: 'For Colleges', href: '/for-colleges', icon: Building2 },
-    { label: 'For EdTech Partners', href: '/for-edtech-partners', icon: Handshake },
-  ];
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -131,18 +109,6 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     ? 'hover:bg-white/10 text-gray-300'
     : 'hover:bg-gray-100 text-gray-700';
 
-  if (loading) {
-    return (
-      <header className={`fixed top-0 left-0 right-0 z-50 border-b ${headerBg}`}>
-        <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <Brain className={`w-8 h-8 ${logoIcon}`} />
-            <span className={`text-xl font-bold ${logoText}`}>Skillsurger</span>
-          </Link>
-        </nav>
-      </header>
-    );
-  }
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 border-b transition-colors duration-300 ${headerBg}`}>
@@ -152,7 +118,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <span className={`text-xl font-bold ${logoText}`}>Skillsurger</span>
         </Link>
 
-        <nav ref={menuRef} className="hidden md:flex items-center space-x-1 flex-1 justify-center">
+        <nav ref={menuRef} className="hidden lg:flex items-center space-x-1 flex-1 justify-center">
           <Link
             to="/"
             className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${navLink(isActive('/'))}`}
@@ -202,19 +168,19 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
             )}
           </div>
 
-          {/* Services Dropdown */}
+          {/* Platform Dropdown */}
           <div className="relative">
             <button
-              onClick={() => toggleMenu('services')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'services')}`}
+              onClick={() => toggleMenu('platform')}
+              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'platform')}`}
             >
-              Services
-              <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'services' ? 'rotate-180' : ''}`} />
+              Platform
+              <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'platform' ? 'rotate-180' : ''}`} />
             </button>
-            {openMenu === 'services' && (
+            {openMenu === 'platform' && (
               <div className={`absolute left-0 mt-2 w-80 rounded-lg shadow-xl border overflow-hidden z-50 ${dropdownBg}`}>
                 <div className="py-2">
-                  {servicesItems.map((item, index) => {
+                  {platformItems.map((item, index) => {
                     const Icon = item.icon;
                     return (
                       <Link
@@ -280,7 +246,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
 
         <div className="flex items-center space-x-4">
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             {user ? (
               <Link to="/dashboard">
                 <Button variant={isDarkPage ? 'primary' : 'outline'} className="flex items-center space-x-2">
@@ -300,12 +266,12 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
             )}
           </div>
 
-          {/* Mobile Menu Button - Only show when user is NOT logged in */}
-          {onMobileMenuToggle && !user && (
+          {/* Mobile Menu Button */}
+          {onMobileMenuToggle && (
             <button
               onClick={onMobileMenuToggle}
-              className={`md:hidden p-2 rounded-lg transition-colors flex-shrink-0 ${mobileMenuBtn}`}
-              aria-label="Open mobile menu"
+              className={`lg:hidden p-2 rounded-lg transition-colors flex-shrink-0 ${mobileMenuBtn}`}
+              aria-label="Open mobile menu" aria-controls="mobile-navigation"
             >
               <Menu className="w-6 h-6" />
             </button>

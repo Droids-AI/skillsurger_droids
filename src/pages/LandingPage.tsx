@@ -1,26 +1,17 @@
 import {
   Check,
-  Shield,
   Clock,
   Search,
-  Target,
-  TrendingUp,
   FileText,
   Video,
   GraduationCap,
   BookOpen,
   BarChart3,
-  Download,
-  Star,
   MessageSquare,
   Rocket,
   ArrowRight,
   Brain,
   Briefcase,
-  LineChart,
-  Users,
-  Zap,
-  Award,
 } from "lucide-react";
 import Button from "../components/Button";
 import { Link } from "react-router-dom";
@@ -101,74 +92,6 @@ const stats = [
   { number: "500+", label: "Companies Hiring" },
 ];
 
-const pricingPlans = [
-  {
-    name: "Free Trial",
-    price: "0",
-    period: "7 days",
-    description: "Experience the full power of our AI career agent",
-    features: [
-      "Complete AI career analysis",
-      "Personalized learning paths",
-      "Mock interview sessions",
-      "CV optimization",
-      "Job matching",
-      "AI mentorship chat",
-      "Progress tracking",
-      "All premium features",
-    ],
-    cta: "Start Free Trial",
-    popular: false,
-    color: "gray",
-    url: "/dashboard",
-  },
-  {
-    name: "Monthly Pro",
-    price: "799",
-    period: "month",
-    description: "Full access to your AI career agent",
-    features: [
-      "Unlimited AI career guidance",
-      "Advanced job matching",
-      "Premium learning resources",
-      "Unlimited mock interviews",
-      "CV optimization & download",
-      "Priority AI mentorship",
-      "Detailed analytics",
-      "Career roadmap planning",
-      "Industry insights",
-      "Email support",
-    ],
-    cta: "Get Started",
-    popular: true,
-    color: "blue",
-    url: "https://checkout.dodopayments.com/buy/pdt_VksHXCMm4d8t5TZMiUKfY?quantity=1&redirect_url=https://skillsurger.com%2Fdashboard",
-  },
-  {
-    name: "Yearly Pro",
-    price: "7,999",
-    period: "year",
-    description: "Best value for serious career growth",
-    features: [
-      "Everything in Monthly Pro",
-      "2 months free (save ₹1,589)",
-      "Priority feature access",
-      "Advanced analytics",
-      "Career strategy sessions",
-      "Industry expert insights",
-      "Custom learning paths",
-      "Premium support",
-      "Early access to new features",
-      "Industry expert 1-1 sessions on finding jobs",
-      "Support team to apply 100s of jobs for you",
-      "Real industry person mock interview",
-    ],
-    cta: "Save 17%",
-    popular: false,
-    color: "green",
-    url: "https://checkout.dodopayments.com/buy/pdt_zFZMrKwafzRr12jun9Lfj?quantity=1&redirect_url=https://skillsurger.com%2Fdashboard",
-  },
-];
 
 export default function LandingPage() {
   const [contactForm, setContactForm] = useState({
@@ -265,222 +188,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* AI Resume Builder Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Beat ATS Filters & Get More Interview Calls
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our AI ensures your resume passes through 95% of ATS systems and lands on recruiter's desks
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-            <div>
-              <h3 className="text-2xl font-bold mb-6">How It Works</h3>
-              <ul className="space-y-4 text-lg">
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>Upload your existing CV or start from scratch</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>AI analyzes job descriptions and injects relevant keywords</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>Get instant ATS compliance scoring and optimization suggestions</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>Download professionally formatted PDFs ready for submission</span>
-                </li>
-              </ul>
-            </div>
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl">
-              <div className="text-center">
-                <FileText className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                <h4 className="text-xl font-semibold mb-2">ATS Optimization & Keyword Injection</h4>
-                <p className="text-gray-600">Our AI ensures your resume passes through applicant tracking systems with targeted keyword optimization.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Job Matching Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Find Jobs That Actually Match Your Skills
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Stop wasting time on irrelevant job listings. Let AI find perfect matches for you, including hidden opportunities not listed on job boards.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <Search className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Smart Job Discovery</h3>
-              <p className="text-gray-600">AI analyzes your profile and finds jobs that match your skills, experience, and career goals.</p>
-            </div>
-            <div className="text-center p-6">
-              <Target className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Hidden Job Openings</h3>
-              <p className="text-gray-600">Discover unlisted opportunities and positions that aren't publicly advertised. Get ahead of the competition.</p>
-            </div>
-            <div className="text-center p-6">
-              <TrendingUp className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Real-time Updates</h3>
-              <p className="text-gray-600">Receive instant notifications when new matching jobs are posted.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Free Job Finder Tool Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-bold mb-6">
-              <Search className="w-4 h-4 mr-2" />
-              Free Tool
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              Find Your Perfect Job Match - Free
-            </h2>
-            <p className="text-lg sm:text-xl text-blue-50 mb-10 max-w-2xl mx-auto">
-              Use our free AI-powered job finder to discover opportunities that match your interests and skills. No signup required.
-            </p>
-            <Link to="/dashboard?section=career">
-              <Button
-                size="lg"
-                className="bg-white text-blue-700 hover:bg-gray-50 px-12 py-6 text-lg font-bold shadow-xl transform hover:scale-105 transition-all"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Find Jobs For Me - It's Free
-              </Button>
-            </Link>
-            <p className="text-sm text-blue-100 mt-6 font-medium">
-              ✓ 100% Free  ✓ Based on your interests  ✓ No credit card required
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Hiring Manager Feature Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-            <div>
-              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
-                <Users className="w-4 h-4 mr-2" />
-                Exclusive Feature
-              </div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                Find Hiring Managers Directly
-              </h2>
-              <p className="text-xl text-gray-600 mb-6">
-                Skip the application black hole. Connect directly with hiring managers and decision-makers at your target companies.
-              </p>
-              <ul className="space-y-4 text-lg mb-8">
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>Find hiring manager emails and LinkedIn profiles</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>AI-generated personalized email drafts ready to send</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>Email verification to ensure deliverability</span>
-                </li>
-                <li className="flex items-start">
-                  <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                  <span>One-click compose button opens your email client</span>
-                </li>
-              </ul>
-              <Link to="/dashboard?section=career">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg">
-                  Try It Now
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl">
-              <div className="text-center">
-                <Users className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                <h4 className="text-xl font-semibold mb-2">Direct Contact Made Easy</h4>
-                <p className="text-gray-600">Our AI finds the right people and helps you reach out professionally. Stand out from the hundreds of online applicants.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Free Resume Templates Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Free ATS-Friendly Resume Templates (MS Word Format)
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Download professionally designed, ATS-optimized resume templates in MS Word format. Ready to customize and start applying.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <FileText className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-center">Modern Professional</h3>
-              <p className="text-gray-600 mb-4 text-center">Clean, modern design perfect for tech and creative roles</p>
-              <a
-                href="/Modern Professional CV Resume.pdf"
-                download="Modern Professional CV Resume.pdf"
-                className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Download className="w-4 h-4 inline mr-2" />
-                Download Template
-              </a>
-            </div>
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <FileText className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-center">Professional Modern</h3>
-              <p className="text-gray-600 mb-4 text-center">Professional format ideal for corporate and management positions</p>
-              <a
-                href="/Professional Modern CV Resume.pdf"
-                download="Professional Modern CV Resume.pdf"
-                className="block w-full text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
-              >
-                <Download className="w-4 h-4 inline mr-2" />
-                Download Template
-              </a>
-            </div>
-            <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <FileText className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-center">Professional Resume</h3>
-              <p className="text-gray-600 mb-4 text-center">Classic professional design for all industries and career levels</p>
-              <a
-                href="/Professional Resume.pdf"
-                download="Professional Resume.pdf"
-                className="block w-full text-center bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
-              >
-                <Download className="w-4 h-4 inline mr-2" />
-                Download Template
-              </a>
-            </div>
-          </div>
-          <div className="text-center mt-8">
-            <p className="text-gray-600 mb-4">All templates are ATS-friendly, available in MS Word format, and optimized for applicant tracking systems</p>
-            <Link to="/dashboard?section=cv-scoring">
-              <Button variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
-                Or Create Your Resume with AI
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
+      <section className="py-10 bg-blue-50 border-y border-blue-100">
+        <div className="container mx-auto px-4 text-center max-w-3xl">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Start with our free career tools</h2>
+          <p className="text-gray-600 mb-4">Find your next step with Job Readiness Index™, FREE CV Score, or a Free Resume Audit. Explore all tools from the Tools menu.</p>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-blue-700 font-semibold">
+            <Link to="/job-readiness-index" className="underline">Job Readiness Index™</Link>
+            <Link to="/dashboard?section=cv-scoring" className="underline">FREE CV Score</Link>
+            <Link to="/free-resume-audit" className="underline">Free Resume Audit</Link>
           </div>
         </div>
       </section>
@@ -564,95 +279,12 @@ export default function LandingPage() {
       <FAQSection />
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Start Free, Upgrade When You're Ready
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Try everything free for 7 days. No credit card required.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <div
-                key={index}
-                className={`relative rounded-2xl border-2 p-8 ${
-                  plan.popular
-                    ? "border-blue-500 bg-blue-50 scale-105 shadow-xl"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                } transition-all duration-300`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    {plan.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{plan.description}</p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-5xl font-bold text-gray-900">
-                      ₹{plan.price}
-                    </span>
-                    <span className="text-gray-600 ml-2">/{plan.period}</span>
-                  </div>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start">
-                      <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link to={plan.url} className="block">
-                  <Button
-                    className={`w-full py-3 ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                        : "bg-gray-900 hover:bg-gray-800 text-white"
-                    }`}
-                  >
-                    {plan.cta}
-                  </Button>
-                </Link>
-                {plan.name === "Free Trial" && (
-                  <div className="flex items-center justify-center text-sm text-gray-600 mt-2 font-medium">
-                    <Shield className="w-4 h-4 mr-1.5 text-green-500" />
-                    No credit card required
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">All plans include:</p>
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
-              <span className="flex items-center">
-                <Shield className="w-4 h-4 mr-1" /> Enterprise Security
-              </span>
-              <span className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" /> 24/7 Support
-              </span>
-              <span className="flex items-center">
-                <Download className="w-4 h-4 mr-1" /> CV Downloads
-              </span>
-              <span className="flex items-center">
-                <BarChart3 className="w-4 h-4 mr-1" /> Analytics
-              </span>
-            </div>
-          </div>
+      <section id="pricing" className="py-16 bg-white">
+        <div className="container mx-auto px-4 text-center max-w-3xl">
+          <h2 className="text-3xl font-bold mb-4">Job Switch Copilot</h2>
+          <p className="text-gray-600 mb-4">A focused one-month programme: 8 sessions × 2 hours, including 2 personal 1-to-1 sessions.</p>
+          <p className="text-4xl font-bold text-blue-600 mb-6">₹9,999 <span className="text-lg text-gray-600">for one month</span></p>
+          <Link to="/job-switch-copilot"><Button size="lg">Explore the programme &amp; free webinar</Button></Link>
         </div>
       </section>
 
@@ -714,7 +346,7 @@ export default function LandingPage() {
               </p>
               <Link to="/job-switch-copilot">
                 <Button size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
-                  View Plans
+                  Explore Job Switch Copilot
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -726,9 +358,9 @@ export default function LandingPage() {
       {/* Job Switch Copilot: Final CTA */}
       <CTASection
         title="Stop applying randomly. Build a structured job-search system."
-        subtitle="Start with a free resume audit and understand what is blocking your job search."
-        ctaLabel="Get Free Resume Audit"
-        ctaHref="/free-resume-audit"
+        subtitle="Join a free one-hour webinar on planning your next job switch and targeting 1.5x to 5x salary growth."
+        ctaLabel="Reserve my free webinar seat"
+        ctaHref="/job-switch-copilot#webinar"
         footnote="No guaranteed outcomes — just a structured system to improve your job search."
       />
 

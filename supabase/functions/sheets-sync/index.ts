@@ -26,6 +26,10 @@ interface SheetConfig {
 
 // Each known form_type gets its own tab with a fixed, matching column set.
 const SHEET_CONFIG: Record<string, SheetConfig> = {
+  webinar_registration: {
+    tab: "Webinar Registrations",
+    columns: ["receivedAt", "name", "email", "phoneNumber", "webinarTitle", "durationMinutes", "source", "pageUrl", "timestamp"],
+  },
   diagnosis_booking: {
     tab: "Book a Call",
     columns: [
@@ -86,7 +90,7 @@ async function createSheetTab(accessToken: string, tab: string, columns: string[
 async function appendRow(accessToken: string, tab: string, row: unknown[]): Promise<void> {
   const range = encodeURIComponent(`${tab}!A1`);
   const res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}:append?valueInputOption=RAW`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -114,7 +118,11 @@ Deno.serve(async (req: Request) => {
   try {
     // Called directly from the browser (src/lib/googleSheets.ts submitLead),
     // same flat shape it already POSTs: { ...formFields, formType, timestamp }.
-    const payload = (await req.json()) as Record<string, unknown>;
+    const incoming = (await req.json()) as Record<string, unknown>;
+    const record = incoming.record as { payload?: Record<string, unknown>; form_type?: string } | undefined;
+    const payload = record?.payload
+      ? { ...record.payload, formType: record.form_type }
+      : incoming;
     const formType = String(payload.formType ?? "");
 
     const config = SHEET_CONFIG[formType] ?? genericConfig(payload);

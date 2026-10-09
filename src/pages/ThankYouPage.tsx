@@ -153,7 +153,7 @@ export default function ThankYouPage() {
   const [searchParams] = useSearchParams();
   const type = searchParams.get('type');
 
-  if (type === 'resume-audit' || type === 'diagnosis-booking') {
+  if (type === 'resume-audit' || type === 'diagnosis-booking' || type === 'webinar') {
     return <ParameterizedThankYou type={type} />;
   }
 

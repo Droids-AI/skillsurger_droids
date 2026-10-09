@@ -1,147 +1,56 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Home, 
-  FileText, 
-  BarChart3, 
-  Video, 
-  Search, 
-  Briefcase, 
-  BookOpen, 
-  DollarSign, 
-  Info 
-} from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { toolsItems, platformItems, companyItems } from '../lib/constants/navigation';
 
-interface MobileNavigationProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+interface MobileNavigationProps { isOpen: boolean; onClose: () => void; }
 
-const MobileNavigation: React.FC<MobileNavigationProps> = ({ isOpen, onClose }) => {
-  const navigationItems = [
-    {
-      label: 'Home',
-      href: '/',
-      icon: Home
-    },
-    {
-      label: 'AI Resume Builder',
-      href: '/ai-resume-builder',
-      icon: FileText
-    },
-    {
-      label: 'CV Score',
-      href: '/dashboard?section=cv-scoring',
-      icon: BarChart3
-    },
-    {
-      label: 'Free Job Readiness Score',
-      href: '/job-readiness-index',
-      icon: BarChart3
-    },
-    {
-      label: 'Mock Interview',
-      href: '/mock-interview',
-      icon: Video
-    },
-    {
-      label: 'Free Job Search',
-      href: '/job-search',
-      icon: Search
-    },
-    {
-      label: 'Career Explorer',
-      href: '/dashboard',
-      icon: Briefcase
-    },
-    {
-      label: 'Blog',
-      href: '/blog',
-      icon: BookOpen
-    },
-    {
-      label: 'Pricing',
-      href: '/pricing',
-      icon: DollarSign
-    },
-    {
-      label: 'About',
-      href: '/about',
-      icon: Info
-    }
-  ];
-
-  return (
-    <>
-      {/* Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-      
-      {/* Mobile Menu */}
-      <div className={`
-        fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-      `}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Menu</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation Items */}
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    to={item.href}
-                    onClick={onClose}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  >
-                    <Icon className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* CTA Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-gray-50">
-          <div className="space-y-3">
-            <Link
-              to="/login"
-              onClick={onClose}
-              className="block w-full px-4 py-2 text-center text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              onClick={onClose}
-              className="block w-full px-4 py-2 text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
+export default function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
+  const location = useLocation();
+  const panel = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => { close.current(); }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panel.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close.current();
+      if (event.key === 'Tab') {
+        const items = panel.current?.querySelectorAll<HTMLElement>('a, button');
+        if (!items?.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', keydown);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', keydown); previous?.focus({ preventScroll: true }); };
+  }, [isOpen]);
+  return <div
+    aria-hidden={!isOpen}
+    {...(!isOpen ? { inert: '' } : {})}
+    className={`fixed inset-0 z-[60] overflow-hidden lg:hidden transition-[visibility] duration-0 motion-reduce:delay-0 ${isOpen ? 'visible delay-0' : 'invisible delay-300 pointer-events-none'}`}
+  >
+    <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ease-in-out motion-reduce:transition-none ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
+    <div ref={panel} id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Main menu" className={`absolute inset-y-0 right-0 w-80 max-w-full bg-white shadow-xl overflow-y-auto transform will-change-transform transition-transform duration-300 ease-in-out motion-reduce:transition-none ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-xl font-bold">Menu</h2>
+        <button onClick={onClose} aria-label="Close menu" className="p-2 rounded-lg hover:bg-gray-100"><X /></button>
       </div>
-    </>
-  );
-};
-
-export default MobileNavigation;
+      <nav className="p-4" aria-label="Mobile navigation">
+        <Link to="/" onClick={onClose} className="block px-3 py-3 font-semibold">Home</Link>
+        {[{ label: 'Platform', items: platformItems }, { label: 'Tools', items: toolsItems }, { label: 'Company', items: companyItems }].map(group => <div key={group.label} className="mb-5">
+          <h3 className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-bold">{group.label}</h3>
+          {group.items.map(item => <Link key={item.href} to={item.href} onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-blue-50 text-gray-800"><item.icon className="w-5 h-5 text-blue-600" />{item.label}</Link>)}
+        </div>)}
+        <Link to="/dashboard" onClick={onClose} className="block py-3 text-center text-blue-600 font-semibold">Dashboard</Link>
+        <Link to="/login" onClick={onClose} className="block py-3 text-center border rounded-lg">Log in</Link>
+        <Link to="/signup" onClick={onClose} className="block py-3 mt-3 text-center bg-blue-600 text-white rounded-lg">Get Started</Link>
+      </nav>
+    </div>
+  </div>;
+}

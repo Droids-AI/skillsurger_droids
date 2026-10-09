@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto py-12 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
@@ -38,8 +38,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/training" className="text-gray-400 hover:text-white transition-colors">
-                  Career Training
+                <Link to="/job-switch-copilot#webinar" className="text-gray-400 hover:text-white transition-colors">
+                  Free Job Switch Webinar
                 </Link>
               </li>
               <li>

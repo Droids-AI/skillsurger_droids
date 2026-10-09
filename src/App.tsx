@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { useState } from 'react';
 import Header from './components/Header';
@@ -35,7 +35,6 @@ import OnboardingForm from './components/OnboardingForm';
 import Onboarding from './pages/Onboarding';
 import OnboardingModal from './components/OnboardingModal';
 import ScrollToTop from './components/ScrollToTop';
-import Training from './pages/Training';
 import ThankYouPage from './pages/ThankYouPage';
 import JobSwitchCopilot from './pages/JobSwitchCopilot';
 import FreeResumeAudit from './pages/FreeResumeAudit';
@@ -135,7 +134,7 @@ function App() {
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/user-type-selection" element={<UserTypeSelection />} />
               <Route path="/onboarding" element={<OnboardingForm />} />
-              <Route path="/training" element={<Training />} />
+              <Route path="/training" element={<Navigate to="/job-switch-copilot" replace />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
 
               {/* Job Switch Copilot — additive product line */}

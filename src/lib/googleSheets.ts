@@ -109,11 +109,11 @@ export async function submitToGoogleSheets(data: MasterclassSubmission): Promise
  *
  * Persistence:
  * 1. Supabase `leads` table (see migration 20260706071747_add_leads_table.sql)
- *    — always written, and the only path the caller waits on/can fail from.
+ *    — always written, and the only path that can fail the form submission.
  * 2. Google Apps Script webhook, if VITE_GOOGLE_SHEETS_WEBHOOK_URL is set —
- *    appends the row to Google Sheets and emails a notification (see
- *    scripts/google-apps-script/book-a-call-webhook.gs). Fired best-effort
- *    so a Google-side hiccup never blocks or fails the user's submission.
+ *    appends the row to Google Sheets (see
+ *    scripts/google-apps-script/book-a-call-webhook.gs). Synced best-effort
+ *    so a Google-side hiccup never fails the user's submission.
  */
 export async function submitLead(payload: Record<string, unknown>, formType: string): Promise<void> {
   const webhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
@@ -126,10 +126,16 @@ export async function submitLead(payload: Record<string, unknown>, formType: str
   }
 
   if (webhookUrl) {
-    fetch(webhookUrl, {
+    await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000),
+      keepalive: true,
+    }).then(async response => {
+      if (!response.ok || !(await response.json()).success) {
+        throw new Error('Google Sheets sync did not confirm the submission');
+      }
     }).catch((error) => {
       console.error('Google Sheets/email webhook failed (lead was still saved to Supabase):', error);
     });
