@@ -33,10 +33,11 @@ const server = http.createServer((req,res) => {
     assert.equal(await page.getByRole('dialog').getByRole('heading',{name:'Platform',exact:true}).count(),1);
     for(const name of ['Career Explorer','Learning Paths','AI Mentor','Free Resume Audit','Job Switch Copilot']) assert.equal(await page.getByRole('dialog').getByRole('link',{name,exact:true}).count(),1);
     assert.equal(await page.getByRole('dialog').getByText('Services',{exact:true}).count(),0);
-    await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),0);
+    await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
     await page.goto('http://127.0.0.1:4173/training');await page.waitForURL('**/job-switch-copilot');
     assert.ok((await page.locator('main').innerText()).includes('₹9,999'));
     assert.equal(await page.getByText('JSC Lite',{exact:true}).count(),0);
+    assert.ok(await page.evaluate(() => document.getElementById('webinar').getBoundingClientRect().top < document.getElementById('programme').getBoundingClientRect().top), 'Registration must precede the paid programme');
     await page.getByRole('link',{name:'Start with the free webinar'}).click();
     await page.getByLabel('Full name').fill('Smoke Test');await page.getByLabel('Email',{exact:true}).fill('smoke@example.com');await page.getByLabel('Phone number with country code').fill('+91 98765 43210');
     failLead=true;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.getByRole('alert').waitFor();assert.equal(rows.length,0);
