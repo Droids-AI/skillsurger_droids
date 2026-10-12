@@ -11,7 +11,9 @@
     "build:ssr": "vite build --config vite.config.ssr.ts",
     "serve:ssr": "node server.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:tracker": "node scripts/check-tracker-contracts.cjs && node scripts/check-course-evidence.cjs && node scripts/check-tracker-database.cjs && node scripts/check-tracker-edge.cjs && node scripts/check-ad-landing.cjs && node scripts/check-tracker-browser.cjs",
+    "postbuild": "node scripts/render-fde-page.cjs"
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.2.0",
@@ -36,6 +38,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
@@ -45,7 +48,9 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
+    "jszip": "^3.10.2",
     "mammoth": "^1.10.0",
+    "playwright": "^1.64.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "terser": "^5.44.1",

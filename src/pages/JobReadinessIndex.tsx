@@ -59,7 +59,7 @@ export default function JobReadinessIndex() {
 
   const calculateReadinessScore = (analysis: ResumeAnalysis, quiz: QuizResult): JobReadinessScore => {
     // Scoring formula from design doc
-    const skillVerificationScore = (quiz.correctAnswers / quiz.totalQuestions) * 100;
+    const skillVerificationScore = quiz.totalQuestions > 0 ? (quiz.correctAnswers / quiz.totalQuestions) * 100 : 0;
 
     // Role alignment calculation
     const roleAlignment = calculateRoleAlignment(analysis);

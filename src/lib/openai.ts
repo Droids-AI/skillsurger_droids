@@ -1,3 +1,6 @@
+import { reportError } from './safeLogging';
+import { verifyCourseCandidates } from './courseValidation';
+import axios from 'axios';
 import { openai, isOpenAIConfigured } from './openaiConfig';
 import { generateCareerOptions, findJobOpportunities, generateCVSuggestions } from './careerServices';
 import { extractJsonFromMarkdown } from './utils';
@@ -27,7 +30,7 @@ Growth Potential: ${option.growthPotential}
 
     return formattedSuggestions || 'No suggestions generated.';
   } catch (error: any) {
-    console.error('Error generating career suggestions:', error);
+    reportError('openai', 'operation_failed');
     return 'Unable to generate career suggestions at this time. Please try again later.';
   }
 }
@@ -50,7 +53,6 @@ export async function generateLearningPlan(
   difficulty?: string;
   duration?: string;
 }>> {
-  console.log('Generating learning plan for:', jobTitle);
 
   // Use the enhanced verified learning resources
   const verifiedResources = await generateVerifiedLearningResources(jobTitle, jobDescription, requirements);
@@ -72,9 +74,7 @@ export async function generateLearningPlan(
   }));
 
   if (learningPlan.length === 0) {
-    console.warn(`No learning resources could be generated for "${jobTitle}". The generated plan will be empty.`);
   } else {
-    console.log('Generated verified learning plan with', learningPlan.length, 'resources');
   }
   
   return learningPlan;
@@ -96,8 +96,7 @@ export async function generateVerifiedCareerPathLearningResources(
   duration?: string;
 }>> {
   if (!isOpenAIConfigured()) {
-    console.log('OpenAI not configured, returning fallback career path resources');
-    return getFallbackCareerPathResources(careerPath);
+    return verifyCourseCandidates(getFallbackCareerPathResources(careerPath));
   }
 
   try {
@@ -108,16 +107,14 @@ export async function generateVerifiedCareerPathLearningResources(
     });
 
     if (!response.data.success) {
-      console.log('No response from OpenAI, using fallback career path resources');
-      return getFallbackCareerPathResources(careerPath);
+      return verifyCourseCandidates(getFallbackCareerPathResources(careerPath));
     }
 
     const resources = response.data.data;
-    console.log('Generated career path learning resources:', resources.length);
-    return resources;
+    return verifyCourseCandidates(resources);
   } catch (error) {
-    console.error('Error generating career path learning resources:', error);
-    return getFallbackCareerPathResources(careerPath);
+    reportError('openai', 'operation_failed');
+    return verifyCourseCandidates(getFallbackCareerPathResources(careerPath));
   }
 }
 
@@ -247,7 +244,6 @@ export async function generateCareerPathLearningPlan(
   difficulty?: string;
   duration?: string;
 }>> {
-  console.log('Generating career path learning plan for:', careerPath);
 
   // Use the enhanced verified learning resources for career paths
   const verifiedResources = await generateVerifiedCareerPathLearningResources(careerPath);
@@ -269,9 +265,7 @@ export async function generateCareerPathLearningPlan(
   }));
 
   if (learningPlan.length === 0) {
-    console.warn(`No learning resources could be generated for career path "${careerPath}". The generated plan will be empty.`);
   } else {
-    console.log('Generated verified career path learning plan with', learningPlan.length, 'resources');
   }
   
   return learningPlan;

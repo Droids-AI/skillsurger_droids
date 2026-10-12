@@ -5,6 +5,8 @@ import ApplicationTrackerMockup from '../components/jobSwitchCopilot/Application
 import ResumeAuditReportPreview from '../components/jobSwitchCopilot/ResumeAuditReportPreview';
 import { trackEvent, EVENTS } from '../lib/analytics';
 
+import { WEBINAR } from '../lib/constants/webinar';
+
 const agenda = [
   { icon: Target, title: 'Find the right salary opportunity', text: 'Choose roles and companies where your experience solves a valuable problem. Understand what a realistic salary jump could look like for you.', takeaway: 'A clearer target for your next move' },
   { icon: FileText, title: 'Make your profile worth a callback', text: 'Learn how to replace a generic resume with role-specific positioning, measurable achievements, and a LinkedIn story that supports it.', takeaway: 'Know what to change in your resume' },
@@ -19,7 +21,7 @@ const sessions = [
 ];
 const faqs = [
   ['Is the webinar really free?', 'Yes. This form reserves a free one-hour online webinar. No payment or programme purchase is required.'],
-  ['When is the webinar, and how do I join?', 'The next session timing and joining details will be shared using the contact details you provide when you register.'],
+  ['When is the webinar, and how do I join?', `${WEBINAR.schedule}. The session lasts one hour. Register with your WhatsApp number for the private joining link. If delivery fails, your confirmation provides a support link.`],
   ['Who should attend?', 'Professionals planning a job switch, including software, data, cloud, DevOps, and AI professionals; people on notice period or returning after a layoff; and applicants who want to improve their callbacks, interview preparation, or salary conversations.'],
   ['Do I need to prepare anything?', 'Come with a target role in mind and a sense of where your current job search is getting stuck. Keeping your resume handy can help you relate the discussion to your own experience.'],
   ['Is 1.5x to 5x salary growth guaranteed?', 'No. This is a target to explore, not a promised result. Your starting salary, experience, skills, target role, market conditions, and execution all affect what is achievable. No job offer or salary increase is guaranteed.'],
@@ -39,6 +41,7 @@ export default function JobSwitchCopilot() {
       <div className="relative max-w-6xl mx-auto px-4 grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-14 items-center">
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200 mb-6"><Video className="w-4 h-4" /> FREE ONLINE WEBINAR · 60 MINUTES</p>
+          <p className="text-cyan-200 font-semibold mb-4">{WEBINAR.schedule}</p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6">Your next job could be a <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">bigger step up.</span></h1>
           <p className="text-xl sm:text-2xl font-semibold text-white mb-4">Learn how to switch jobs and target <span className="text-cyan-300">1.5x to 5x salary growth.</span></p>
           <p className="text-lg leading-relaxed text-slate-300 mb-7">Sending more applications isn't always the answer. Discover how to choose better-fit roles, make your experience stand out, and approach interviews and salary conversations with a clear plan.</p>
@@ -62,7 +65,7 @@ export default function JobSwitchCopilot() {
           <div className="flex justify-between items-center mb-5"><span className="inline-flex p-3 rounded-xl bg-blue-500/15 text-blue-300"><Icon className="w-6 h-6" /></span><span className="text-3xl font-bold text-blue-300/40">0{index + 1}</span></div>
           <h3 className="text-xl font-bold mb-3">{title}</h3><p className="text-slate-300 leading-relaxed mb-5">{text}</p><p className="flex gap-2 items-start text-sm font-semibold text-blue-300"><CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />{takeaway}</p>
         </article>)}</div>
-        <div className="mt-8 text-center"><a href="#webinar" onClick={() => reserve('agenda')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-3">No payment required. Session timing and joining details will be shared after registration.</p></div>
+        <div className="mt-8 text-center"><a href="#webinar" onClick={() => reserve('agenda')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-3">{WEBINAR.schedule}. No payment required. Joining link sent privately via WhatsApp.</p></div>
       </div>
     </section>
 

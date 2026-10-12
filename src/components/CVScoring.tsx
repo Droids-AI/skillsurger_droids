@@ -1,7 +1,9 @@
+import { reportError } from '../lib/safeLogging';
 import { useState, useEffect } from 'react';
 import { Upload, FileText, Zap, CheckCircle, AlertCircle, Loader2, TrendingUp, Download, User, Save } from 'lucide-react';
 import Button from './Button';
 import { backendApi, type CVScore, type CVEnhancement } from '../lib/backendApi';
+import { getCVSignedUrl } from '../lib/cvStorage';
 import { extractTextFromPdf } from '../lib/pdf';
 import { useUser } from '../context/UserContext';
 import { supabase } from '../lib/supabase';
@@ -45,10 +47,9 @@ export default function CVScoring() {
       // Load existing projects to merge when enhancing
       if (profile?.projects && Array.isArray(profile.projects)) {
         setExistingProjects(profile.projects);
-        console.log(`Loaded ${profile.projects.length} existing projects from profile`);
       }
     } catch (error) {
-      console.error('Error loading profile CV:', error);
+      reportError('CVScoring', 'operation_failed');
     }
   };
 
@@ -63,7 +64,7 @@ export default function CVScoring() {
       setError('');
 
       // Fetch the CV file from the URL
-      const response = await fetch(profileCVUrl);
+      const response = await fetch(await getCVSignedUrl(profileCVUrl));
       if (!response.ok) {
         throw new Error('Failed to fetch CV from profile');
       }
@@ -94,7 +95,7 @@ export default function CVScoring() {
         }
       }, 3000);
     } catch (err: any) {
-      console.error('Error loading profile CV:', err);
+      reportError('CVScoring', 'operation_failed');
       setError(err.message || 'Failed to load profile CV');
     } finally {
       setLoadingProfileCV(false);
@@ -137,7 +138,7 @@ export default function CVScoring() {
 
       setCvText(text);
     } catch (err: any) {
-      console.error('File reading error:', err);
+      reportError('CVScoring', 'operation_failed');
       setError(err.message || 'Failed to read file');
     } finally {
       setLoading(false);
@@ -160,7 +161,6 @@ export default function CVScoring() {
       setError('');
       // Use streaming for scoring with progress updates
       const onProgress = (message: string, step?: number) => {
-        console.log(`CV Scoring Progress: ${message} (${step}%)`);
       };
       
       const result = await backendApi.scoreCVText(cvText, onProgress);
@@ -191,12 +191,10 @@ export default function CVScoring() {
       // Pass existing projects from profile to merge with CV projects
       const projectsToMerge = existingProjects.length > 0 ? existingProjects : undefined;
       if (projectsToMerge) {
-        console.log(`Merging ${projectsToMerge.length} existing projects with CV projects`);
       }
       
       // Progress callback for streaming updates
       const onProgress = (message: string, step?: number) => {
-        console.log(`CV Enhancement Progress: ${message} (${step}%)`);
         // Update progress message if needed (you can add state for this)
       };
       
@@ -236,7 +234,7 @@ export default function CVScoring() {
   };
 
   const handleApplyToProfile = async () => {
-    if (!enhancedCV) return;
+    if (!enhancedCV || enhancedCV.canApplyToProfile === false) return;
 
     // Check subscription for AI features
     if (!checkSubscriptionForAI()) {
@@ -251,7 +249,6 @@ export default function CVScoring() {
       if (!user) throw new Error('No user found');
 
       // Use the enhanced parsed data directly (no need to re-parse)
-      console.log('Applying enhanced CV data to profile...');
       const parsedData = enhancedCV.parsedData;
 
       // Check if this is the first AI enhancement (no valid defaults exist yet)
@@ -298,7 +295,6 @@ export default function CVScoring() {
 
       // Save as defaults ONLY on first enhancement
       if (isFirstEnhancement) {
-        console.log('✅ First AI enhancement - saving as default values:', parsedData);
         updateData.summary_default = parsedData.summary;
         updateData.experience_default = parsedData.experience;
         updateData.projects_default = parsedData.projects;
@@ -316,7 +312,6 @@ export default function CVScoring() {
         updateData.years_of_experience_default = Math.round(Number(parsedData.years_of_experience) || 0);
         updateData.skills_default = parsedData.skills;
       } else {
-        console.log('ℹ️ Subsequent enhancement - defaults preserved, only updating current data');
       }
 
       // Update profile with enhanced data
@@ -362,7 +357,7 @@ export default function CVScoring() {
       }, 3000);
 
     } catch (err: any) {
-      console.error('Error applying enhanced CV to profile:', err);
+      reportError('CVScoring', 'operation_failed');
       setError(err.message || 'Failed to apply enhanced CV to profile');
 
       // Show error message
@@ -673,12 +668,12 @@ export default function CVScoring() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <Zap className="w-6 h-6 text-green-600 mr-3" />
-                <h2 className="text-xl font-bold">Enhanced CV</h2>
+                <h2 className="text-xl font-bold">Formatted CV</h2>
               </div>
               <div className="flex gap-3">
                 <Button
                   onClick={handleApplyToProfile}
-                  disabled={applyingToProfile}
+                  disabled={applyingToProfile || enhancedCV.canApplyToProfile === false}
                   size="sm"
                   className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >

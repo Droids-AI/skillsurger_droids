@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { extractResumeText, detectResumeSkills } from '../../lib/resumeText';
 import { ResumeAnalysis } from '../../pages/JobReadinessIndex';
+import { reportError } from '../../lib/safeLogging';
 
 type Props = {
   onAnalysisComplete: (analysis: ResumeAnalysis) => void;
@@ -44,13 +46,12 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
     // Validate file type
     const validTypes = [
       'application/pdf',
-      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain'
     ];
 
     if (!validTypes.includes(file.type)) {
-      setError('Please upload a PDF, DOC, DOCX, or TXT file');
+      setError('Please upload a PDF, DOCX, or TXT file');
       return;
     }
 
@@ -72,14 +73,14 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
 
     try {
       // Simulate file reading and analysis
-      const text = await readFileAsText(file);
+      const text = await extractResumeText(file);
 
       // Simulate progressive analysis
       setProgress(20);
       await delay(500);
 
       // Extract skills (simple keyword matching - in production, use AI/NLP)
-      const skills = extractSkills(text);
+      const skills = detectResumeSkills(text);
       setProgress(40);
       await delay(500);
 
@@ -114,41 +115,14 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
 
       onAnalysisComplete(analysis);
     } catch (err) {
-      setError('Failed to analyze resume. Please try again.');
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to analyze resume. Please try again.');
+      reportError('resume-analysis', 'extraction_failed');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const readFileAsText = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
-
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const extractSkills = (text: string): string[] => {
-    // Common tech skills - in production, use a comprehensive skills database
-    const skillsDatabase = [
-      'JavaScript', 'TypeScript', 'React', 'Angular', 'Vue', 'Node.js', 'Python',
-      'Java', 'C++', 'SQL', 'MongoDB', 'PostgreSQL', 'AWS', 'Azure', 'Docker',
-      'Kubernetes', 'Git', 'REST API', 'GraphQL', 'HTML', 'CSS', 'Tailwind',
-      'Leadership', 'Communication', 'Project Management', 'Agile', 'Scrum',
-      'Data Analysis', 'Machine Learning', 'AI', 'DevOps', 'CI/CD', 'Testing',
-      'Problem Solving', 'Team Collaboration', 'Critical Thinking'
-    ];
-
-    const foundSkills = skillsDatabase.filter(skill =>
-      text.toLowerCase().includes(skill.toLowerCase())
-    );
-
-    return foundSkills.slice(0, 10); // Limit to top 10
-  };
 
   const extractExperience = (text: string): string[] => {
     // Simple extraction - look for year patterns and job-related keywords
@@ -283,13 +257,13 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
                       Drop your resume here or click to upload
                     </p>
                     <p className="text-sm text-gray-600 mb-6">
-                      Supports PDF, DOC, DOCX, TXT (Max 5MB)
+                      Supports PDF, DOCX, TXT (Max 5MB)
                     </p>
                     <label className="cursor-pointer">
                       <input
                         type="file"
                         className="hidden"
-                        accept=".pdf,.doc,.docx,.txt"
+                        accept=".pdf,.docx,.txt"
                         onChange={handleFileInput}
                       />
                       <span className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">

@@ -1,0 +1,96 @@
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+const sessionId = 'job-switch-2026-10-17';
+const startsAt = '2026-10-17T15:00:00+05:30';
+const schedule = 'Saturday, 17 October 2026 at 3:00 PM IST';
+const origins = (Deno.env.get('WEBINAR_ALLOWED_ORIGINS') || 'https://skillsurger.com,https://www.skillsurger.com').split(',');
+const cors = (origin: string) => ({ 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', Vary: 'Origin' });
+
+Deno.serve(async request => {
+  const origin = request.headers.get('origin') || '';
+  if (!origins.includes(origin)) return new Response('Forbidden', { status: 403 });
+  const headers = { ...cors(origin), 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
+  if (request.method === 'OPTIONS') return new Response(null, { headers });
+  if (request.method !== 'POST') return respond({ error: 'Method not allowed' }, 405);
+  const requestId = crypto.randomUUID();
+  try {
+    const raw = await request.text();
+    if (raw.length > 4096) return respond({ error: 'Request too large', requestId }, 413);
+    let input;
+    try { input = JSON.parse(raw); } catch { return respond({ error: 'Invalid request', requestId }, 400); }
+    if (!input || typeof input !== 'object') return respond({ error: 'Invalid request', requestId }, 400);
+    const name = String(input.name || '').trim();
+    const email = String(input.email || '').trim().toLowerCase();
+    const phone = String(input.phoneNumber || '').replace(/[\s()-]/g, '');
+    if (input.sessionId !== sessionId || !name || name.length > 120 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\+[1-9]\d{6,14}$/.test(phone)) {
+      return respond({ error: 'Enter a valid name, email and WhatsApp number including +country code.', requestId }, 400);
+    }
+    if (Date.now() >= new Date(startsAt).getTime()) return respond({ error: 'Registration for this session is closed.', requestId }, 409);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${Deno.env.get('RATE_LIMIT_SALT') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}:${ip}`));
+    const key = Array.from(new Uint8Array(digest), x => x.toString(16).padStart(2, '0')).join('');
+    const limit = await admin.rpc('webinar_rate_limit', { p_key: key });
+    if (limit.error) throw new Error('rate_limit_failed');
+    if (!limit.data) return respond({ error: 'Too many attempts. Please retry in 10 minutes.', requestId }, 429);
+    const result = await admin.rpc('register_webinar', { p_session_id: sessionId, p_payload: {
+      name, email, phoneNumber: phone, webinarTitle: 'How to switch jobs and target 1.5x to 5x salary growth',
+      startsAt, durationMinutes: 60, source: 'job-switch-copilot', timestamp: new Date().toISOString(),
+      // URL is normalized: no arbitrary query parameters/contact details in logs or leads.
+      pageUrl: `${origin}/job-switch-copilot`, requestId,
+    } });
+    if (result.error) throw new Error('registration_failed');
+    const { registrationId, alreadyRegistered } = result.data;
+    let whatsappStatus = 'pending';
+    try {
+    const sender = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+    const token = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+    const template = Deno.env.get('WHATSAPP_WEBINAR_TEMPLATE');
+    const joinUrl = Deno.env.get('WEBINAR_JOIN_URL');
+    if (!alreadyRegistered) {
+      if (!sender || !token || !template || !joinUrl || !Deno.env.get('WHATSAPP_GRAPH_VERSION')) {
+        whatsappStatus = 'unconfigured';
+        const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, error_code: 'sender_not_configured', request_id: requestId }).eq('registration_id', registrationId);
+        if (saved.error) throw new Error('notification_log_failed');
+      } else {
+        // Atomically claim notification. A retry never sends a second message.
+        const claim = await admin.from('webinar_notifications').update({ status: 'sending', request_id: requestId }).eq('registration_id', registrationId).eq('status', 'pending').select('registration_id');
+        if (claim.error || claim.data?.length !== 1) throw new Error('notification_claim_failed');
+        let messageId: string | null = null;
+        let errorCode: string | null = null;
+        try {
+          const response = await fetch(`https://graph.facebook.com/${Deno.env.get('WHATSAPP_GRAPH_VERSION')}/${sender}/messages`, {
+            method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(10000),
+            body: JSON.stringify({ messaging_product: 'whatsapp', to: phone.slice(1), type: 'template', template: {
+              name: template, language: { code: Deno.env.get('WHATSAPP_TEMPLATE_LANGUAGE') || 'en' },
+              components: [{ type: 'body', parameters: [name, schedule, joinUrl].map(text => ({ type: 'text', text })) }],
+            } }),
+          });
+          const body = await response.json();
+          messageId = response.ok ? body.messages?.[0]?.id : null;
+          whatsappStatus = messageId ? 'accepted' : 'failed';
+          errorCode = messageId ? null : 'provider_rejected';
+        } catch { whatsappStatus = 'failed'; errorCode = 'provider_response_unknown'; }
+        const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, provider_message_id: messageId, error_code: errorCode, updated_at: new Date().toISOString() }).eq('registration_id', registrationId);
+        if (saved.error) throw new Error('notification_log_failed');
+      }
+    } else {
+      const notification = await admin.from('webinar_notifications').select('status').eq('registration_id', registrationId).single();
+      if (notification.error) throw new Error('notification_status_failed');
+      whatsappStatus = notification.data.status === 'sending' ? 'pending' : notification.data.status;
+    }
+    } catch {
+      // Registration already committed. Notification trouble must not turn a
+      // saved registration into a failure/retry or lose its conversion result.
+      whatsappStatus = 'failed';
+      console.error(JSON.stringify({ area: 'webinar-notification', code: 'notification_failed', requestId }));
+    }
+    // Sheets should be triggered server-side by the leads INSERT database webhook.
+    return respond({ registrationId, alreadyRegistered, whatsappStatus, requestId });
+  } catch {
+    console.error(JSON.stringify({ area: 'webinar-registration', code: 'request_failed', requestId }));
+    return respond({ error: 'Unable to register. Please retry.', requestId }, 500);
+  }
+});

@@ -25,7 +25,7 @@ export default function SkillQuiz({ skills, jobTitle, onQuizComplete }: Props) {
   const [answeredQuestions, setAnsweredQuestions] = useState<boolean[]>([]);
 
   useEffect(() => {
-    const generatedQuestions = generateQuestions(skills.slice(0, 5), jobTitle);
+    const generatedQuestions = generateQuestions(skills.slice(0, 5));
     setQuestions(generatedQuestions);
     setAnsweredQuestions(new Array(generatedQuestions.length).fill(false));
   }, [skills, jobTitle]);
@@ -47,7 +47,7 @@ export default function SkillQuiz({ skills, jobTitle, onQuizComplete }: Props) {
         setCorrectAnswers(prev => prev + 1);
       }
       const newAnswered = [...answeredQuestions];
-      newAnswered[currentQuestionIndex] = true;
+      newAnswered[currentQuestionIndex] = isCorrect;
       setAnsweredQuestions(newAnswered);
     } else {
       // Move to next question or complete quiz
@@ -67,9 +67,7 @@ export default function SkillQuiz({ skills, jobTitle, onQuizComplete }: Props) {
     const skillsFailed: string[] = [];
 
     questions.forEach((q, index) => {
-      // In a real implementation, track individual answers
-      // For now, approximate based on overall score
-      if (index < correctAnswers) {
+      if (answeredQuestions[index]) {
         skillsVerified.push(q.skill);
       } else {
         skillsFailed.push(q.skill);
@@ -90,8 +88,8 @@ export default function SkillQuiz({ skills, jobTitle, onQuizComplete }: Props) {
     return (
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Preparing your personalized quiz...</p>
+          <p className="text-gray-600">We do not yet have quiz questions for the skills in this resume. No skills will be marked verified.</p>
+          <button className="mt-5 px-5 py-3 rounded-lg bg-blue-600 text-white" onClick={completeQuiz}>Continue to results</button>
         </div>
       </div>
     );
@@ -272,8 +270,10 @@ export default function SkillQuiz({ skills, jobTitle, onQuizComplete }: Props) {
 }
 
 // Question generation logic
-function generateQuestions(skills: string[], jobTitle: string): Question[] {
+export function generateQuestions(skills: string[]): Question[] {
   const questionBank: Record<string, Question[]> = {
+    'Java': [{ skill: 'Java', question: 'What does the Java Virtual Machine execute?', options: ['Java bytecode', 'Only Java source files', 'SQL queries', 'Dockerfiles'], correctAnswer: 0, explanation: 'The JVM executes bytecode compiled from Java source.' }],
+    'REST APIs': [{ skill: 'REST APIs', question: 'Which HTTP method is normally used to retrieve a resource without changing it?', options: ['POST', 'DELETE', 'GET', 'PATCH'], correctAnswer: 2, explanation: 'GET retrieves a resource and is defined as a safe method.' }],
     'JavaScript': [
       {
         skill: 'JavaScript',
@@ -402,7 +402,8 @@ function generateQuestions(skills: string[], jobTitle: string): Question[] {
   const questions: Question[] = [];
 
   for (const skill of skills) {
-    const skillQuestions = questionBank[skill] || questionBank['default'];
+    const skillQuestions = questionBank[skill];
+    if (!skillQuestions) continue;
     const randomQuestion = skillQuestions[Math.floor(Math.random() * skillQuestions.length)];
     questions.push({ ...randomQuestion, skill });
   }

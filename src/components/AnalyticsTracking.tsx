@@ -17,7 +17,7 @@ const AnalyticsTracking: React.FC<AnalyticsTrackingProps> = ({
 
   useEffect(() => {
     // Prevent double initialization of Google Analytics
-    if (hasInitializedGA.current || (window as any).gtag) {
+    if (hasInitializedGA.current) {
       return;
     }
 
@@ -25,19 +25,15 @@ const AnalyticsTracking: React.FC<AnalyticsTrackingProps> = ({
     if (googleAnalyticsId && googleAnalyticsId !== "YOUR_GA_ID") {
       hasInitializedGA.current = true;
 
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`;
-      document.head.appendChild(script);
-
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args: any[]) {
-        window.dataLayer.push(args);
+      if (!document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`;
+        document.head.appendChild(script);
       }
-      gtag('js', new Date());
-      gtag('config', googleAnalyticsId);
+      window.gtag?.('config', googleAnalyticsId);
     }
-  }, []); // Remove googleAnalyticsId from dependencies
+  }, [googleAnalyticsId]);
 
   return (
     <>

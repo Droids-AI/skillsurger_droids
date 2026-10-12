@@ -153,122 +153,22 @@ const linkCache = new Map<string, LinkVerificationResult>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 export async function verifyLink(url: string): Promise<LinkVerificationResult> {
+  const cached = linkCache.get(url);
+  if (cached?.lastChecked && Date.now() - new Date(cached.lastChecked).getTime() < CACHE_DURATION) return cached;
+  let validUrl: URL;
+  try { validUrl = new URL(url); if (validUrl.protocol !== 'https:') throw new Error('HTTPS required'); }
+  catch { return { url, isValid: false, status: null, error: 'Invalid learning resource URL' }; }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  let result: LinkVerificationResult;
   try {
-    // Check cache first
-    const cached = linkCache.get(url);
-    if (cached && cached.lastChecked) {
-      const cacheAge = Date.now() - new Date(cached.lastChecked).getTime();
-      if (cacheAge < CACHE_DURATION) {
-        return cached;
-      }
-    }
-
-    // Basic URL validation
-    if (!url || typeof url !== 'string') {
-      return {
-        url,
-        isValid: false,
-        status: null,
-        error: 'Invalid URL format'
-      };
-    }
-
-    let validUrl: URL;
-    try {
-      validUrl = new URL(url);
-    } catch {
-      return {
-        url,
-        isValid: false,
-        status: null,
-        error: 'Malformed URL'
-      };
-    }
-
-    const domain = validUrl.hostname.toLowerCase();
-    const startTime = Date.now();
-
-    // Check against verified platforms
-    for (const [platformDomain, platformInfo] of Object.entries(VERIFIED_PLATFORMS)) {
-      if (domain === platformDomain || domain.endsWith('.' + platformDomain)) {
-        // Check URL pattern
-        if (platformInfo.urlPattern.test(url)) {
-          const result: LinkVerificationResult = {
-            url,
-            isValid: true,
-            status: 200,
-            lastChecked: new Date().toISOString(),
-            responseTime: Date.now() - startTime
-          };
-          
-          // Cache the result
-          linkCache.set(url, result);
-          return result;
-        }
-      }
-    }
-
-    // For unknown domains, try a lightweight check
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(url, {
-        method: 'HEAD',
-        signal: controller.signal,
-        mode: 'no-cors' // This will limit what we can check but avoids CORS issues
-      });
-
-      clearTimeout(timeoutId);
-
-      const result: LinkVerificationResult = {
-        url,
-        isValid: true,
-        status: response.status || 200,
-        lastChecked: new Date().toISOString(),
-        responseTime: Date.now() - startTime
-      };
-
-      linkCache.set(url, result);
-      return result;
-
-    } catch (fetchError) {
-      // If fetch fails, still mark as valid if it's a known educational domain
-      const educationalDomains = [
-        'mit.edu', 'stanford.edu', 'harvard.edu', 'berkeley.edu',
-        'microsoft.com', 'google.com', 'amazon.com', 'ibm.com',
-        'oracle.com', 'adobe.com', 'figma.com', 'sketch.com'
-      ];
-
-      const isEducational = educationalDomains.some(eduDomain => 
-        domain === eduDomain || domain.endsWith('.' + eduDomain)
-      );
-
-      const result: LinkVerificationResult = {
-        url,
-        isValid: isEducational,
-        status: null,
-        error: isEducational ? 'Educational domain - assumed valid' : 'Network error or CORS restriction',
-        lastChecked: new Date().toISOString(),
-        responseTime: Date.now() - startTime
-      };
-
-      linkCache.set(url, result);
-      return result;
-    }
-
-  } catch (error) {
-    const result: LinkVerificationResult = {
-      url,
-      isValid: false,
-      status: null,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      lastChecked: new Date().toISOString()
-    };
-
-    linkCache.set(url, result);
-    return result;
-  }
+    const response = await fetch(validUrl.href, { method: 'HEAD', signal: controller.signal, mode: 'cors' });
+    result = { url, isValid: response.ok && response.type !== 'opaque', status: response.type === 'opaque' ? null : response.status, lastChecked: new Date().toISOString() };
+  } catch {
+    result = { url, isValid: false, status: null, error: 'Availability could not be verified', lastChecked: new Date().toISOString() };
+  } finally { clearTimeout(timeout); }
+  linkCache.set(url, result);
+  return result;
 }
 
 export async function verifyMultipleLinks(urls: string[]): Promise<LinkVerificationResult[]> {

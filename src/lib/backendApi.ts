@@ -1,3 +1,6 @@
+import { reportError } from './safeLogging';
+import { assertFactPreservingCV } from './cvFactuality';
+import { formatFactualCV } from './factualCVFormatter';
 // Backend API service for AI Mentor functionality
 // Note: VITE_BACKEND_API should include /api/v1 path
 // Example: https://api.wisedroids.ai/api/v1 or http://localhost:5002/api/v1
@@ -56,6 +59,7 @@ export interface CVScore {
 }
 
 export interface CVEnhancement {
+  canApplyToProfile?: boolean;
   enhancedCV: string;
   parsedData: {
     full_name?: string;
@@ -171,12 +175,7 @@ class BackendApiService {
         errorMessage = 'An unknown error occurred';
       }
 
-      console.error('Backend API error:', {
-        message: errorMessage,
-        endpoint: `${BACKEND_BASE_URL}${endpoint}`,
-        type,
-        error
-      });
+      reportError('backendApi', 'operation_failed');
       throw new Error(errorMessage);
     }
   }
@@ -245,25 +244,16 @@ class BackendApiService {
 
   async enhanceCVText(
     cvText: string, 
-    targetRole?: string, 
+    _targetRole?: string,
     existingProjects?: Array<any>,
     onProgress?: (message: string, step?: number) => void
   ): Promise<CVEnhancement> {
-    // Use streaming if progress callback is provided
-    if (onProgress) {
-      return this.makeStreamingRequest<CVEnhancement>(
-        '/openai/skillsurger',
-        { text: cvText, targetRole, existingProjects },
-        'enhanceCVText',
-        onProgress
-      );
-    }
-    
-    return this.makeRequest<CVEnhancement>(
-      '/openai/skillsurger',
-      { text: cvText, targetRole, existingProjects },
-      'enhanceCVText'
-    );
+    // Factual formatting is deterministic. Generative rewrites are not safe to auto-apply.
+    onProgress?.('Formatting your supplied resume without changing facts...', 10);
+    const result = formatFactualCV(cvText);
+    assertFactPreservingCV(cvText, result, existingProjects);
+    onProgress?.('Formatting complete. Add verified metrics to your source resume where needed.', 100);
+    return result;
   }
 
   private async makeStreamingRequest<T>(
@@ -375,7 +365,7 @@ class BackendApiService {
         reject(new Error(errorData.error || 'An error occurred'));
       }
     } catch (error) {
-      console.error('Error processing SSE message:', error);
+      reportError('backendApi', 'operation_failed');
       // Don't reject on parse errors, just log them
     }
   }

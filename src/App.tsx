@@ -45,6 +45,9 @@ import ForEdtechPartners from './pages/ForEdtechPartners';
 import BookACall from './pages/BookACall';
 import SEOLandingPage from './pages/seo/SEOLandingPage';
 
+import PasswordRecovery from './pages/PasswordRecovery';
+import FDECourse from './pages/FDECourse';
+
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -70,6 +73,10 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<PasswordRecovery />} />
+              <Route path="/reset-password" element={<PasswordRecovery reset />} />
+              <Route path="/book-diagnosis" element={<Navigate to="/book-a-call" replace />} />
+              <Route path="/forward-deployed-ai-engineer" element={<FDECourse />} />
               <Route path="/get-started" element={<Onboarding />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/job-readiness-index" element={<JobReadinessIndex />} />

@@ -3,6 +3,12 @@
   command = "npm run build"
 
 [[redirects]]
+  from = "/book-diagnosis"
+  to = "/book-a-call"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/training"
   to = "/job-switch-copilot"
   status = 301

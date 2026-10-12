@@ -1,8 +1,10 @@
+import { reportError } from '../lib/safeLogging';
 import { useState, useEffect } from 'react';
 import { FileText, Download, Award, Upload, Edit2, Save, X, Trash2, AlertTriangle, TrendingUp, CheckCircle, Zap, Loader2, RotateCcw } from 'lucide-react';
 import Button from './Button';
 import { supabase } from '../lib/supabase';
 import CVEditor from './CVEditor';
+import { getCVSignedUrl } from '../lib/cvStorage';
 import { uploadCV, parseCV, extractTextFromPdf } from '../lib/pdf';
 import { useUser } from '../context/UserContext';
 import html2canvas from 'html2canvas';
@@ -166,7 +168,7 @@ export default function ProfileSection() {
             }
           }, 3000);
         } catch (error) {
-          console.error('Error processing pending resume:', error);
+          reportError('ProfileSection', 'operation_failed');
           const errorDiv = document.createElement('div');
           errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
           errorDiv.textContent = 'Failed to process resume. Please try uploading again.';
@@ -225,7 +227,7 @@ export default function ProfileSection() {
         }));
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      reportError('ProfileSection', 'operation_failed');
       setError('Failed to load profile');
     } finally {
       setLoading(false);
@@ -320,7 +322,7 @@ export default function ProfileSection() {
       setShowDeleteConfirm(null);
 
     } catch (error: any) {
-      console.error('Error deleting data:', error);
+      reportError('ProfileSection', 'operation_failed');
       setError(error.message || `Failed to delete ${dataType}`);
     } finally {
       setDeleting(null);
@@ -425,7 +427,7 @@ export default function ProfileSection() {
         }
       }, 3000);
     } catch (error: any) {
-      console.error('Error updating profile:', error);
+      reportError('ProfileSection', 'operation_failed');
       setError(error.message || 'Failed to update profile');
       
       // Show error message
@@ -539,7 +541,6 @@ export default function ProfileSection() {
 
       // Save as defaults ONLY on first valid SkillSurger API call
       if (isFirstApiCall) {
-        console.log('✅ First SkillSurger API call - saving as default values:', parsedData);
         updateData.summary_default = parsedData.summary;
         updateData.experience_default = parsedData.experience;
         updateData.projects_default = parsedData.projects;
@@ -557,7 +558,6 @@ export default function ProfileSection() {
         updateData.years_of_experience_default = Math.round(Number(parsedData.years_of_experience) || 0);
         updateData.skills_default = parsedData.skills;
       } else {
-        console.log('ℹ️ Subsequent API call - defaults preserved, only updating current data');
       }
 
       // Update profile with parsed CV data
@@ -602,13 +602,12 @@ export default function ProfileSection() {
         if (cvText && cvText.trim()) {
           // Use streaming for scoring
           const onScoreProgress = (message: string, step?: number) => {
-            console.log(`CV Scoring: ${message}`);
           };
           const scoreResult = await backendApi.scoreCVText(cvText, onScoreProgress);
           setCvScore(scoreResult);
         }
       } catch (scoreError) {
-        console.error('Error scoring CV:', scoreError);
+        reportError('ProfileSection', 'operation_failed');
         // Don't fail the upload if scoring fails
       } finally {
         setScoringCV(false);
@@ -629,7 +628,7 @@ export default function ProfileSection() {
         }
       }, 3000);
     } catch (error: any) {
-      console.error('Error reuploading CV:', error);
+      reportError('ProfileSection', 'operation_failed');
       setError(error.message || 'Failed to reupload CV');
 
       // Show error message with more specific guidance
@@ -673,20 +672,12 @@ export default function ProfileSection() {
       // Find the CV preview element
       const cvPreviewElement = document.getElementById('cv-preview');
       if (!cvPreviewElement) {
-        console.error('CV preview element not found');
+        reportError('ProfileSection', 'operation_failed');
         throw new Error('CV preview element not found');
       }
 
       // Wait a bit for any dynamic content to render
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('CV Element found:', cvPreviewElement);
-      console.log('CV Element dimensions:', {
-        width: cvPreviewElement.offsetWidth,
-        height: cvPreviewElement.offsetHeight,
-        scrollWidth: cvPreviewElement.scrollWidth,
-        scrollHeight: cvPreviewElement.scrollHeight
-      });
 
       // Use html2canvas to capture the actual rendered CV preview
       const canvas = await html2canvas(cvPreviewElement, {
@@ -706,11 +697,6 @@ export default function ProfileSection() {
         }
       });
 
-      console.log('Canvas created:', {
-        width: canvas.width,
-        height: canvas.height
-      });
-
       // Create PDF with custom dimensions to fit all content
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -728,11 +714,9 @@ export default function ProfileSection() {
       const fullName = profile.cv_parsed_data?.full_name || profile.full_name || 'CV';
       const fileName = `${fullName.replace(/\s+/g, '_')}_CV.pdf`;
       pdf.save(fileName);
-      
-      console.log('PDF saved successfully');
 
     } catch (error) {
-      console.error('Error generating CV PDF:', error);
+      reportError('ProfileSection', 'operation_failed');
       setError('Failed to generate CV PDF');
     } finally {
       setDownloading(false);
@@ -760,7 +744,6 @@ export default function ProfileSection() {
       let cvFile: File;
       let latestCvFileName: string;
       try {
-        console.log('Fetching CV files from storage for user:', user.id);
         
         // List all CV files for this user
         const { data: cvFiles, error: listError } = await supabase.storage
@@ -768,7 +751,7 @@ export default function ProfileSection() {
           .list(user.id);
         
         if (listError) {
-          console.error('Error listing CV files:', listError);
+          reportError('ProfileSection', 'operation_failed');
           throw new Error('Failed to access CV storage. Please try again.');
         }
         
@@ -779,7 +762,6 @@ export default function ProfileSection() {
         // Get the most recent CV file (assuming files are sorted by creation time)
         const latestCvFile = cvFiles[cvFiles.length - 1];
         latestCvFileName = latestCvFile.name;
-        console.log('Found CV file:', latestCvFileName);
         
         // Download the CV file
         const { data: cvData, error: downloadError } = await supabase.storage
@@ -787,33 +769,29 @@ export default function ProfileSection() {
           .download(`${user.id}/${latestCvFileName}`);
         
         if (downloadError) {
-          console.error('Error downloading CV file:', downloadError);
+          reportError('ProfileSection', 'operation_failed');
           throw new Error('Failed to download CV file. Please try again.');
         }
         
         // Convert blob to File object
         cvFile = new File([cvData], latestCvFileName, { type: 'application/pdf' });
-        console.log('Successfully downloaded CV file:', latestCvFileName);
         
       } catch (storageError) {
-        console.error('Error fetching CV from storage:', storageError);
+        reportError('ProfileSection', 'operation_failed');
         throw new Error('CV file is no longer accessible. Please re-upload your CV file.');
       }
       
       // Parse the CV using AI
       const parsedData = await parseCV(cvFile);
       
-      // Get the public URL for the CV file we just downloaded
-      const { data: { publicUrl } } = supabase.storage
-        .from('cvs')
-        .getPublicUrl(`${user.id}/${latestCvFileName}`);
+      const cvPath = `${user.id}/${latestCvFileName}`;
 
       // Update the profile with the new parsed data and correct CV URL
       // Defaults will be saved on first AI enhancement
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          cv_url: publicUrl,
+          cv_url: cvPath,
           summary: parsedData.summary,
           experience: parsedData.experience,
           projects: parsedData.projects,
@@ -857,7 +835,7 @@ export default function ProfileSection() {
         }
       }, 3000);
     } catch (error: any) {
-      console.error('Error re-analyzing and saving CV:', error);
+      reportError('ProfileSection', 'operation_failed');
       
       let errorMessage = 'Failed to re-analyze and save resume. Please try again.';
       let toastMessage = 'Failed to re-analyze CV. Please try again.';
@@ -942,7 +920,6 @@ export default function ProfileSection() {
       let cvFile: File;
       let cvText: string;
       try {
-        console.log('Fetching CV files from storage for user:', user.id);
 
         // List all CV files for this user
         const { data: cvFiles, error: listError } = await supabase.storage
@@ -950,7 +927,7 @@ export default function ProfileSection() {
           .list(user.id);
 
         if (listError) {
-          console.error('Error listing CV files:', listError);
+          reportError('ProfileSection', 'operation_failed');
           throw new Error('Failed to access CV storage. Please try again.');
         }
 
@@ -961,7 +938,6 @@ export default function ProfileSection() {
         // Get the most recent CV file
         const latestCvFile = cvFiles[cvFiles.length - 1];
         const latestCvFileName = latestCvFile.name;
-        console.log('Found CV file:', latestCvFileName);
 
         // Step 1: Extracting text from CV
         setProgressStep(1);
@@ -971,13 +947,12 @@ export default function ProfileSection() {
           .download(`${user.id}/${latestCvFileName}`);
 
         if (downloadError) {
-          console.error('Error downloading CV file:', downloadError);
+          reportError('ProfileSection', 'operation_failed');
           throw new Error('Failed to download CV file. Please try again.');
         }
 
         // Convert blob to File object
         cvFile = new File([cvData], latestCvFileName, { type: 'application/pdf' });
-        console.log('Successfully downloaded CV file:', latestCvFileName);
 
         // Extract text from CV
         cvText = await extractTextFromPdf(cvFile);
@@ -986,7 +961,7 @@ export default function ProfileSection() {
         }
 
       } catch (storageError) {
-        console.error('Error fetching CV from storage:', storageError);
+        reportError('ProfileSection', 'operation_failed');
         throw storageError;
       }
 
@@ -995,7 +970,6 @@ export default function ProfileSection() {
       await new Promise(resolve => setTimeout(resolve, 300));
       // Get existing projects from profile to merge with CV projects
       const existingProjects = profile?.projects || [];
-      console.log(`Found ${existingProjects.length} existing projects in profile to merge`);
       
       // Step 3: Parsing CV sections (happens in backend)
       setProgressStep(3);
@@ -1006,11 +980,9 @@ export default function ProfileSection() {
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Enhance the CV with existing projects (this is a long operation)
-      console.log('Enhancing CV...');
       
       // Use streaming API with progress callback for real-time updates
       const onEnhanceProgress = (message: string, step?: number) => {
-        console.log(`CV Enhancement: ${message}`);
         if (step !== undefined && step >= 0) {
           // Map backend progress (0-100) to our step index (0-12)
           // Backend steps: 0-100%, our steps: 0-12
@@ -1025,14 +997,17 @@ export default function ProfileSection() {
         existingProjects,
         onEnhanceProgress // Enable SSE streaming
       );
-      
-      console.log('CV enhanced successfully');
       setProgressStep(12); // Complete
+      if (enhancedResult.canApplyToProfile === false) {
+        const url = URL.createObjectURL(new Blob([enhancedResult.enhancedCV], { type: 'text/plain' }));
+        const link = document.createElement('a'); link.href = url; link.download = 'formatted-cv.txt'; link.click();
+        URL.revokeObjectURL(url);
+        setError('Your formatted CV has been downloaded. All supplied facts were preserved. Add verified metrics and project details to your source resume to improve its content; your profile was not overwritten.');
+        return;
+      }
 
       // Use the parsed data from the enhancement result (no need to re-parse)
-      console.log('Using enhanced parsed data...');
       const parsedData = enhancedResult.parsedData;
-      console.log('Enhanced CV data ready');
 
       // Step 10: Updating profile
       setProgressStep(10);
@@ -1081,7 +1056,6 @@ export default function ProfileSection() {
 
       // Save as defaults ONLY on first enhancement
       if (isFirstEnhancement) {
-        console.log('✅ First AI enhancement - saving as default values:', parsedData);
         updateData.summary_default = parsedData.summary;
         updateData.experience_default = parsedData.experience;
         updateData.projects_default = parsedData.projects;
@@ -1099,7 +1073,6 @@ export default function ProfileSection() {
         updateData.years_of_experience_default = Math.round(Number(parsedData.years_of_experience) || 0);
         updateData.skills_default = parsedData.skills;
       } else {
-        console.log('ℹ️ Subsequent enhancement - defaults preserved, only updating current data');
       }
 
       // Update profile with enhanced data
@@ -1138,12 +1111,11 @@ export default function ProfileSection() {
       // Score the enhanced CV with streaming
       try {
         const onScoreProgress = (message: string, step?: number) => {
-          console.log(`Enhanced CV Scoring: ${message}`);
         };
         const scoreResult = await backendApi.scoreCVText(enhancedResult.enhancedCV, onScoreProgress);
         setCvScore(scoreResult);
       } catch (scoreError) {
-        console.error('Error scoring enhanced CV:', scoreError);
+        reportError('ProfileSection', 'operation_failed');
         // Don't fail the enhancement if scoring fails
       }
 
@@ -1166,7 +1138,7 @@ export default function ProfileSection() {
       }, 3000);
 
     } catch (err: any) {
-      console.error('Error enhancing CV:', err);
+      reportError('ProfileSection', 'operation_failed');
 
       let errorMessage = 'Failed to enhance CV. Please try again.';
 
@@ -1233,9 +1205,8 @@ export default function ProfileSection() {
       if (updateError) throw updateError;
 
       await loadProfile();
-      console.log('✅ Defaults cleared successfully');
     } catch (err) {
-      console.error('Error clearing defaults:', err);
+      reportError('ProfileSection', 'operation_failed');
     }
   };
 
@@ -1288,15 +1259,12 @@ export default function ProfileSection() {
       );
 
       if (!hasValidDefaultData) {
-        console.warn('⚠️ Invalid defaults detected (image-based PDF or empty data). Clearing bad defaults...');
         // Auto-clear the bad defaults so next enhancement will save proper defaults
         await handleClearDefaults();
         setError('Your saved defaults were from an invalid CV (image-based PDF or empty). They have been cleared. Please enhance your CV again to create a proper baseline.');
         setEnhancing(false);
         return;
       }
-
-      console.log('Reverting to cv_parsed_data_default:', defaultData);
 
       // Helper function to check if a value is meaningful (not empty)
       const hasValue = (val: any): boolean => {
@@ -1363,8 +1331,6 @@ export default function ProfileSection() {
         revertUpdate.custom_sections = defaultData.custom_sections;
       }
 
-      console.log('Reverting with data:', revertUpdate);
-
       if (!revertUpdate.cv_parsed_data || Object.keys(revertUpdate.cv_parsed_data).length === 0) {
         throw new Error('No meaningful default data found to revert to. The original CV data appears to be empty.');
       }
@@ -1392,7 +1358,7 @@ export default function ProfileSection() {
       }, 3000);
 
     } catch (err: any) {
-      console.error('Error reverting CV:', err);
+      reportError('ProfileSection', 'operation_failed');
       setError(err.message || 'Failed to revert CV. Please try again.');
 
       // Show error message
@@ -1878,7 +1844,12 @@ export default function ProfileSection() {
                   <div className="mt-4 pt-4 border-t border-blue-200">
                     <div className="flex flex-col sm:flex-row gap-3">
                       <a
-                        href={profile.cv_url}
+                        href="#"
+                        onClick={async event => {
+                          event.preventDefault();
+                          try { const signed = await getCVSignedUrl(profile.cv_url); window.location.assign(signed); }
+                          catch { setError('Could not open your CV. Please try again.'); }
+                        }}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
@@ -2190,7 +2161,7 @@ export default function ProfileSection() {
                       
                       await loadProfile();
                     } catch (error) {
-                      console.error('Error updating profile:', error);
+                      reportError('ProfileSection', 'operation_failed');
                       setError('Failed to update profile');
                     }
                   }}

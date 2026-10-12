@@ -1,3 +1,4 @@
+import { normalizeCourseMetadata, verifyCourseCandidates } from '../lib/courseValidation';
 import { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, ExternalLink, RefreshCw, Trash2, Archive, ChevronDown, ChevronUp, Star, Clock, Award, Shield, MessageSquare, Send } from 'lucide-react';
 import Button from './Button';
@@ -6,6 +7,7 @@ import { generateLearningPlan } from '../lib/openai';
 import axios from 'axios';
 
 interface LearningPath {
+  company?: string;
   id: string;
   career_path: string;
   job_title: string;
@@ -271,11 +273,12 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const recentPaths = paths.filter(path => 
+        const safePaths = paths.map(path => ({ ...path, resources: (Array.isArray(path.resources) ? path.resources : []).map(normalizeCourseMetadata) }));
+        const recentPaths = safePaths.filter(path =>
           new Date(path.created_at) >= thirtyDaysAgo
         );
         
-        const historicalPathsData = paths.filter(path => 
+        const historicalPathsData = safePaths.filter(path =>
           new Date(path.created_at) < thirtyDaysAgo
         );
 
@@ -778,7 +781,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
 
             if (status.status === 'completed') {
               completed = true;
-              const updatedResources = status.resources;
+              const updatedResources = Array.isArray(status.resources) ? await verifyCourseCandidates(status.resources as LearningPath['resources']) : [];
 
               if (updatedResources && updatedResources.length > 0) {
                 // Update the learning path in the database
@@ -984,7 +987,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
             <div>
               <h4 className="font-medium text-blue-900">Enhanced Link Verification</h4>
               <p className="text-sm text-blue-700 mt-1">
-                All learning resources are now verified for availability and quality. We prioritize free and low-cost options from trusted educational platforms.
+                Course candidates are suggested resources. Check the provider for current course details, prices and level. Unconfirmed information is labelled unknown.
               </p>
             </div>
           </div>
@@ -1180,6 +1183,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                               {resource.type}
                             </span>
+                            {!resource.verified && <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Not verified</span>}
                             {resource.verified && (
                               <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs flex items-center">
                                 <Shield className="w-3 h-3 mr-1" />
@@ -1353,7 +1357,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
             <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Recent Learning Paths</h3>
             <p className="text-gray-600 mb-4">
-              Generate your first verified learning path to get started
+              Generate your first learning path to get started
             </p>
             <p className="text-sm text-gray-500">
               Make sure you have saved some jobs in Career Explorer first

@@ -1,3 +1,5 @@
+import { reportError } from './safeLogging';
+import { normalizeCourseMetadata, verifyCourseCandidates } from './courseValidation';
 // Enhanced learning resource generation with verified links
 import { verifyLink, generateFallbackUrl, getPlatformInfo } from './linkVerification';
 import axios from 'axios';
@@ -10,10 +12,10 @@ export interface VerifiedResource {
   verified: boolean;
   lastVerified: string;
   fallbackUrl?: string;
-  price: 'free' | 'freemium' | 'paid';
+  price: 'free' | 'freemium' | 'paid' | 'unknown';
   rating?: number;
   provider: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'unknown';
   duration?: string;
 }
 
@@ -379,7 +381,6 @@ export async function generateVerifiedLearningResources(
   requirements: string[] = []
 ): Promise<VerifiedResource[]> {
   try {
-    console.log('Generating verified learning resources for:', jobTitle);
     const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
     const apiUrl = `${apiBase}/openai/skillsurger`;
     const response = await axios.post(apiUrl, {
@@ -388,23 +389,19 @@ export async function generateVerifiedLearningResources(
       jobDescription,
       requirements
     });
-
-    console.log('Backend response:', response.data);
     const content = response.data;
     if (!content.success) {
-      console.error('Backend returned unsuccessful response:', content);
+      reportError('enhancedLearningResources', 'operation_failed');
       throw new Error('No content received from OpenAI');
     }
 
     const parsedJson = content.data;
-    console.log('Parsed JSON from backend:', parsedJson);
     
     if (!parsedJson.resources || !Array.isArray(parsedJson.resources)) {
         throw new Error("Invalid JSON structure from OpenAI. Missing 'resources' array.");
     }
     
     const resources = parsedJson.resources;
-    console.log('Resources from backend:', resources);
 
     // Remove duplicates based on URL and title before verification
     const uniqueResources = resources.filter((resource: any, index: number, arr: any[]) => {
@@ -414,23 +411,19 @@ export async function generateVerifiedLearningResources(
       ) === index;
     });
 
-    console.log(`Removed ${resources.length - uniqueResources.length} duplicate resources.`);
-    console.log('Unique resources after deduplication:', uniqueResources);
-
     // Asynchronously verify and enrich each resource
     const verifiedResources = await Promise.all(
       uniqueResources.map(async (resource: any) => {
         const { isValid } = await verifyLink(resource.url);
         const platformInfo = getPlatformInfo(resource.url);
 
-        return {
+        return normalizeCourseMetadata({
           ...resource,
-          verified: isValid,
+          verified: false,
           lastVerified: new Date().toISOString(),
           fallbackUrl: !isValid ? generateFallbackUrl(resource.url, resource.type, resource.title) : undefined,
-          provider: resource.provider || (platformInfo ? platformInfo.name : 'Unknown'),
-          rating: resource.rating || (platformInfo ? platformInfo.rating : undefined),
-        };
+          provider: platformInfo ? platformInfo.name : 'Unknown',
+        });
       })
     );
 
@@ -441,13 +434,10 @@ export async function generateVerifiedLearningResources(
         r.title.toLowerCase() === resource.title.toLowerCase()
       ) === index;
     });
-
-    console.log(`Generated and verified ${finalResources.length} unique resources for ${jobTitle}.`);
-    console.log('Final resources being returned:', finalResources);
-    return finalResources;
+    return verifyCourseCandidates(finalResources);
 
   } catch (error) {
-    console.error('Error in generateVerifiedLearningResources:', error);
+    reportError('enhancedLearningResources', 'operation_failed');
     // In case of any error (API call, parsing, etc.), return an empty array.
     // The higher-level function will handle this case.
     return [];

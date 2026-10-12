@@ -1,0 +1,893 @@
+{
+  "source": "Developer_Master_Task_Tracker_Final_11Oct2026 (1).xlsx / FDE Curriculum",
+  "sections": [
+    {
+      "number": 1,
+      "title": "Welcome to the Generative AI FDE Program",
+      "items": [
+        {
+          "number": 1,
+          "title": "What is a Generative AI Forward Deployed Engineer?",
+          "type": "Lecture"
+        },
+        {
+          "number": 2,
+          "title": "SDE vs AI Engineer vs AI FDE: How the Role Changes",
+          "type": "Lecture"
+        },
+        {
+          "number": 3,
+          "title": "The Modern GenAI Stack: Models, Context, Tools, Orchestration, Trust and Operations",
+          "type": "Lecture"
+        },
+        {
+          "number": 4,
+          "title": "From LLM Applications to Agentic Workflows and Autonomous Agents",
+          "type": "Lecture"
+        },
+        {
+          "number": 5,
+          "title": "How to Use This Program and Build Your Portfolio",
+          "type": "Lecture"
+        },
+        {
+          "number": 6,
+          "title": "Development Environment Setup: Python, Git, VS Code, Docker and API Keys",
+          "type": "Hands-on"
+        },
+        {
+          "number": 7,
+          "title": "FDE Role and GenAI System Fundamentals",
+          "type": "Quiz"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "title": "Python & Linux Foundations for AI Engineers",
+      "items": [
+        {
+          "number": 8,
+          "title": "Python Refresher: Data Structures, Functions and Modules",
+          "type": "Lecture"
+        },
+        {
+          "number": 9,
+          "title": "Object-Oriented Python for Production Applications",
+          "type": "Lecture"
+        },
+        {
+          "number": 10,
+          "title": "Exceptions, File I/O and Configuration Management",
+          "type": "Lecture"
+        },
+        {
+          "number": 11,
+          "title": "Memory Management and Performance Basics",
+          "type": "Lecture"
+        },
+        {
+          "number": 12,
+          "title": "Async Python: Event Loops, Coroutines and Tasks",
+          "type": "Lecture"
+        },
+        {
+          "number": 13,
+          "title": "Concurrency vs Parallelism and ThreadPoolExecutor",
+          "type": "Lecture"
+        },
+        {
+          "number": 14,
+          "title": "Linux for Engineers: Files, Permissions, Processes and Environment Variables",
+          "type": "Lecture"
+        },
+        {
+          "number": 15,
+          "title": "Build an Async Python Data-Processing Service",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "title": "Modern API & Backend Engineering",
+      "items": [
+        {
+          "number": 16,
+          "title": "FastAPI Fundamentals and REST API Design",
+          "type": "Lecture"
+        },
+        {
+          "number": 17,
+          "title": "Pydantic Validation and Typed Request/Response Models",
+          "type": "Lecture"
+        },
+        {
+          "number": 18,
+          "title": "Dependency Injection, Middleware and CORS",
+          "type": "Lecture"
+        },
+        {
+          "number": 19,
+          "title": "CRUD Patterns and API Error Handling",
+          "type": "Lecture"
+        },
+        {
+          "number": 20,
+          "title": "GraphQL Fundamentals, Schemas, Queries and Mutations",
+          "type": "Lecture"
+        },
+        {
+          "number": 21,
+          "title": "API Versioning and Backward Compatibility",
+          "type": "Lecture"
+        },
+        {
+          "number": 22,
+          "title": "Test a FastAPI Service with Pytest, Fixtures and Mocks",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "title": "Cloud, Networking, Containers & CI/CD",
+      "items": [
+        {
+          "number": 23,
+          "title": "AWS Fundamentals: Compute, Storage, Databases and Serverless",
+          "type": "Lecture"
+        },
+        {
+          "number": 24,
+          "title": "VPCs, Public/Private Subnets, NAT and Security Groups",
+          "type": "Lecture"
+        },
+        {
+          "number": 25,
+          "title": "IAM, Least Privilege and Cloud Cost Controls",
+          "type": "Lecture"
+        },
+        {
+          "number": 26,
+          "title": "Dockerfiles, Images, Containers and Volumes",
+          "type": "Lecture"
+        },
+        {
+          "number": 27,
+          "title": "Docker Compose and Multi-Container AI Applications",
+          "type": "Lecture"
+        },
+        {
+          "number": 28,
+          "title": "Deploying Containers with App Runner and ECS Fargate",
+          "type": "Lecture"
+        },
+        {
+          "number": 29,
+          "title": "CI/CD with GitHub Actions and Secrets Management",
+          "type": "Lecture"
+        },
+        {
+          "number": 30,
+          "title": "Containerize and Deploy a FastAPI AI Service",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "title": "Machine Learning & Deep Learning Foundations",
+      "items": [
+        {
+          "number": 31,
+          "title": "Train, Validation and Test Sets; Leakage and Bias-Variance",
+          "type": "Lecture"
+        },
+        {
+          "number": 32,
+          "title": "Tensors, Forward Pass, Loss Functions and Backpropagation",
+          "type": "Lecture"
+        },
+        {
+          "number": 33,
+          "title": "Activation Functions: ReLU and Beyond",
+          "type": "Lecture"
+        },
+        {
+          "number": 34,
+          "title": "Optimization: SGD, Adam and AdamW",
+          "type": "Lecture"
+        },
+        {
+          "number": 35,
+          "title": "Regularization, Normalization and Learning-Rate Schedules",
+          "type": "Lecture"
+        },
+        {
+          "number": 36,
+          "title": "PyTorch Tensors, Autograd and DataLoaders",
+          "type": "Lecture"
+        },
+        {
+          "number": 37,
+          "title": "Mixed Precision, Gradient Accumulation and Experiment Tracking",
+          "type": "Lecture"
+        },
+        {
+          "number": 38,
+          "title": "Train and Debug a Small Neural Network in PyTorch",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "title": "Transformers, LLM Internals & Model Literacy",
+      "items": [
+        {
+          "number": 39,
+          "title": "Tokenization, Embeddings and Positional Information",
+          "type": "Lecture"
+        },
+        {
+          "number": 40,
+          "title": "Self-Attention Step by Step",
+          "type": "Lecture"
+        },
+        {
+          "number": 41,
+          "title": "Multi-Head, Multi-Query and Grouped-Query Attention",
+          "type": "Lecture"
+        },
+        {
+          "number": 42,
+          "title": "Decoder-Only, Encoder-Only and Encoder-Decoder Architectures",
+          "type": "Lecture"
+        },
+        {
+          "number": 43,
+          "title": "Dense Models vs Mixture-of-Experts Models",
+          "type": "Lecture"
+        },
+        {
+          "number": 44,
+          "title": "Pretraining Data, Scaling, Checkpoints and Contamination",
+          "type": "Lecture"
+        },
+        {
+          "number": 45,
+          "title": "Instruction Tuning, Chat Templates and Tool-Call Formats",
+          "type": "Lecture"
+        },
+        {
+          "number": 46,
+          "title": "Long Context, KV Cache and Context Limitations",
+          "type": "Lecture"
+        },
+        {
+          "number": 47,
+          "title": "Build a Mini Decoder-Only Transformer and Profile Attention Memory",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "title": "Prompting, Structured Outputs & Context Engineering",
+      "items": [
+        {
+          "number": 48,
+          "title": "Prompt Design: Instructions, Context, Examples and Success Criteria",
+          "type": "Lecture"
+        },
+        {
+          "number": 49,
+          "title": "Zero-Shot, Few-Shot and Task Decomposition Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 50,
+          "title": "Reasoning Models, Verification Criteria and Test-Time Compute",
+          "type": "Lecture"
+        },
+        {
+          "number": 51,
+          "title": "Structured Outputs with JSON Schema and Pydantic",
+          "type": "Lecture"
+        },
+        {
+          "number": 52,
+          "title": "Validation, Repair, Retries and Idempotent Downstream Handling",
+          "type": "Lecture"
+        },
+        {
+          "number": 53,
+          "title": "Context Engineering: Write, Select, Compress and Isolate",
+          "type": "Lecture"
+        },
+        {
+          "number": 54,
+          "title": "Prompt Versioning, Caching, Routing and Fallbacks",
+          "type": "Lecture"
+        },
+        {
+          "number": 55,
+          "title": "Create a Versioned Prompt Package with a Regression Test Suite",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "title": "Vector Search & Production RAG",
+      "items": [
+        {
+          "number": 56,
+          "title": "RAG Architecture: Ingestion, Retrieval, Generation and Citations",
+          "type": "Lecture"
+        },
+        {
+          "number": 57,
+          "title": "Document Parsing, Metadata, Deduplication and Incremental Updates",
+          "type": "Lecture"
+        },
+        {
+          "number": 58,
+          "title": "Fixed, Recursive, Structural and Semantic Chunking",
+          "type": "Lecture"
+        },
+        {
+          "number": 59,
+          "title": "Embedding Models and Vector Representations",
+          "type": "Lecture"
+        },
+        {
+          "number": 60,
+          "title": "Vector Databases: Indexes, Distance Metrics and Metadata Filtering",
+          "type": "Lecture"
+        },
+        {
+          "number": 61,
+          "title": "Sparse Search with BM25 and Dense vs Sparse Retrieval",
+          "type": "Lecture"
+        },
+        {
+          "number": 62,
+          "title": "Hybrid Search and Reciprocal Rank Fusion",
+          "type": "Lecture"
+        },
+        {
+          "number": 63,
+          "title": "Query Rewriting, Multi-Query Search and Reranking",
+          "type": "Lecture"
+        },
+        {
+          "number": 64,
+          "title": "RAG Evaluation: Retrieval, Faithfulness, Correctness and Citation Accuracy",
+          "type": "Lecture"
+        },
+        {
+          "number": 65,
+          "title": "Build a Permission-Aware Hybrid RAG Service over Enterprise PDFs",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "title": "Knowledge Graphs, GraphRAG & Multimodal RAG",
+      "items": [
+        {
+          "number": 66,
+          "title": "Knowledge Graph Fundamentals: Nodes, Edges, Properties and Ontologies",
+          "type": "Lecture"
+        },
+        {
+          "number": 67,
+          "title": "Neo4j and Cypher: Modeling and Querying Enterprise Relationships",
+          "type": "Lecture"
+        },
+        {
+          "number": 68,
+          "title": "Graph-Based Retrieval and When GraphRAG Is Worth It",
+          "type": "Lecture"
+        },
+        {
+          "number": 69,
+          "title": "Multimodal RAG Architecture for Text, Tables, Images and Charts",
+          "type": "Lecture"
+        },
+        {
+          "number": 70,
+          "title": "OCR, Layout-Aware Parsing and OCR-Free Retrieval Concepts",
+          "type": "Lecture"
+        },
+        {
+          "number": 71,
+          "title": "Vision-Language Models, CLIP and Visual Embeddings",
+          "type": "Lecture"
+        },
+        {
+          "number": 72,
+          "title": "Scanned PDFs, Tables, Charts and Multi-Page Visual Context",
+          "type": "Lecture"
+        },
+        {
+          "number": 73,
+          "title": "Build a Visual Document Assistant with Graph and Multimodal Retrieval",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "title": "Fine-Tuning, Model Adaptation & Post-Training",
+      "items": [
+        {
+          "number": 74,
+          "title": "Choosing Between Prompting, RAG, Tools and Fine-Tuning",
+          "type": "Lecture"
+        },
+        {
+          "number": 75,
+          "title": "Data Quality, Licensing, Deduplication and Train/Eval Separation",
+          "type": "Lecture"
+        },
+        {
+          "number": 76,
+          "title": "Supervised Fine-Tuning (SFT) Fundamentals",
+          "type": "Lecture"
+        },
+        {
+          "number": 77,
+          "title": "LoRA and QLoRA: How Parameter-Efficient Fine-Tuning Works",
+          "type": "Lecture"
+        },
+        {
+          "number": 78,
+          "title": "Adapter Rank, Target Modules, Merging and Serving Trade-Offs",
+          "type": "Lecture"
+        },
+        {
+          "number": 79,
+          "title": "Preference Learning: Reward Models, DPO and RLAIF",
+          "type": "Lecture"
+        },
+        {
+          "number": 80,
+          "title": "RLHF, GRPO and Verifiable-Reward Training Concepts",
+          "type": "Lecture"
+        },
+        {
+          "number": 81,
+          "title": "Synthetic Data, Multi-Turn and Tool-Use Training",
+          "type": "Lecture"
+        },
+        {
+          "number": 82,
+          "title": "Fine-Tune a Small Open Model and Compare It with Prompt and RAG Baselines",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "title": "Agentic AI, Tool Engineering & LangGraph",
+      "items": [
+        {
+          "number": 83,
+          "title": "The Augmented LLM: Model + Retrieval + Tools + Memory",
+          "type": "Lecture"
+        },
+        {
+          "number": 84,
+          "title": "Workflow Patterns: Chaining, Routing and Parallelization",
+          "type": "Lecture"
+        },
+        {
+          "number": 85,
+          "title": "Orchestrator-Worker and Evaluator-Optimizer Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 86,
+          "title": "Agent Loops: Observe, Decide, Act, Inspect and Stop",
+          "type": "Lecture"
+        },
+        {
+          "number": 87,
+          "title": "ReAct, Plan-and-Execute, Router and Supervisor Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 88,
+          "title": "Designing Safe, Typed and Idempotent Tools",
+          "type": "Lecture"
+        },
+        {
+          "number": 89,
+          "title": "LangGraph: State, Nodes, Edges and Conditional Routing",
+          "type": "Lecture"
+        },
+        {
+          "number": 90,
+          "title": "Subgraphs, Parallel Execution and Map-Reduce Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 91,
+          "title": "When Multi-Agent Architecture Helps - and When It Hurts",
+          "type": "Lecture"
+        },
+        {
+          "number": 92,
+          "title": "Build and Compare a Workflow, Single Agent and Multi-Agent System",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "title": "MCP, A2A & Enterprise Integrations",
+      "items": [
+        {
+          "number": 93,
+          "title": "Model Context Protocol (MCP): Host, Client, Server, Tools and Resources",
+          "type": "Lecture"
+        },
+        {
+          "number": 94,
+          "title": "Building and Securing an MCP Server",
+          "type": "Lecture"
+        },
+        {
+          "number": 95,
+          "title": "Agent-to-Agent (A2A): Skills, Tasks, Messages and Artifacts",
+          "type": "Lecture"
+        },
+        {
+          "number": 96,
+          "title": "MCP vs A2A: Choosing the Right Protocol Boundary",
+          "type": "Lecture"
+        },
+        {
+          "number": 97,
+          "title": "Slack, Microsoft Teams and Jira Integrations",
+          "type": "Lecture"
+        },
+        {
+          "number": 98,
+          "title": "SOAP APIs, WSDL, XML Envelopes and Legacy Error Handling",
+          "type": "Lecture"
+        },
+        {
+          "number": 99,
+          "title": "Oracle and MS SQL Server Integration with Safe Parameterized Queries",
+          "type": "Lecture"
+        },
+        {
+          "number": 100,
+          "title": "Text-to-SQL Constraints, Read-Only Roles and Fallbacks",
+          "type": "Lecture"
+        },
+        {
+          "number": 101,
+          "title": "Build an MCP Tool Server and an Enterprise Integration Agent",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "title": "Long-Running & Autonomous Agent Engineering",
+      "items": [
+        {
+          "number": 102,
+          "title": "Planning, Decomposition, Task Graphs and Completion Checks",
+          "type": "Lecture"
+        },
+        {
+          "number": 103,
+          "title": "Durable Execution: Checkpoints, Resumability and Event-Driven State",
+          "type": "Lecture"
+        },
+        {
+          "number": 104,
+          "title": "Retries, Idempotency, Compensating Actions and Cancellation",
+          "type": "Lecture"
+        },
+        {
+          "number": 105,
+          "title": "Working State, Thread History, Long-Term Memory and Artifact Stores",
+          "type": "Lecture"
+        },
+        {
+          "number": 106,
+          "title": "Context Compaction, Selective Recall and Subagent Isolation",
+          "type": "Lecture"
+        },
+        {
+          "number": 107,
+          "title": "Async Background Jobs, Queues, Webhooks and Schedules",
+          "type": "Lecture"
+        },
+        {
+          "number": 108,
+          "title": "Code, Shell, Browser and Computer-Use Agents",
+          "type": "Lecture"
+        },
+        {
+          "number": 109,
+          "title": "Human-in-the-Loop Approval, Escalation and Safe Resume",
+          "type": "Lecture"
+        },
+        {
+          "number": 110,
+          "title": "Build a Long-Running Agent that Survives Interruption and Resume",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "title": "Identity, AI Security, Guardrails & Governance",
+      "items": [
+        {
+          "number": 111,
+          "title": "Authentication vs Authorization: OAuth 2.0, OIDC, SAML and JWT",
+          "type": "Lecture"
+        },
+        {
+          "number": 112,
+          "title": "Active Directory, Enterprise SSO and RBAC",
+          "type": "Lecture"
+        },
+        {
+          "number": 113,
+          "title": "Data-Level Permissions in RAG and Tool Layers",
+          "type": "Lecture"
+        },
+        {
+          "number": 114,
+          "title": "Prompt Injection, Indirect Injection and Jailbreak Threats",
+          "type": "Lecture"
+        },
+        {
+          "number": 115,
+          "title": "Excessive Agency, Confused Deputy and Data Exfiltration Risks",
+          "type": "Lecture"
+        },
+        {
+          "number": 116,
+          "title": "PII Detection, Masking and Sensitive-Data Redaction",
+          "type": "Lecture"
+        },
+        {
+          "number": 117,
+          "title": "NeMo Guardrails and Managed Guardrail Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 118,
+          "title": "Sandboxing, Egress Control, Secrets and Kill Switches",
+          "type": "Lecture"
+        },
+        {
+          "number": 119,
+          "title": "Threat-Model and Secure an Enterprise Agent",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "title": "Evaluation, Observability, Reliability & LLMOps",
+      "items": [
+        {
+          "number": 120,
+          "title": "Building Golden Datasets, Rubrics and Adversarial Cases",
+          "type": "Lecture"
+        },
+        {
+          "number": 121,
+          "title": "Deterministic Graders, LLM Judges and Human Calibration",
+          "type": "Lecture"
+        },
+        {
+          "number": 122,
+          "title": "RAG Metrics, Generation Metrics and Business Metrics",
+          "type": "Lecture"
+        },
+        {
+          "number": 123,
+          "title": "Agent Trajectory Evaluation: Plans, Tools, Arguments and Policy",
+          "type": "Lecture"
+        },
+        {
+          "number": 124,
+          "title": "Production Reliability: Timeouts, Retries, Rate Limits and Circuit Breakers",
+          "type": "Lecture"
+        },
+        {
+          "number": 125,
+          "title": "LLM Gateways, Routing, Fallbacks and Centralized API Management",
+          "type": "Lecture"
+        },
+        {
+          "number": 126,
+          "title": "Tracing with LangSmith, Langfuse and OpenTelemetry Concepts",
+          "type": "Lecture"
+        },
+        {
+          "number": 127,
+          "title": "SLOs, Error Budgets, Cost per Successful Task and Release Gates",
+          "type": "Lecture"
+        },
+        {
+          "number": 128,
+          "title": "Build an Agent Evaluation Suite and Production Observability Dashboard",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "title": "Multimodal, Voice & Realtime AI Systems",
+      "items": [
+        {
+          "number": 129,
+          "title": "Vision-Language Models for Images, Documents and Video",
+          "type": "Lecture"
+        },
+        {
+          "number": 130,
+          "title": "Multimodal Embeddings and Evidence Retrieval",
+          "type": "Lecture"
+        },
+        {
+          "number": 131,
+          "title": "ASR, TTS and Speech-to-Speech Systems",
+          "type": "Lecture"
+        },
+        {
+          "number": 132,
+          "title": "Realtime Sessions, Streaming and Turn Detection",
+          "type": "Lecture"
+        },
+        {
+          "number": 133,
+          "title": "Interruption, Tool Delegation and Voice Safety",
+          "type": "Lecture"
+        },
+        {
+          "number": 134,
+          "title": "Embodied and Vision-Language-Action Agent Concepts",
+          "type": "Lecture"
+        },
+        {
+          "number": 135,
+          "title": "Build a Voice or Visual Enterprise Assistant",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "title": "Inference Optimization & Enterprise Platform Deployment",
+      "items": [
+        {
+          "number": 136,
+          "title": "Inference Metrics: TTFT, Inter-Token Latency, Throughput and Goodput",
+          "type": "Lecture"
+        },
+        {
+          "number": 137,
+          "title": "KV Cache, Paged Attention and Prefix Caching",
+          "type": "Lecture"
+        },
+        {
+          "number": 138,
+          "title": "Continuous Batching, Chunked Prefill and Request Scheduling",
+          "type": "Lecture"
+        },
+        {
+          "number": 139,
+          "title": "Quantization, Speculative Decoding and Quality Trade-Offs",
+          "type": "Lecture"
+        },
+        {
+          "number": 140,
+          "title": "Tensor, Pipeline, Context and Expert Parallelism",
+          "type": "Lecture"
+        },
+        {
+          "number": 141,
+          "title": "Prefill/Decode Disaggregation and KV-Aware Routing",
+          "type": "Lecture"
+        },
+        {
+          "number": 142,
+          "title": "Serving with vLLM, SGLang, TensorRT-LLM and NIM",
+          "type": "Lecture"
+        },
+        {
+          "number": 143,
+          "title": "NVIDIA NeMo Agent Toolkit, OpenShell, Retriever and Dynamo",
+          "type": "Lecture"
+        },
+        {
+          "number": 144,
+          "title": "Benchmark and Optimize an Open-Model Deployment for an Agent Workload",
+          "type": "Hands-on"
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "title": "Forward Deployed Engineering Lifecycle, Capstones & Interview Preparation",
+      "items": [
+        {
+          "number": 145,
+          "title": "FDE Discovery Workshops: Users, Workflows, Data and Constraints",
+          "type": "Lecture"
+        },
+        {
+          "number": 146,
+          "title": "Scoping, Architecture Decisions and Statements of Work",
+          "type": "Lecture"
+        },
+        {
+          "number": 147,
+          "title": "Enterprise AI ROI, KPIs, SLAs and Executive Communication",
+          "type": "Lecture"
+        },
+        {
+          "number": 148,
+          "title": "UAT, Runbooks, Operations Handoff and User Training",
+          "type": "Lecture"
+        },
+        {
+          "number": 149,
+          "title": "Capstone 1: OmniGuard - Secure AI Integration",
+          "type": "Capstone"
+        },
+        {
+          "number": 150,
+          "title": "OmniGuard Build: RBAC, Hybrid RAG, Secure SQL and Guardrails",
+          "type": "Capstone"
+        },
+        {
+          "number": 151,
+          "title": "Capstone 2: AuditMesh - Multi-Agent Compliance System",
+          "type": "Capstone"
+        },
+        {
+          "number": 152,
+          "title": "AuditMesh Build: LangGraph Supervisor, MCP, Human Approval and Cost Tracing",
+          "type": "Capstone"
+        },
+        {
+          "number": 153,
+          "title": "Production Review: Quality, Security, Cost and Business KPIs",
+          "type": "Lecture"
+        },
+        {
+          "number": 154,
+          "title": "GenAI FDE System Design Interview Patterns",
+          "type": "Lecture"
+        },
+        {
+          "number": 155,
+          "title": "RAG, Fine-Tuning, Agent and Security Interview Questions",
+          "type": "Lecture"
+        },
+        {
+          "number": 156,
+          "title": "How to Present Your FDE Portfolio and Capstone Architecture",
+          "type": "Lecture"
+        }
+      ]
+    }
+  ]
+}

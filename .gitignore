@@ -29,3 +29,6 @@ supabase/.temp/
 *.sln
 *.sw?
 config.bat
+
+# Local QA screenshots, source workbook extracts and backend backups
+artifacts/
