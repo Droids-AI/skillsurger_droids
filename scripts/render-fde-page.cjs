@@ -20,6 +20,6 @@ html=html.replace(/<title>[\s\S]*?<\/title>/g,'').replace(/<meta\b[^>]*data-rh="
 // Homepage JSON-LD must not describe the course route.
 html=html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g,'');
 html=html.replace('</head>',rendered.head+'\n</head>').replace('<div id="root"></div>','<div id="root">'+rendered.body+'</div>');
-fs.mkdirSync('dist/forward-deployed-ai-engineer',{recursive:true});
-fs.writeFileSync('dist/forward-deployed-ai-engineer/index.html',html);
+fs.mkdirSync('dist/courses/forward-deployed-ai-engineer',{recursive:true});
+fs.writeFileSync('dist/courses/forward-deployed-ai-engineer/index.html',html);
 console.log('Generated FDE static HTML with route-specific SEO/OG and complete curriculum.');

@@ -76,7 +76,8 @@ function App() {
               <Route path="/forgot-password" element={<PasswordRecovery />} />
               <Route path="/reset-password" element={<PasswordRecovery reset />} />
               <Route path="/book-diagnosis" element={<Navigate to="/book-a-call" replace />} />
-              <Route path="/forward-deployed-ai-engineer" element={<FDECourse />} />
+              <Route path="/courses/forward-deployed-ai-engineer" element={<FDECourse />} />
+              <Route path="/forward-deployed-ai-engineer" element={<Navigate to="/courses/forward-deployed-ai-engineer" replace />} />
               <Route path="/get-started" element={<Onboarding />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/job-readiness-index" element={<JobReadinessIndex />} />

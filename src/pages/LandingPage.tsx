@@ -25,6 +25,7 @@ import FAQSection from "../components/landing/FAQSection";
 import CTASection from "../components/landing/CTASection";
 import RoleTrackCard from "../components/roleTracks/RoleTrackCard";
 import { roleTracks } from "../lib/constants/roleTracks";
+import { WEBINAR } from "../lib/constants/webinar";
 
 const features = [
   {
@@ -358,7 +359,7 @@ export default function LandingPage() {
       {/* Job Switch Copilot: Final CTA */}
       <CTASection
         title="Stop applying randomly. Build a structured job-search system."
-        subtitle="Join a free one-hour webinar on planning your next job switch and targeting 1.5x to 5x salary growth."
+        subtitle={`${WEBINAR.schedule}: join a free one-hour webinar on planning your next job switch and targeting 1.5x to 5x salary growth.`}
         ctaLabel="Reserve my free webinar seat"
         ctaHref="/job-switch-copilot#webinar"
         footnote="No guaranteed outcomes — just a structured system to improve your job search."

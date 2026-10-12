@@ -9,6 +9,12 @@
   force = true
 
 [[redirects]]
+  from = "/forward-deployed-ai-engineer"
+  to = "/courses/forward-deployed-ai-engineer"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/training"
   to = "/job-switch-copilot"
   status = 301

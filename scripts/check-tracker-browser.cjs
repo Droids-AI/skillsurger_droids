@@ -130,7 +130,7 @@ const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
     await page.getByLabel('New password',{exact:true}).fill('SyntheticPassword123!');await page.getByLabel('Confirm password').fill('SyntheticPassword123!');await page.getByRole('button',{name:'Update password'}).click();await page.getByRole('status').filter({hasText:'Your password has been updated'}).waitFor();assert.equal(updatedPassword,true);
     await page.goto(base+'/reset-password');await page.getByText(/reset link is missing, invalid, or expired/).waitFor();assert.ok(await page.getByRole('link',{name:'Request a new reset link'}).count()===1);passed('DEV-013','Reset request failure/retry, PKCE recovery callback, password update/signout and expired-link recovery checked with mocked auth.');
     await page.goto(base+'/book-diagnosis');await page.waitForURL('**/book-a-call');await page.getByRole('heading',{name:'Book Your Career Diagnosis Call'}).waitFor();passed('DEV-012','Booking alias resolves to existing usable booking form.');
-    await page.goto(base+'/forward-deployed-ai-engineer');
+    await page.goto(base+'/courses/forward-deployed-ai-engineer');
     const sections=page.locator('details').filter({has:page.locator('ol')});assert.equal(await sections.count(),18);
     for(const detail of await sections.all())await detail.locator('summary').click();assert.equal(await sections.locator('ol li').count(),156);
     for(const name of ['OmniGuard','AuditMesh'])assert.equal(await page.getByRole('heading',{name,exact:true}).count(),1);

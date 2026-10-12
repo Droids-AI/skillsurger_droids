@@ -11,9 +11,8 @@ export interface ThankYouContent {
 }
 
 /**
- * Copy for the parameterized /thank-you?type=... variants. The default
- * (no `type` param) masterclass/webinar experience in ThankYouPage.tsx is
- * untouched and does not read from this file.
+ * Copy for the parameterized /thank-you?type=... variants. Visits without
+ * a `type` param redirect to the current webinar page.
  */
 export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
   webinar: {

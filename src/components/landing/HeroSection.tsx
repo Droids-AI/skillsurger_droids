@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 
-import { ArrowRight, Shield, Clock, Globe, Sparkles } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Globe, Sparkles, Calendar } from 'lucide-react';
 import Button from '../Button';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { WEBINAR } from '../../lib/constants/webinar';
 
 export default function HeroSection() {
 
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const webinarUpcoming = Date.now() < new Date(WEBINAR.endsAt).getTime();
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -43,10 +45,21 @@ export default function HeroSection() {
 
         <div className="container relative mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Powered by Advanced AI Technology
-            </div>
+            {webinarUpcoming ? (
+              <Link
+                to="/job-switch-copilot#webinar"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-2xl sm:rounded-full text-sm font-semibold text-left mb-6 hover:bg-blue-700 transition-colors"
+              >
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span>Free job switch webinar · {WEBINAR.schedule}</span>
+                <ArrowRight className="w-4 h-4 flex-shrink-0" />
+              </Link>
+            ) : (
+              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Powered by Advanced AI Technology
+              </div>
+            )}
 
             <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">
               One Stop Solution for Career Growth
