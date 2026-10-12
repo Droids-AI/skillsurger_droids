@@ -2,6 +2,7 @@ import { reportError } from './safeLogging';
 import { normalizeCourseMetadata, verifyCourseCandidates } from './courseValidation';
 // Enhanced learning resource generation with verified links
 import { verifyLink, generateFallbackUrl, getPlatformInfo } from './linkVerification';
+import { completeLearningResources } from './curatedLearningResources';
 import axios from 'axios';
 
 export interface VerifiedResource {
@@ -15,8 +16,10 @@ export interface VerifiedResource {
   price: 'free' | 'freemium' | 'paid' | 'unknown';
   rating?: number;
   provider: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'unknown';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'unknown';
   duration?: string;
+  // Official source added by Skillsurger for a skill the generated path missed.
+  curated?: boolean;
 }
 
 // Curated 2024-2025 learning resources with verified links
@@ -434,13 +437,12 @@ export async function generateVerifiedLearningResources(
         r.title.toLowerCase() === resource.title.toLowerCase()
       ) === index;
     });
-    return verifyCourseCandidates(finalResources);
+    return completeLearningResources(await verifyCourseCandidates(finalResources), requirements) as VerifiedResource[];
 
   } catch (error) {
     reportError('enhancedLearningResources', 'operation_failed');
-    // In case of any error (API call, parsing, etc.), return an empty array.
-    // The higher-level function will handle this case.
-    return [];
+    // Generation failed: still give official sources for the required skills.
+    return completeLearningResources([], requirements) as VerifiedResource[];
   }
 }
 

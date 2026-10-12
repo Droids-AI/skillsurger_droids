@@ -19,8 +19,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SubscriptionProtectedRoute from './components/SubscriptionProtectedRoute';
 import ProfileProtectedRoute from './components/ProfileProtectedRoute';
 import { UserProvider } from './context/UserContext';
-import Pricing from './pages/Pricing';
-import Upgrade from './pages/Upgrade';
+import Plans from './pages/Plans';
 import Subscription from './pages/Subscription';
 import AIResumeBuilder from "./pages/AIResumeBuilder";
 import MockInterview from "./pages/MockInterview";
@@ -80,8 +79,8 @@ function App() {
               <Route path="/courses/forward-deployed-ai-engineer" element={<FDECourse />} />
               <Route path="/forward-deployed-ai-engineer" element={<Navigate to="/courses/forward-deployed-ai-engineer" replace />} />
               <Route path="/get-started" element={<Onboarding />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
+              <Route path="/pricing" element={<Plans publicPage />} />
+              <Route path="/upgrade" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
               <Route path="/job-readiness-index" element={<JobReadinessIndex />} />
               <Route path="/linkedin-profile-optimizer" element={<LinkedInProfileOptimizer />} />
               <Route 

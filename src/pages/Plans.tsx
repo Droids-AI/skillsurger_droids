@@ -4,7 +4,7 @@ import { Shield, Clock, Download, BarChart3, Check, RefreshCcw, CheckCircle, Arr
 import SEO from "../components/SEO";
 import { trackEvent, EVENTS } from "../lib/analytics";
 
-// In-app subscription plans. Public /pricing visits go to the Job Switch Copilot offer instead.
+// Subscription plans: public at /pricing (with the free trial) and for signed-in users at /upgrade.
 const plans = [
   {
     name: "Monthly Pro",
@@ -23,7 +23,7 @@ const plans = [
       "Industry insights",
       "Email support",
     ],
-    cta: "Upgrade to Monthly",
+    cta: "Get Monthly Pro",
     popular: true,
     url: "https://checkout.dodopayments.com/buy/pdt_VksHXCMm4d8t5TZMiUKfY?quantity=1&redirect_url=https://skillsurger.com%2Fdashboard",
   },
@@ -46,30 +46,56 @@ const plans = [
       "Support team to apply 100s of jobs for you",
       "Real industry person mock interview",
     ],
-    cta: "Upgrade to Yearly · Save 17%",
+    cta: "Get Yearly Pro · Save 17%",
     popular: false,
     url: "https://checkout.dodopayments.com/buy/pdt_zFZMrKwafzRr12jun9Lfj?quantity=1&redirect_url=https://skillsurger.com%2Fdashboard",
   },
 ];
 
-export default function Upgrade() {
+const freeTrial = {
+  name: "Free Trial",
+  price: "0",
+  period: "7 days",
+  description: "Experience the full power of our AI career agent",
+  features: [
+    "Complete AI career analysis",
+    "Personalized learning paths",
+    "Mock interview sessions",
+    "CV optimization",
+    "Job matching",
+    "AI mentorship chat",
+  ],
+};
+
+export default function Plans({ publicPage = false }: { publicPage?: boolean }) {
   useEffect(() => {
-    trackEvent(EVENTS.PRICING_VIEWED, { page: "upgrade" });
-  }, []);
+    trackEvent(EVENTS.PRICING_VIEWED, { page: publicPage ? "pricing" : "upgrade" });
+  }, [publicPage]);
 
   return (
     <section className="py-16 sm:py-20 bg-gray-50 min-h-screen">
-      <SEO
-        title="Upgrade Your Plan | Skillsurger"
-        description="Upgrade your Skillsurger plan to keep using AI career guidance, mock interviews, CV optimization and job matching."
-        canonicalUrl="/upgrade"
-        noIndex
-      />
+      {publicPage ? (
+        <SEO
+          title="Pricing Plans | Skillsurger AI Career Coach"
+          description="Start with a free 7-day trial, then choose Monthly Pro at ₹799 or Yearly Pro at ₹7,999 for AI career guidance, mock interviews, CV optimization and job matching."
+          keywords="AI career coach pricing India, resume builder cost, career development pricing, job search tools pricing India"
+          canonicalUrl="/pricing"
+        />
+      ) : (
+        <SEO
+          title="Upgrade Your Plan | Skillsurger"
+          description="Upgrade your Skillsurger plan to keep using AI career guidance, mock interviews, CV optimization and job matching."
+          canonicalUrl="/upgrade"
+          noIndex
+        />
+      )}
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Upgrade your plan</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{publicPage ? "Choose your career growth plan" : "Upgrade your plan"}</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Keep full access to your AI career agent. Your profile, CVs and progress stay as they are.
+            {publicPage
+              ? "Start with a free 7-day trial. No credit card needed. Upgrade when you're ready."
+              : "Keep full access to your AI career agent. Your profile, CVs and progress stay as they are."}
           </p>
         </div>
 
@@ -85,7 +111,39 @@ export default function Upgrade() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className={`grid gap-8 mx-auto ${publicPage ? "md:grid-cols-2 lg:grid-cols-3 max-w-6xl" : "md:grid-cols-2 max-w-4xl"}`}>
+          {publicPage && (
+            <div className="relative rounded-2xl border-2 border-gray-200 bg-white p-8 hover:border-gray-300 transition-all duration-300">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{freeTrial.name}</h3>
+                <p className="text-gray-600 mb-4">{freeTrial.description}</p>
+                <div className="flex items-baseline justify-center">
+                  <span className="text-5xl font-bold text-gray-900">₹{freeTrial.price}</span>
+                  <span className="text-gray-600 ml-2">/{freeTrial.period}</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {freeTrial.features.map((feature) => (
+                  <li key={feature} className="flex items-start">
+                    <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/signup"
+                onClick={() => trackEvent(EVENTS.PLAN_SELECTED, { plan: freeTrial.name })}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-lg font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors"
+              >
+                Start Free Trial
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <div className="flex items-center justify-center text-sm text-gray-600 mt-3 font-medium">
+                <Shield className="w-4 h-4 mr-1.5 text-green-500" />
+                No credit card required
+              </div>
+            </div>
+          )}
           {plans.map((plan) => (
             <div
               key={plan.name}

@@ -52,6 +52,7 @@ export async function generateLearningPlan(
   provider?: string;
   difficulty?: string;
   duration?: string;
+  curated?: boolean;
 }>> {
 
   // Use the enhanced verified learning resources
@@ -70,7 +71,8 @@ export async function generateLearningPlan(
     rating: resource.rating,
     provider: resource.provider,
     difficulty: resource.difficulty,
-    duration: resource.duration
+    duration: resource.duration,
+    curated: resource.curated
   }));
 
   if (learningPlan.length === 0) {

@@ -27,6 +27,7 @@ interface LearningPath {
     provider?: string;
     difficulty?: string;
     duration?: string;
+    curated?: boolean;
   }>;
   progress: number;
   created_at: string;
@@ -978,16 +979,16 @@ export default function LearningPaths({ job }: LearningPathsProps) {
       <div className="bg-white rounded-lg shadow-lg p-6 cursor-default">
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <BookOpen className="w-5 h-5 mr-2 text-blue-600" />
-          Generate Verified Learning Path
+          Generate Learning Path
         </h3>
         
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start">
             <Shield className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-medium text-blue-900">Enhanced Link Verification</h4>
+              <h4 className="font-medium text-blue-900">How resources are labelled</h4>
               <p className="text-sm text-blue-700 mt-1">
-                Course candidates are suggested resources. Check the provider for current course details, prices and level. Unconfirmed information is labelled unknown.
+                Suggested resources are checked against the provider where possible. Each required skill also gets an official guide where we know one. Anything we could not confirm, such as price or level, is labelled unknown.
               </p>
             </div>
           </div>
@@ -1060,12 +1061,12 @@ export default function LearningPaths({ job }: LearningPathsProps) {
             {generatingPlan ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Generating Verified Learning Path...
+                Generating Learning Path...
               </>
             ) : (
               <>
                 <BookOpen className="w-4 h-4 mr-2" />
-                Generate Verified Learning Path
+                Generate Learning Path
               </>
             )}
           </Button>
@@ -1167,7 +1168,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                 <div className="space-y-4">
                   <h5 className="text-sm font-medium text-gray-700 flex items-center">
                     <Shield className="w-4 h-4 mr-1 text-green-600" />
-                    Verified Learning Resources
+                    Learning Resources
                   </h5>
                   {path.resources.map((resource, index) => (
                     <div
@@ -1183,7 +1184,8 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                             <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                               {resource.type}
                             </span>
-                            {!resource.verified && <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Not verified</span>}
+                            {resource.curated && <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Official source</span>}
+                            {!resource.verified && !resource.curated && <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Not verified</span>}
                             {resource.verified && (
                               <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs flex items-center">
                                 <Shield className="w-3 h-3 mr-1" />
@@ -1192,12 +1194,12 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                             )}
                             {resource.price && (
                               <span className={`px-2 py-1 rounded text-xs ${getPriceColor(resource.price)}`}>
-                                {resource.price}
+                                {resource.price.toLowerCase() === 'unknown' ? 'Price unknown' : resource.price.toLowerCase() === 'free' ? 'Free' : resource.price}
                               </span>
                             )}
                             {resource.difficulty && (
                               <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(resource.difficulty)}`}>
-                                {resource.difficulty}
+                                {resource.difficulty.toLowerCase() === 'unknown' ? 'Level unknown' : resource.difficulty}
                               </span>
                             )}
                           </div>
