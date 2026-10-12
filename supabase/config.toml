@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.verify-courses]
 verify_jwt = false
+
+[functions.sheets-sync]
+verify_jwt = false

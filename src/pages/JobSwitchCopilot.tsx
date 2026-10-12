@@ -21,7 +21,7 @@ const sessions = [
 ];
 const faqs = [
   ['Is the webinar really free?', 'Yes. This form reserves a free one-hour online webinar. No payment or programme purchase is required.'],
-  ['When is the webinar, and how do I join?', `${WEBINAR.schedule}. The session lasts one hour. Register with your WhatsApp number for the private joining link. If delivery fails, your confirmation provides a support link.`],
+  ['When is the webinar, and how do I join?', `${WEBINAR.schedule}. The session lasts one hour. After registering, join the webinar WhatsApp group from your confirmation page; the joining link and reminders are shared there.`],
   ['Who should attend?', 'Professionals planning a job switch, including software, data, cloud, DevOps, and AI professionals; people on notice period or returning after a layoff; and applicants who want to improve their callbacks, interview preparation, or salary conversations.'],
   ['Do I need to prepare anything?', 'Come with a target role in mind and a sense of where your current job search is getting stuck. Keeping your resume handy can help you relate the discussion to your own experience.'],
   ['Is 1.5x to 5x salary growth guaranteed?', 'No. This is a target to explore, not a promised result. Your starting salary, experience, skills, target role, market conditions, and execution all affect what is achievable. No job offer or salary increase is guaranteed.'],

@@ -28,7 +28,7 @@ interface SheetConfig {
 const SHEET_CONFIG: Record<string, SheetConfig> = {
   webinar_registration: {
     tab: "Webinar Registrations",
-    columns: ["receivedAt", "name", "email", "phoneNumber", "webinarTitle", "durationMinutes", "source", "pageUrl", "timestamp"],
+    columns: ["receivedAt", "name", "email", "phoneNumber", "webinarTitle", "startsAt", "durationMinutes", "source", "pageUrl", "timestamp", "requestId"],
   },
   diagnosis_booking: {
     tab: "Book a Call",

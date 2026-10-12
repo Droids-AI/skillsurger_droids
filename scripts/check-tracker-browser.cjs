@@ -84,7 +84,7 @@ const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
     await page.getByLabel('Full name').fill('Synthetic QA');await page.getByLabel('Email',{exact:true}).fill('QA@EXAMPLE.COM');await page.getByLabel('WhatsApp number with country code').fill('+919876543210');
     await page.getByRole('button',{name:'Reserve my free seat',exact:true}).click();await page.getByRole('heading',{name:'You are already registered.'}).waitFor();
     assert.equal((await conversions()).length,0);assert.equal(registrations.size,1);passed('QA-005','Concurrent submits, success refresh and existing-registration response do not duplicate conversions.');
-    assert.ok(await page.getByRole('link',{name:'Get help with your joining link'}).count()===1);
+    assert.equal(await page.getByRole('link',{name:'Join WhatsApp group'}).getAttribute('href'),'https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE');
     for(const width of [320,390,768,1280]) {
       await page.setViewportSize({width,height:900});await page.goto(base+'/job-switch-copilot');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
@@ -134,7 +134,7 @@ const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
     const sections=page.locator('details').filter({has:page.locator('ol')});assert.equal(await sections.count(),18);
     for(const detail of await sections.all())await detail.locator('summary').click();assert.equal(await sections.locator('ol li').count(),156);
     for(const name of ['OmniGuard','AuditMesh'])assert.equal(await page.getByRole('heading',{name,exact:true}).count(),1);
-    assert.equal(await page.getByRole('link',{name:'Check availability on Udemy'}).getAttribute('href'),'https://www.udemy.com/course/draft/7361879/?referralCode=059C9E3DEB7126402751');
+    assert.equal(await page.getByRole('link',{name:'Enroll on Udemy'}).getAttribute('href'),'https://www.udemy.com/course/draft/7361879/?referralCode=059C9E3DEB7126402751');
     assert.ok(await page.title().then(t=>t.includes('Forward Deployed AI Engineer')));assert.ok(await page.locator('meta[property="og:description"]').getAttribute('content'));
     for(const width of [320,390,768,1280]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
     passed('QA-036','18 sections/156 items, two exact capstone names, supplied Udemy CTA and metadata; responsive widths checked. Public Udemy availability not tested.');

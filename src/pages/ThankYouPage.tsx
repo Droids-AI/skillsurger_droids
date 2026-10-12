@@ -1,5 +1,5 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Calendar, ArrowRight } from 'lucide-react';
+import { CheckCircle, Calendar, ArrowRight, MessageCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 import { thankYouContent, ThankYouType } from '../lib/constants/thankYouContent';
 import { WEBINAR } from '../lib/constants/webinar';
@@ -89,9 +89,14 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{existing ? 'You are already registered.' : content.headline}</h1>
           <p className="text-gray-600 text-lg">{content.body}</p>
-          {type === 'webinar' && <div className="mt-5 rounded-xl bg-blue-50 p-5 text-left">
-            <p>{delivery === 'delivered' || delivery === 'read' ? 'The joining message was delivered to your WhatsApp number.' : delivery === 'accepted' ? 'The joining message was submitted to WhatsApp. Check your registered number; delivery may take a moment.' : 'Your registration is saved. If the joining message has not arrived, contact us for help.'}</p>
-            <a className="block mt-3 text-blue-700 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2017%20October%202026">Get help with your joining link</a>
+          {type === 'webinar' && <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-6 text-left">
+            <div className="flex items-center gap-2 text-green-800 font-bold text-lg"><MessageCircle className="w-5 h-5" /> Next step: join the webinar WhatsApp group</div>
+            <p className="mt-2 text-gray-700">The joining link and reminders for {WEBINAR.schedule} are shared in this group.</p>
+            <a href={WEBINAR.whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-6 py-3 font-semibold text-white transition-colors">
+              <MessageCircle className="w-5 h-5" /> Join WhatsApp group
+            </a>
+            {(delivery === 'delivered' || delivery === 'read' || delivery === 'accepted') && <p className="mt-3 text-sm text-gray-600">We've also sent the joining message to your WhatsApp number.</p>}
+            <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2017%20October%202026">Trouble joining? Message us</a>
           </div>}
           {type === 'webinar' && <div className="mt-5"><AddToCalendarButton /></div>}
         </div>
