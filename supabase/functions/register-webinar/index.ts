@@ -34,12 +34,13 @@ Deno.serve(async request => {
     const limit = await admin.rpc('webinar_rate_limit', { p_key: key });
     if (limit.error) throw new Error('rate_limit_failed');
     if (!limit.data) return respond({ error: 'Too many attempts. Please retry in 10 minutes.', requestId }, 429);
-    const result = await admin.rpc('register_webinar', { p_session_id: sessionId, p_payload: {
+    const lead = {
       name, email, phoneNumber: phone, webinarTitle: 'How to switch jobs and target 1.5x to 5x salary growth',
       startsAt, durationMinutes: 60, source: 'job-switch-copilot', timestamp: new Date().toISOString(),
       // URL is normalized: no arbitrary query parameters/contact details in logs or leads.
       pageUrl: `${origin}/job-switch-copilot`, requestId,
-    } });
+    };
+    const result = await admin.rpc('register_webinar', { p_session_id: sessionId, p_payload: lead });
     if (result.error) throw new Error('registration_failed');
     const { registrationId, alreadyRegistered } = result.data;
     let whatsappStatus = 'pending';
@@ -87,7 +88,18 @@ Deno.serve(async request => {
       whatsappStatus = 'failed';
       console.error(JSON.stringify({ area: 'webinar-notification', code: 'notification_failed', requestId }));
     }
-    // Sheets should be triggered server-side by the leads INSERT database webhook.
+    if (!alreadyRegistered) {
+      // Same Google Sheet sync the other lead forms use ("Webinar Registrations" tab).
+      // Best-effort: a Sheets hiccup must not fail a saved registration.
+      const sync = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/sheets-sync`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ ...lead, formType: 'webinar_registration' }),
+      }).then(response => { if (!response.ok) throw new Error(String(response.status)); })
+        .catch(() => console.error(JSON.stringify({ area: 'webinar-sheets', code: 'sheets_sync_failed', requestId })));
+      // deno-lint-ignore no-explicit-any
+      const runtime = (globalThis as any).EdgeRuntime;
+      if (runtime?.waitUntil) runtime.waitUntil(sync); else await sync;
+    }
     return respond({ registrationId, alreadyRegistered, whatsappStatus, requestId });
   } catch {
     console.error(JSON.stringify({ area: 'webinar-registration', code: 'request_failed', requestId }));
