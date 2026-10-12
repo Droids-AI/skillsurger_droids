@@ -8,7 +8,7 @@ const toUtcStamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g,
 
 function AddToCalendarButton() {
   const title = `Free webinar: ${WEBINAR.title} — Skillsurger`;
-  const description = `${WEBINAR.schedule}. 60 minutes online. Your private joining link is sent to your registered WhatsApp number.`;
+  const description = `${WEBINAR.schedule}. 60 minutes online. Joining link: ${WEBINAR.whatsappGroupUrl} (shared in the webinar WhatsApp group).`;
   const location = 'Online (joining link sent via WhatsApp)';
   const startDate = toUtcStamp(WEBINAR.startsAt);
   const endDate = toUtcStamp(WEBINAR.endsAt);

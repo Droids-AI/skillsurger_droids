@@ -41,7 +41,7 @@ const server = http.createServer((req,res) => {
     assert.ok((await page.locator('main').innerText()).includes('₹9,999'));
     assert.equal(await page.getByText('JSC Lite',{exact:true}).count(),0);
     assert.ok(await page.evaluate(() => document.getElementById('webinar').getBoundingClientRect().top < document.getElementById('programme').getBoundingClientRect().top), 'Registration must precede the paid programme');
-    await page.getByRole('link',{name:'Start with the free webinar'}).click();
+    await page.getByRole('link',{name:'Register for the free webinar'}).click();await page.waitForFunction(()=>document.activeElement?.id==='webinar-name');
     await page.getByLabel('Full name').fill('Smoke Test');await page.getByLabel('Email',{exact:true}).fill('smoke@example.com');await page.getByLabel('WhatsApp number with country code').fill('+91 98765 43210');
     failLead=true;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.getByRole('alert').waitFor();assert.equal(rows.length,0);
     failLead=false;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured');

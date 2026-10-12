@@ -30,7 +30,16 @@ const faqs = [
 ];
 
 export default function JobSwitchCopilot() {
-  const reserve = (placement: string) => trackEvent(EVENTS.JOB_SWITCH_COPILOT_CTA_CLICKED, { placement, destination: 'free_webinar' });
+  // Every webinar CTA lands the visitor in the form's first field, not just near it.
+  const reserve = (placement: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+    trackEvent(EVENTS.JOB_SWITCH_COPILOT_CTA_CLICKED, { placement, destination: 'free_webinar' });
+    const form = document.getElementById('webinar');
+    const name = document.getElementById('webinar-name') as HTMLInputElement | null;
+    if (!form || !name) return;
+    event.preventDefault();
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => name.focus({ preventScroll: true }), 450);
+  };
   const ctaClass = 'inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500';
   return <div className="min-h-screen bg-[#020420] text-white">
     <SEO title="Free Job Switch Webinar | Job Switch Copilot — Skillsurger" description="Join a free one-hour webinar on planning a job switch and targeting 1.5x to 5x salary growth. Explore our optional ₹9,999 one-month Job Switch Copilot programme." canonicalUrl="/job-switch-copilot" />
@@ -48,7 +57,7 @@ export default function JobSwitchCopilot() {
           <div className="flex flex-wrap gap-3 mb-7">{[{ label: '60 minutes', icon: Clock }, { label: 'Online', icon: Video }, { label: '₹0 to attend', icon: ShieldCheck }].map(({ label, icon: Icon }) =>
             <span key={label} className="flex items-center gap-2 text-sm rounded-lg bg-white/5 border border-white/10 px-3 py-2"><Icon className="w-4 h-4 text-cyan-300" />{label}</span>
           )}</div>
-          <a href="#webinar" onClick={() => reserve('hero')} className={ctaClass}>Start with the free webinar <ArrowRight className="w-5 h-5" /></a>
+          <a href="#webinar" onClick={reserve('hero')} className={`${ctaClass} lg:hidden`}>Register for the free webinar <ArrowRight className="w-5 h-5" /></a>
           <p className="text-sm text-slate-400 mt-4 max-w-lg">Salary growth is a target, not a guarantee. What is achievable depends on your starting point, skills, role, and market.</p>
         </div>
         <div id="webinar" className="scroll-mt-24 rounded-3xl bg-white/5 text-white border border-white/10 p-6 sm:p-8 shadow-2xl shadow-blue-950/40 border border-blue-400/20">
@@ -65,7 +74,7 @@ export default function JobSwitchCopilot() {
           <div className="flex justify-between items-center mb-5"><span className="inline-flex p-3 rounded-xl bg-blue-500/15 text-blue-300"><Icon className="w-6 h-6" /></span><span className="text-3xl font-bold text-blue-300/40">0{index + 1}</span></div>
           <h3 className="text-xl font-bold mb-3">{title}</h3><p className="text-slate-300 leading-relaxed mb-5">{text}</p><p className="flex gap-2 items-start text-sm font-semibold text-blue-300"><CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />{takeaway}</p>
         </article>)}</div>
-        <div className="mt-8 text-center"><a href="#webinar" onClick={() => reserve('agenda')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-3">{WEBINAR.schedule}. No payment required. Joining link sent privately via WhatsApp.</p></div>
+        <div className="mt-8 text-center"><a href="#webinar" onClick={reserve('agenda')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-3">{WEBINAR.schedule}. No payment required. Joining link sent privately via WhatsApp.</p></div>
       </div>
     </section>
 
@@ -77,7 +86,7 @@ export default function JobSwitchCopilot() {
         <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-7 sm:p-10">
           <Sparkles className="w-9 h-9 text-cyan-200 mb-5" /><h3 className="text-2xl sm:text-3xl font-bold mb-6">Leave with a clearer direction for your next move.</h3>
           <div className="space-y-5">{[['Choose', 'Focus on roles that match your strengths and growth goals.'], ['Position', 'Show why your experience matters to the employer.'], ['Execute', 'Connect applications, outreach, interview prep, and negotiation.']].map(([title, text], i) => <div key={title} className="flex gap-4"><span className="w-8 h-8 shrink-0 rounded-full bg-white/15 flex items-center justify-center text-sm font-bold">{i + 1}</span><div><h4 className="font-bold">{title}</h4><p className="text-blue-100 mt-1">{text}</p></div></div>)}</div>
-          <a href="#webinar" onClick={() => reserve('audience')} className="inline-flex items-center gap-2 bg-white text-blue-700 rounded-xl px-5 py-3 font-bold mt-8 hover:bg-blue-50">Join the free webinar <ArrowUpRight className="w-5 h-5" /></a>
+          <a href="#webinar" onClick={reserve('audience')} className="inline-flex items-center gap-2 bg-white text-blue-700 rounded-xl px-5 py-3 font-bold mt-8 hover:bg-blue-50">Join the free webinar <ArrowUpRight className="w-5 h-5" /></a>
         </div>
       </div>
     </section>
@@ -103,13 +112,13 @@ export default function JobSwitchCopilot() {
           <div className="rounded-3xl border-2 border-blue-500 bg-[#0a1238] p-6 sm:p-9 shadow-xl shadow-blue-900/5">
             <p className="text-blue-300 font-bold text-sm tracking-wider uppercase mb-3">One programme · One fee</p><h3 className="text-3xl font-bold mb-5">Job Switch Copilot</h3><p className="text-5xl font-extrabold mb-2">₹9,999</p><p className="text-slate-400 mb-7">For the complete one-month programme</p>
             <div className="border-y border-white/10 py-5 mb-7 space-y-3"><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />8 live sessions of 2 hours each</p><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />6 group + 2 personal 1-to-1 sessions</p><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />16 hours total, across one month</p></div>
-            <p className="text-slate-300 mb-6">Start with the free webinar to understand the approach. Choose the paid programme only if it fits your goals.</p><a href="#webinar" onClick={() => reserve('programme')} className={`${ctaClass} w-full`}>Explore it in the free webinar <ArrowRight className="w-5 h-5 shrink-0" /></a><p className="text-xs text-slate-400 mt-4">Registering for the webinar does not enrol you in the programme. No job or salary outcome is guaranteed.</p>
+            <p className="text-slate-300 mb-6">Start with the free webinar to understand the approach. Choose the paid programme only if it fits your goals.</p><a href="#webinar" onClick={reserve('programme')} className={`${ctaClass} w-full`}>Explore it in the free webinar <ArrowRight className="w-5 h-5 shrink-0" /></a><p className="text-xs text-slate-400 mt-4">Registering for the webinar does not enrol you in the programme. No job or salary outcome is guaranteed.</p>
           </div>
         </div>
       </div>
     </section>
 
     <section className="py-16 max-w-3xl mx-auto px-4"><h2 className="text-3xl font-bold text-center mb-8">Your questions, answered</h2>{faqs.map(([question, answer]) => <details key={question} className="border-b border-white/10 py-5"><summary className="font-semibold text-lg cursor-pointer pr-2">{question}</summary><p className="text-slate-300 mt-3 leading-relaxed">{answer}</p></details>)}</section>
-    <section className="py-16 bg-gradient-to-br from-blue-950 to-[#020420]"><div className="max-w-3xl mx-auto px-4 text-center"><p className="text-blue-300 font-bold text-sm uppercase tracking-wider mb-3">Start with one hour</p><h2 className="text-3xl sm:text-4xl font-bold mb-5">Make your next application part of a plan.</h2><p className="text-slate-300 text-lg mb-8">Join the free job-switch webinar and see how a more focused approach could change your next move.</p><a href="#webinar" onClick={() => reserve('final')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-4">Free registration · 60 minutes online · No programme purchase required</p></div></section>
+    <section className="py-16 bg-gradient-to-br from-blue-950 to-[#020420]"><div className="max-w-3xl mx-auto px-4 text-center"><p className="text-blue-300 font-bold text-sm uppercase tracking-wider mb-3">Start with one hour</p><h2 className="text-3xl sm:text-4xl font-bold mb-5">Make your next application part of a plan.</h2><p className="text-slate-300 text-lg mb-8">Join the free job-switch webinar and see how a more focused approach could change your next move.</p><a href="#webinar" onClick={reserve('final')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-4">Free registration · 60 minutes online · No programme purchase required</p></div></section>
   </div>;
 }
