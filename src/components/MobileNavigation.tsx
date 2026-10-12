@@ -1,13 +1,20 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { toolsItems, platformItems, companyItems } from '../lib/constants/navigation';
+import { supabase } from '../lib/supabase';
 
 interface MobileNavigationProps { isOpen: boolean; onClose: () => void; }
 
 export default function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
   const location = useLocation();
   const panel = useRef<HTMLDivElement>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
+    return () => subscription.unsubscribe();
+  }, []);
   const close = useRef(onClose);
   close.current = onClose;
   useEffect(() => { close.current(); }, [location.pathname, location.search]);
@@ -48,9 +55,14 @@ export default function MobileNavigation({ isOpen, onClose }: MobileNavigationPr
           <h3 className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-bold">{group.label}</h3>
           {group.items.map(item => <Link key={item.href} to={item.href} onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-blue-50 text-gray-800"><item.icon className="w-5 h-5 text-blue-600" />{item.label}</Link>)}
         </div>)}
-        <Link to="/dashboard" onClick={onClose} className="block py-3 text-center text-blue-600 font-semibold">Dashboard</Link>
-        <Link to="/login" onClick={onClose} className="block py-3 text-center border rounded-lg">Log in</Link>
-        <Link to="/signup" onClick={onClose} className="block py-3 mt-3 text-center bg-blue-600 text-white rounded-lg">Get Started</Link>
+        {signedIn ? (
+          <Link to="/dashboard" onClick={onClose} className="block py-3 text-center bg-blue-600 text-white font-semibold rounded-lg">Dashboard</Link>
+        ) : (
+          <>
+            <Link to="/login" onClick={onClose} className="block py-3 text-center border rounded-lg">Log in</Link>
+            <Link to="/signup" onClick={onClose} className="block py-3 mt-3 text-center bg-blue-600 text-white rounded-lg">Get Started</Link>
+          </>
+        )}
       </nav>
     </div>
   </div>;

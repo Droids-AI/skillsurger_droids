@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { ArrowRight, Shield, Clock, Globe, Sparkles, Calendar } from 'lucide-react';
+import { ArrowRight, Shield, Clock, Globe, Sparkles, Calendar, CheckCircle2 } from 'lucide-react';
 import Button from '../Button';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -26,7 +26,7 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="relative pt-32 pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+      <section className="relative pt-24 pb-14 sm:pt-32 sm:pb-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&h=1080&fit=crop&fm=webp&q=50&auto=format"
           alt="Career growth background"
@@ -48,63 +48,63 @@ export default function HeroSection() {
             {webinarUpcoming ? (
               <Link
                 to="/job-switch-copilot#webinar"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-2xl sm:rounded-full text-sm font-semibold text-left mb-6 hover:bg-blue-700 transition-colors"
+                className="inline-flex max-w-full items-center gap-2 px-3 py-2 sm:px-4 bg-blue-600 text-white rounded-2xl sm:rounded-full text-xs sm:text-sm font-semibold text-left mb-5 sm:mb-6 hover:bg-blue-700 transition-colors"
               >
                 <Calendar className="w-4 h-4 flex-shrink-0" />
                 <span>Free job switch webinar · {WEBINAR.schedule}</span>
                 <ArrowRight className="w-4 h-4 flex-shrink-0" />
               </Link>
             ) : (
-              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium mb-5 sm:mb-6">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Powered by Advanced AI Technology
               </div>
             )}
 
-            <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight tracking-tight">
               One Stop Solution for Career Growth
             </h1>
 
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed">
               Get AI-powered resume optimization, discover hidden job openings, find hiring managers directly, and unlock personalized career insights—all in one platform. No credit card. No commitment. Just results.
             </p>
 
             {/* Free Benefits Bullets */}
-            <div className="flex flex-wrap justify-center gap-6 mb-8 max-w-2xl mx-auto">
-              <div className="flex items-center text-gray-700">
-                <Shield className="w-5 h-5 mr-2 text-green-500 flex-shrink-0" />
-                <span className="font-medium">Generate unlimited resumes—Free AI-powered builder</span>
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Shield className="w-5 h-5 mr-2 text-green-500 flex-shrink-0" />
-                <span className="font-medium">Smart job matching—Personalized recommendations</span>
-              </div>
-              <div className="flex items-center text-gray-700">
-                <Shield className="w-5 h-5 mr-2 text-green-500 flex-shrink-0" />
-                <span className="font-medium">Full platform access—7 days, completely free</span>
-              </div>
-            </div>
+            <ul className="mx-auto mb-8 flex max-w-sm flex-col gap-3 text-left sm:max-w-3xl sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6 sm:gap-y-3">
+              {[
+                ["Generate unlimited resumes", "Free AI-powered builder"],
+                ["Smart job matching", "Personalized recommendations"],
+                ["Full platform access", "7 days, completely free"],
+              ].map(([title, detail]) => (
+                <li key={title} className="flex items-start gap-2.5 rounded-xl bg-white/70 px-4 py-3 text-sm text-gray-700 shadow-sm ring-1 ring-gray-200/70 sm:bg-transparent sm:p-0 sm:text-base sm:shadow-none sm:ring-0">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
+                  <span><span className="font-semibold text-gray-900">{title}</span> — {detail}</span>
+                </li>
+              ))}
+            </ul>
 
-            <div className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-12">
-              <div className="flex flex-col items-center w-full sm:w-auto">
-                <Link to={isLoggedIn ? "/dashboard" : "/signup"} className="w-full">
+            <div className="mx-auto mb-10 flex max-w-sm flex-col items-stretch gap-3 sm:mb-12 sm:max-w-none sm:flex-row sm:items-start sm:justify-center sm:gap-4">
+              <div className="flex flex-col items-center">
+                <Link to={isLoggedIn ? "/dashboard" : "/signup"} className="block w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg w-full sm:w-auto"
+                    className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-base sm:text-lg w-full sm:w-auto"
                   >
-                    Start Free Now
+                    {isLoggedIn ? "Go to Dashboard" : "Start Free Now"}
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <div className="flex items-center text-sm text-gray-600 mt-2 font-medium">
-                  <Shield className="w-4 h-4 mr-1.5 text-green-500" />
-                  No payment info needed. Your 7-day free access starts immediately.
-                </div>
+                {!isLoggedIn && (
+                  <p className="mt-2 flex items-center justify-center text-center text-xs sm:text-sm text-gray-600 font-medium">
+                    <Shield className="w-4 h-4 mr-1.5 flex-shrink-0 text-green-500" />
+                    No payment info needed. 7-day free access starts now.
+                  </p>
+                )}
               </div>
               <Button
                 variant="outline"
                 size="lg"
-                className="px-8 py-4 text-lg border-2 w-full sm:w-auto"
+                className="px-8 py-4 text-base sm:text-lg border-2 w-full sm:w-auto bg-white/70"
                 onClick={() => setShowDemoModal(true)}
               >
                 See How It Works
@@ -112,17 +112,17 @@ export default function HeroSection() {
             </div>
 
             {/* Trust indicators */}
-            <div className="flex items-center justify-center space-x-8 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-gray-500">
               <div className="flex items-center">
-                <Shield className="w-4 h-4 mr-1" />
+                <Shield className="w-4 h-4 mr-1.5" />
                 Enterprise Security
               </div>
               <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" />
+                <Clock className="w-4 h-4 mr-1.5" />
                 24/7 AI Support
               </div>
               <div className="flex items-center">
-                <Globe className="w-4 h-4 mr-1" />
+                <Globe className="w-4 h-4 mr-1.5" />
                 Global Job Market
               </div>
             </div>
