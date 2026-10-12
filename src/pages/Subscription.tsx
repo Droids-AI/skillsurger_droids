@@ -70,9 +70,9 @@ const Subscription: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <XCircle className="w-14 h-14 text-red-400 mb-4" />
         <h2 className="text-3xl font-bold mb-2">No Subscription Found</h2>
-        <p className="text-gray-600 mb-6 text-lg">You do not have an active subscription. Please visit the pricing page to purchase a plan.</p>
+        <p className="text-gray-600 mb-6 text-lg">You do not have an active subscription. Choose a plan to continue.</p>
         <a
-          href="/pricing"
+          href="/upgrade"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition text-lg"
         >
           View Plans
@@ -221,7 +221,7 @@ const Subscription: React.FC = () => {
         {/* Upgrade Plan Button */}
         <div className="mt-10 flex justify-center w-full">
           <a
-            href="/pricing"
+            href="/upgrade"
             className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-xl shadow-lg text-lg transition transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             Upgrade Plan

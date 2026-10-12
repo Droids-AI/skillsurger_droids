@@ -35,7 +35,7 @@ export default function ProfileProtectedRoute({ children }: ProfileProtectedRout
   // Allow access to profile pages if user has any subscription record (including expired)
   // This prevents redirects during tab switching when subscription might be temporarily null
   if (shouldRedirect) {
-    return <Navigate to="/pricing" replace />;
+    return <Navigate to="/upgrade" replace />;
   }
 
   return <>{children}</>;

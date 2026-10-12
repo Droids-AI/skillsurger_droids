@@ -20,6 +20,7 @@ import SubscriptionProtectedRoute from './components/SubscriptionProtectedRoute'
 import ProfileProtectedRoute from './components/ProfileProtectedRoute';
 import { UserProvider } from './context/UserContext';
 import Pricing from './pages/Pricing';
+import Upgrade from './pages/Upgrade';
 import Subscription from './pages/Subscription';
 import AIResumeBuilder from "./pages/AIResumeBuilder";
 import MockInterview from "./pages/MockInterview";
@@ -80,6 +81,7 @@ function App() {
               <Route path="/forward-deployed-ai-engineer" element={<Navigate to="/courses/forward-deployed-ai-engineer" replace />} />
               <Route path="/get-started" element={<Onboarding />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
               <Route path="/job-readiness-index" element={<JobReadinessIndex />} />
               <Route path="/linkedin-profile-optimizer" element={<LinkedInProfileOptimizer />} />
               <Route 

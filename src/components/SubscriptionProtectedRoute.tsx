@@ -28,7 +28,7 @@ export default function SubscriptionProtectedRoute({ children }: SubscriptionPro
 
   // Check if user has valid subscription for AI features
   if (!checkSubscriptionForAI()) {
-    return <Navigate to="/pricing" replace />;
+    return <Navigate to="/upgrade" replace />;
   }
 
   return <>{children}</>;

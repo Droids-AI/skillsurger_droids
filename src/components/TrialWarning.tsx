@@ -24,7 +24,7 @@ export default function TrialWarning() {
               Your trial has expired
             </p>
             <p className="text-red-700 text-xs">
-              <Link to="/pricing" className="underline hover:text-red-900">
+              <Link to="/upgrade" className="underline hover:text-red-900">
                 Upgrade now
               </Link> to continue using all features
             </p>
@@ -44,7 +44,7 @@ export default function TrialWarning() {
               {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left in your trial
             </p>
             <p className="text-yellow-700 text-xs">
-              <Link to="/pricing" className="underline hover:text-yellow-900">
+              <Link to="/upgrade" className="underline hover:text-yellow-900">
                 Upgrade now
               </Link> to avoid losing access to features
             </p>

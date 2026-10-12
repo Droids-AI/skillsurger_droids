@@ -43,7 +43,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkSubscriptionForAI = (): boolean => {
     // Use the utility function to check AI feature access
     if (!hasAIFeatureAccess(subscription)) {
-      navigate('/pricing');
+      navigate('/upgrade');
       return false;
     }
 
@@ -53,7 +53,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkProfileAccess = (): boolean => {
     // Use the utility function to check profile access (allows expired users)
     if (!hasProfileAccess(subscription)) {
-      navigate('/pricing');
+      navigate('/upgrade');
       return false;
     }
 

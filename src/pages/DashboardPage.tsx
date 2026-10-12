@@ -349,7 +349,7 @@ export default function DashboardPage() {
                         Your trial or subscription has expired. To access Career Explorer and other AI-powered features, please upgrade your plan.
                       </p>
                       <a
-                        href="/pricing"
+                        href="/upgrade"
                         className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
                       >
                         Upgrade Now
@@ -380,7 +380,7 @@ export default function DashboardPage() {
                         Your trial or subscription has expired. To access CV Scoring and other AI-powered features, please upgrade your plan.
                       </p>
                       <a
-                        href="/pricing"
+                        href="/upgrade"
                         className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
                       >
                         Upgrade Now
@@ -402,7 +402,7 @@ export default function DashboardPage() {
                         Your trial or subscription has expired. To access Mentorship Hub and other AI-powered features, please upgrade your plan.
                       </p>
                       <a
-                        href="/pricing"
+                        href="/upgrade"
                         className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
                       >
                         Upgrade Now
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                         Your trial or subscription has expired. To access Learning Paths and other AI-powered features, please upgrade your plan.
                       </p>
                       <a
-                        href="/pricing"
+                        href="/upgrade"
                         className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
                       >
                         Upgrade Now
