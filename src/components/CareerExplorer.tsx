@@ -1207,7 +1207,14 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
     }
   };
 
-  if (!userSkills.length && !userInterests.length && !profile?.current_role) {
+  if (
+    !userSkills.length &&
+    !userInterests.length &&
+    !profile?.current_role &&
+    !showCustomForm &&
+    careerOptions.length === 0 &&
+    jobs.length === 0
+  ) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 w-full max-w-full overflow-x-hidden">
         <div className="text-center">
