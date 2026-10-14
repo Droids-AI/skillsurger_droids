@@ -102,20 +102,27 @@ export async function submitToGoogleSheets(data: MasterclassSubmission): Promise
   }
 }
 
-/**
- * Generic lead submission for new Job Switch Copilot forms (resume audit,
- * diagnosis booking, etc). Kept separate from submitToGoogleSheets so the
- * existing masterclass form/webhook contract is never altered.
- *
- * Persistence:
- * 1. Supabase `leads` table (see migration 20260706071747_add_leads_table.sql)
- *    — always written, and the only path that can fail the form submission.
- * 2. Google Apps Script webhook, if VITE_GOOGLE_SHEETS_WEBHOOK_URL is set —
- *    appends the row to Google Sheets (see
- *    scripts/google-apps-script/book-a-call-webhook.gs). Synced best-effort
- *    so a Google-side hiccup never fails the user's submission.
- */
-export async function submitLead(payload: Record<string, unknown>, formType: string): Promise<void> {
+/** Resume audits use the validated server endpoint, which saves the lead,
+ * sends a confirmation receipt and syncs the sheet. Other lead forms retain
+ * the direct leads insert and best-effort sheet notification flow. */
+export class LeadSubmissionError extends Error {
+  constructor(message: string, public fields: Record<string, string> = {}) { super(message); }
+}
+
+export type LeadReceipt = { leadId: string; emailStatus: 'pending' | 'sending' | 'accepted' | 'failed' | 'unconfigured' };
+
+export async function submitLead(payload: Record<string, unknown>, formType: string): Promise<LeadReceipt | void> {
+  if (formType === 'resume_audit') {
+    const { data, error } = await supabase.functions.invoke('register-resume-audit', { body: payload });
+    if (error || !data?.leadId) {
+      let response = data;
+      if (error && 'context' in error && error.context instanceof Response) {
+        try { response = await error.context.clone().json(); } catch { /* Use fallback below. */ }
+      }
+      throw new LeadSubmissionError(response?.error || 'We could not save your audit request. Please try again.', response?.errors || {});
+    }
+    return data as LeadReceipt;
+  }
   const webhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
   const body = { ...payload, formType, timestamp: new Date().toISOString() };
 

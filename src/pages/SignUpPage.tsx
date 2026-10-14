@@ -65,12 +65,8 @@ export default function SignUpPage() {
         },
       });
 
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          setError('An account with this email already exists. Please log in instead.');
-        } else {
-          setError(signUpError.message);
-        }
+      if (signUpError || !data.session) {
+        setError('If signup can be completed, check your inbox to continue. You can also log in or reset your password.');
         return;
       }
 
@@ -114,7 +110,7 @@ export default function SignUpPage() {
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
-      setError('An unexpected error occurred. Please try again.');
+      setError('If signup can be completed, check your inbox to continue. You can also log in or reset your password.');
     } finally {
       setLoading(false);
     }

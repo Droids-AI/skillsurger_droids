@@ -73,7 +73,7 @@ const schedule='Saturday, 24 October 2026 at 3:00 PM IST';
     fail=false;
     const before=attempts;
     await page.locator('#webinar form').evaluate(form=>{form.requestSubmit();form.requestSubmit()});
-    await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured');
+    await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured&email=unconfigured');
     assert.equal(attempts-before,1);assert.equal(registrations.size,1);
     // SPA navigation leaves the dataLayer intact, so inspect the actual gtag call.
     const events=await conversions();assert.equal(events.length,1);assert.equal(events[0].send_to,'AW-18357417979/018aCPbEh5gdEPvvv7FE');assert.equal(events[0].transaction_id,'synthetic-1');

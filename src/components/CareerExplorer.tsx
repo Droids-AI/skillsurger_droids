@@ -1,3 +1,4 @@
+import { profileJobLocation, normalizeJobLocation, matchesJobLocation, jobCountryCode } from '../lib/jobLocation';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -90,7 +91,10 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
   useEffect(() => {
     loadUserData();
     loadSavedCareers();
-    // Don't load saved jobs by default - we'll show actual job postings instead
+    loadSavedJobs();
+    const refresh = () => { void loadSavedJobs(); };
+    window.addEventListener('saved-jobs-changed', refresh);
+    return () => window.removeEventListener('saved-jobs-changed', refresh);
   }, []);
 
   async function loadUserData() {
@@ -192,17 +196,6 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
           savedJobs.map(job => `${job.title}-${job.company}`)
         );
         setSavedJobIds(savedJobIdentifiers);
-
-        setJobs(savedJobs.map(job => ({
-          id: job.id,
-          title: job.title,
-          company: job.company,
-          location: job.location,
-          description: job.description,
-          requirements: job.requirements,
-          type: job.type,
-          salary: job.salary
-        })));
       }
     } catch (error) {
       console.error('Error loading saved jobs:', error);
@@ -281,6 +274,7 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
         .insert([jobToSave]);
 
       if (error) throw error;
+      window.dispatchEvent(new Event('saved-jobs-changed'));
       console.log('Job auto-saved to database successfully');
     } catch (error) {
       console.error('Error auto-saving job to database:', error);
@@ -313,6 +307,7 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
 
       // Update local state
       setSavedJobIds(prev => new Set([...prev, `${job.title}-${job.company}`]));
+      window.dispatchEvent(new Event('saved-jobs-changed'));
 
       // Show success message
       const successDiv = document.createElement('div');
@@ -781,167 +776,7 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
     }
   };
 
-  const autoSaveJobs = async (jobs: JobOpportunity[]) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('No user found, skipping auto-save');
-        return;
-      }
-
-      // First, clear all previous saved jobs for this user
-      const { error: deleteError } = await supabase
-        .from('saved_jobs')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (deleteError) {
-        console.error('Error clearing previous jobs:', deleteError);
-        // Continue with saving new jobs even if clearing fails
-      } else {
-        console.log('Previous jobs cleared successfully');
-      }
-
-      // Prepare jobs for saving
-      const jobsToSave = jobs.map(job => ({
-        user_id: user.id,
-        title: job.title,
-        company: job.company,
-        location: job.location,
-        description: job.description,
-        requirements: job.requirements || [],
-        type: job.type || 'Full-time',
-        salary: job.salary || ''
-      }));
-
-      // Save all new jobs
-      const { error: insertError } = await supabase
-        .from('saved_jobs')
-        .insert(jobsToSave);
-
-      if (insertError) {
-        console.error('Error auto-saving jobs:', insertError);
-        setError('Jobs found but failed to save automatically. You can save them manually.');
-      } else {
-        console.log(`Successfully auto-saved ${jobs.length} jobs`);
-
-        // Update local state
-        const savedJobIdentifiers = new Set(
-          jobs.map(job => `${job.title}-${job.company}`)
-        );
-        setSavedJobIds(savedJobIdentifiers);
-
-        // Show success message
-        const successDiv = document.createElement('div');
-        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        successDiv.textContent = `Auto-saved ${jobs.length} jobs successfully!`;
-        document.body.appendChild(successDiv);
-
-        setTimeout(() => {
-          if (document.body.contains(successDiv)) {
-            document.body.removeChild(successDiv);
-          }
-        }, 3000);
-      }
-    } catch (error) {
-      console.error('Error in auto-save process:', error);
-      setError('Jobs found but failed to save automatically. You can save them manually.');
-    }
-  };
-
-  // Function to filter and sort jobs by location match - show matching location jobs at top
-  const filterAndSortJobsByLocation = (jobs: JobOpportunity[], searchLocation: string): JobOpportunity[] => {
-    if (!searchLocation || !searchLocation.trim()) {
-      console.log('No search location provided, returning jobs as-is');
-      return jobs; // No location, return as is
-    }
-
-    const searchLocationLower = searchLocation.toLowerCase().trim();
-    console.log('🔍 Filtering jobs by location:', searchLocationLower);
-    console.log('📊 Total jobs received:', jobs.length);
-
-    // Handle city name variations (e.g., Bangalore/Bengaluru)
-    const cityVariations: { [key: string]: string[] } = {
-      'bangalore': ['bangalore', 'bengaluru'],
-      'bengaluru': ['bangalore', 'bengaluru'],
-      'mumbai': ['mumbai', 'bombay'],
-      'bombay': ['mumbai', 'bombay'],
-      'chennai': ['chennai', 'madras'],
-      'madras': ['chennai', 'madras'],
-      'kolkata': ['kolkata', 'calcutta'],
-      'calcutta': ['kolkata', 'calcutta'],
-      'pune': ['pune', 'poona'],
-      'poona': ['pune', 'poona']
-    };
-
-    // Split by comma to get individual location parts (city, state, country)
-    const locationParts = searchLocationLower.split(',').map(part => part.trim()).filter(Boolean);
-
-    // Get the primary location part (usually the city) for more flexible matching
-    const primaryLocation = locationParts[0] || searchLocationLower;
-
-    // Get all variations of the primary location
-    const primaryLocationVariations = cityVariations[primaryLocation] || [primaryLocation];
-
-    console.log('📍 Primary location:', primaryLocation);
-    console.log('🔄 Location variations:', primaryLocationVariations);
-
-    // Separate jobs into matching and non-matching
-    const matchingJobs: JobOpportunity[] = [];
-    const nonMatchingJobs: JobOpportunity[] = [];
-
-    jobs.forEach((job, index) => {
-      const jobLocation = (job.location || '').toLowerCase().trim();
-
-      if (!jobLocation) {
-        nonMatchingJobs.push(job);
-        return;
-      }
-
-      // Check if any variation of the primary location appears in the job location
-      const matchesPrimaryLocation = primaryLocationVariations.some(variation =>
-        jobLocation.includes(variation)
-      );
-
-      // Also check if any location part matches
-      const matchesAnyPart = locationParts.some(part => {
-        const partVariations = cityVariations[part] || [part];
-        return partVariations.some(variation => jobLocation.includes(variation));
-      });
-
-      if (matchesPrimaryLocation || matchesAnyPart) {
-        matchingJobs.push(job);
-        if (index < 3) {
-          console.log(`✅ Match ${index + 1}: "${job.title}" at "${job.location}"`);
-        }
-      } else {
-        nonMatchingJobs.push(job);
-        if (index < 3) {
-          console.log(`❌ No match ${index + 1}: "${job.title}" at "${job.location}"`);
-        }
-      }
-    });
-
-    console.log('📈 Location filtering results:', {
-      searchLocation: searchLocation,
-      totalJobs: jobs.length,
-      matchingJobs: matchingJobs.length,
-      nonMatchingJobs: nonMatchingJobs.length,
-      sampleMatchingLocations: matchingJobs.slice(0, 5).map(j => j.location),
-      sampleNonMatchingLocations: nonMatchingJobs.slice(0, 5).map(j => j.location)
-    });
-
-    // Return only matching jobs when location is specified
-    // Only include non-matching jobs if no matching jobs found
-    if (matchingJobs.length > 0) {
-      console.log('✅ Returning only location-matching jobs:', matchingJobs.length);
-      return matchingJobs;
-    }
-
-    // If no matching jobs, return all jobs but log warning
-    console.log('⚠️ No jobs match the location. Returning all jobs as fallback.');
-    return nonMatchingJobs;
-  };
+  const filterAndSortJobsByLocation = (jobs: JobOpportunity[], searchLocation: string) => jobs.filter(job => matchesJobLocation(job, searchLocation));
 
   const handleFindJobs = async (careerTitle: string) => {
     try {
@@ -949,101 +784,14 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
       setError('');
       setSelectedCareer(careerTitle);
 
-      let location = '';
-
-      // Priority order: lastCustomFormData > customLocation > profile data
-      if (lastCustomFormData && lastCustomFormData.location) {
-        location = lastCustomFormData.location;
-      } else if (customLocation.trim()) {
-        location = customLocation.trim();
-      } else {
-        // Fall back to profile data
-        const preferredLocations = profile?.preferred_locations;
-        if (preferredLocations && preferredLocations.length > 0) {
-          location = preferredLocations[0];
-        } else {
-          location = profile?.city || '';
-        }
+      const location = normalizeJobLocation(
+        (lastGenerationMethod === 'interests' ? lastCustomFormData?.location || customLocation : '') || profileJobLocation(profile)
+      );
+      if (!location) {
+        setError('Add a preferred location in Profile or choose a location in the interests form before finding jobs.');
+        return;
       }
-
-      // Normalize location - ensure Indian cities include country if not specified
-      const locationLower = location.toLowerCase().trim();
-      const indianCities = ['bangalore', 'mumbai', 'delhi', 'hyderabad', 'chennai', 'pune', 'kolkata', 'ahmedabad', 'jaipur', 'surat', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'varanasi', 'srinagar', 'amritsar', 'dhanbad', 'jodhpur', 'raipur', 'allahabad', 'coimbatore', 'jabalpur', 'gwalior', 'vijayawada', 'madurai', 'guwahati', 'chandigarh', 'hubli', 'mysore', 'gurgaon', 'noida', 'kochi', 'bhubaneswar', 'dehradun', 'mangalore', 'belgaum', 'tiruchirappalli', 'bikaner', 'amravati', 'nanded', 'kolhapur', 'sangli', 'jalandhar', 'bathinda', 'panipat', 'karnal', 'hisar', 'rohtak', 'sonipat', 'dharamshala', 'shimla', 'solan', 'mandi', 'kullu', 'manali', 'dharamsala'];
-
-      // Check if location is an Indian city without country specified
-      if (indianCities.some(city => locationLower.includes(city)) && !locationLower.includes('india') && !locationLower.includes('in,')) {
-        // Add India to the location if not already present
-        if (locationLower.includes(',')) {
-          // If it has a comma, check if country is missing
-          const parts = location.split(',').map(p => p.trim());
-          if (parts.length === 1 || (parts.length === 2 && !parts[1].toLowerCase().includes('india'))) {
-            location = `${location}, India`;
-          }
-        } else {
-          // If no comma, add city with India
-          location = `${location}, India`;
-        }
-      }
-
-      // Determine country code from location string or profile
-      let countryCode = 'us'; // default
-
-      // First try to detect from location string
-      const locationLowerForCountry = location.toLowerCase();
-      if (locationLowerForCountry.includes('india') || locationLowerForCountry.includes(', in')) {
-        countryCode = 'in';
-      } else if (locationLowerForCountry.includes('united states') || locationLowerForCountry.includes('usa') || locationLowerForCountry.includes(', us')) {
-        countryCode = 'us';
-      } else if (locationLowerForCountry.includes('united kingdom') || locationLowerForCountry.includes('uk') || locationLowerForCountry.includes(', uk')) {
-        countryCode = 'uk';
-      } else if (locationLowerForCountry.includes('australia') || locationLowerForCountry.includes(', au')) {
-        countryCode = 'au';
-      } else if (locationLowerForCountry.includes('canada') || locationLowerForCountry.includes(', ca')) {
-        countryCode = 'ca';
-      } else if (locationLowerForCountry.includes('germany') || locationLowerForCountry.includes(', de')) {
-        countryCode = 'de';
-      } else if (locationLowerForCountry.includes('france') || locationLowerForCountry.includes(', fr')) {
-        countryCode = 'fr';
-      } else if (locationLowerForCountry.includes('spain') || locationLowerForCountry.includes(', es')) {
-        countryCode = 'es';
-      } else if (locationLowerForCountry.includes('italy') || locationLowerForCountry.includes(', it')) {
-        countryCode = 'it';
-      } else if (locationLowerForCountry.includes('netherlands') || locationLowerForCountry.includes(', nl')) {
-        countryCode = 'nl';
-      } else if (locationLowerForCountry.includes('brazil') || locationLowerForCountry.includes(', br')) {
-        countryCode = 'br';
-      } else if (locationLowerForCountry.includes('mexico') || locationLowerForCountry.includes(', mx')) {
-        countryCode = 'mx';
-      } else if (locationLowerForCountry.includes('japan') || locationLowerForCountry.includes(', jp')) {
-        countryCode = 'jp';
-      } else if (locationLowerForCountry.includes('south korea') || locationLowerForCountry.includes('korea') || locationLowerForCountry.includes(', kr')) {
-        countryCode = 'kr';
-      } else if (locationLowerForCountry.includes('singapore') || locationLowerForCountry.includes(', sg')) {
-        countryCode = 'sg';
-      } else if (profile?.country) {
-        // Fall back to profile country if location doesn't specify
-        const countryMap: { [key: string]: string } = {
-          'United States': 'us',
-          'USA': 'us',
-          'US': 'us',
-          'United Kingdom': 'uk',
-          'UK': 'uk',
-          'India': 'in',
-          'Australia': 'au',
-          'Canada': 'ca',
-          'Germany': 'de',
-          'France': 'fr',
-          'Spain': 'es',
-          'Italy': 'it',
-          'Netherlands': 'nl',
-          'Brazil': 'br',
-          'Mexico': 'mx',
-          'Japan': 'jp',
-          'South Korea': 'kr',
-          'Singapore': 'sg'
-        };
-        countryCode = countryMap[profile.country] || 'us';
-      }
+      const countryCode = jobCountryCode(location);
 
       // Create job search context
       const jobSearchContext = {
@@ -1078,9 +826,6 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
 
       if (filteredAndSortedJobs.length === 0) {
         setError('No job opportunities found for this career path. Try adjusting your search criteria.');
-      } else {
-        // Auto-save all fetched jobs and clear previous ones
-        await autoSaveJobs(filteredAndSortedJobs);
       }
     } catch (error) {
       console.error('Error finding jobs:', error);
@@ -1228,54 +973,20 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
         return;
       }
 
-      // Prepare job search context based on profile data
+      const searchLocation = profileJobLocation(profile) || normalizeJobLocation([profile.cv_parsed_data?.city, profile.cv_parsed_data?.state, profile.cv_parsed_data?.country].filter(Boolean).join(', '));
+      if (!searchLocation) {
+        setError('Add a preferred location in Profile before finding jobs.');
+        return;
+      }
       const jobSearchContext = {
         jobTitle: profile.current_role || profile.cv_parsed_data?.current_role || '',
-        location: {
-          city: profile.city || profile.cv_parsed_data?.city || '',
-          state: profile.state || profile.cv_parsed_data?.state || '',
-          country: profile.country || profile.cv_parsed_data?.country || 'United States'
-        },
+        location: searchLocation,
+        countryCode: jobCountryCode(searchLocation),
         skills: userSkills,
-        experience: profile.years_of_experience || profile.cv_parsed_data?.years_of_experience || 0,
-        summary: profile.summary || profile.cv_parsed_data?.summary || ''
+        experience: profile.years_of_experience || 0,
       };
-
-      console.log('Searching for jobs based on profile:', jobSearchContext);
-
-      // First get AI-powered job search recommendations
-      const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-      const apiUrl = `${apiBase}/openai/skillsurger`;
-
-      let jobSearchRecommendations = null;
-      try {
-        const recommendationsResponse = await axios.post(apiUrl, {
-          type: 'findJobsBasedOnProfile',
-          profileData: jobSearchContext
-        });
-        jobSearchRecommendations = recommendationsResponse.data.data;
-        console.log('AI Job Search Recommendations:', jobSearchRecommendations);
-      } catch (recommendationError) {
-        console.warn('Failed to get AI recommendations, proceeding with direct search:', recommendationError);
-      }
-
-      // Use AI recommendations to enhance job search if available
-      let enhancedJobSearchContext = jobSearchContext;
-      if (jobSearchRecommendations && jobSearchRecommendations.suggestedJobTitles?.length > 0) {
-        // Use the first suggested job title for search
-        enhancedJobSearchContext = {
-          ...jobSearchContext,
-          jobTitle: jobSearchRecommendations.suggestedJobTitles[0]
-        };
-      }
-
-      // Find job opportunities directly
-      const foundJobs = await findJobOpportunities(enhancedJobSearchContext);
-
-      // Determine location to use for filtering
-      const searchLocation = profile.city
-        ? `${profile.city}${profile.state ? `, ${profile.state}` : ''}${profile.country ? `, ${profile.country}` : ''}`
-        : '';
+      setJobs([]);
+      const foundJobs = await findJobOpportunities(jobSearchContext);
 
       // Filter and sort jobs by location - show matching location jobs at top
       const filteredAndSortedJobs = filterAndSortJobsByLocation(foundJobs, searchLocation);
@@ -1294,18 +1005,7 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-md';
 
-      let successMessage = `Found ${foundJobs.length} jobs based on your profile!`;
-      if (jobSearchRecommendations) {
-        successMessage += `\n\nAI Recommendations:\n• Experience Level: ${jobSearchRecommendations.experienceLevel || 'Not specified'}\n• Industry Focus: ${jobSearchRecommendations.industryFocus || 'Not specified'}`;
-        if (jobSearchRecommendations.suggestedJobTitles?.length > 0) {
-          successMessage += `\n• Suggested Roles: ${jobSearchRecommendations.suggestedJobTitles.slice(0, 2).join(', ')}`;
-        }
-      }
-
-      successDiv.innerHTML = `
-        <div class="font-medium">Job Search Complete!</div>
-        <div class="text-sm mt-1 whitespace-pre-line">${successMessage}</div>
-      `;
+      successDiv.textContent = `Found ${filteredAndSortedJobs.length} jobs for ${searchLocation}. Save a job to prepare for its interview.`;
       document.body.appendChild(successDiv);
 
       setTimeout(() => {
@@ -2220,7 +1920,7 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
                       variant="outline"
                       size="sm"
                       disabled={isJobSaved(job) || savingJob === `${job.title}-${job.company}`}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto border-blue-600 text-blue-700"
                     >
                       {isJobSaved(job) ? (
                         <>

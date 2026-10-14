@@ -41,7 +41,7 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
         trackEvent(EVENTS.LEAD_FORM_SUBMITTED, { form: 'webinar_registration' });
         try { if (typeof window.fbq === 'function') window.fbq('track', 'Lead', { content_name: 'Free job switch webinar' }); } catch { /* Tracking cannot fail a saved registration. */ }
       }
-      navigate('/thank-you?type=webinar&existing=' + (result.alreadyRegistered ? '1' : '0') + '&delivery=' + result.whatsappStatus);
+      navigate('/thank-you?type=webinar&existing=' + (result.alreadyRegistered ? '1' : '0') + '&delivery=' + result.whatsappStatus + '&email=' + (result.emailStatus || 'unconfigured'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'We could not save your registration. Please try again.');
     } finally { submitting.current = false; setBusy(false); }

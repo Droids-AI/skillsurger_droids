@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { sendLeadConfirmation } from '../_shared/leadConfirmation.ts';
 
 const sessionId = 'job-switch-2026-10-24';
 const startsAt = '2026-10-24T15:00:00+05:30';
@@ -88,6 +89,13 @@ Deno.serve(async request => {
       whatsappStatus = 'failed';
       console.error(JSON.stringify({ area: 'webinar-notification', code: 'notification_failed', requestId }));
     }
+    const calendarStamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const calendarDates = `${calendarStamp(new Date(startsAt))}/${calendarStamp(new Date(new Date(startsAt).getTime() + 60 * 60 * 1000))}`;
+    const emailStatus = await sendLeadConfirmation(admin, {
+      leadId: result.data.leadId, email, name,
+      subject: 'Your Skillsurger webinar registration is confirmed',
+      body: `Hi ${name},\n\nYou are registered for the free Skillsurger job switch webinar.\n${schedule} — 60 minutes online.\n\nJoin the WhatsApp group for the meeting link and reminders: https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE\n\nAdd the session to your calendar: https://calendar.google.com/calendar/render?action=TEMPLATE&text=Skillsurger%20webinar&dates=${calendarDates}\n\nTeam Skillsurger`,
+    });
     if (!alreadyRegistered) {
       // Same Google Sheet sync the other lead forms use ("Webinar Registrations" tab).
       // Best-effort: a Sheets hiccup must not fail a saved registration.
@@ -100,7 +108,7 @@ Deno.serve(async request => {
       const runtime = (globalThis as any).EdgeRuntime;
       if (runtime?.waitUntil) runtime.waitUntil(sync); else await sync;
     }
-    return respond({ registrationId, alreadyRegistered, whatsappStatus, requestId });
+    return respond({ registrationId, alreadyRegistered, whatsappStatus, emailStatus, requestId });
   } catch {
     console.error(JSON.stringify({ area: 'webinar-registration', code: 'request_failed', requestId }));
     return respond({ error: 'Unable to register. Please retry.', requestId }, 500);

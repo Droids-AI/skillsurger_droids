@@ -76,7 +76,7 @@ export async function generateLearningPlan(
   }));
 
   if (learningPlan.length === 0) {
-  } else {
+    throw new Error("We could not find learning resources for your profile. Add your skills or choose a target role, then try again.");
   }
   
   return learningPlan;
@@ -267,7 +267,7 @@ export async function generateCareerPathLearningPlan(
   }));
 
   if (learningPlan.length === 0) {
-  } else {
+    throw new Error("We could not find learning resources for your profile. Add your skills or choose a target role, then try again.");
   }
   
   return learningPlan;

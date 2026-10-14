@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { normalizeJobLocation, matchesJobLocation, jobCountryCode } from '../lib/jobLocation';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { findJobOpportunities } from '../lib/careerServices';
 import type { JobOpportunity } from '../lib/careerServices';
@@ -13,6 +14,30 @@ const JobSearchPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [jobTitle, setJobTitle] = useState('');
   const [jobLocation, setJobLocation] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [experienceFilter, setExperienceFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
+  const searchSequence = useRef(0);
+  useEffect(() => {
+    if (!loading) { setElapsedSeconds(0); return; }
+    const timer = setInterval(() => setElapsedSeconds(seconds => seconds + 1), 1000);
+    return () => clearInterval(timer);
+  }, [loading]);
+  const filteredJobs = jobs.filter(job => {
+    if (!matchesJobLocation(job, locationFilter)) return false;
+    const experienceText = `${job.seniority || ''} ${job.title} ${(job.requirements || []).join(' ')}`;
+    if (experienceFilter === 'entry' && !/entry|junior|graduate|intern|fresher|[01]\+? years/i.test(experienceText)) return false;
+    if (experienceFilter === 'senior' && !/senior|lead|principal|staff|[5-9]\+? years/i.test(experienceText)) return false;
+    if (dateFilter) {
+      const relative = job.postedDate?.match(/(\d+)\s+(day|hour|week|month)s? ago/i);
+      let age = relative ? Number(relative[1]) * ({day:1,hour:1/24,week:7,month:30}[relative[2].toLowerCase()] || 1) : (Date.now() - Date.parse(job.postedDate || '')) / 86400000;
+      if (/today|just now/i.test(job.postedDate || '')) age = 0;
+      if (!Number.isFinite(age) || age > Number(dateFilter)) return false;
+    }
+    return true;
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,26 +89,29 @@ const JobSearchPage = () => {
   };
 
   const fetchJobs = async (title: string, loc: string | null) => {
+    const sequence = ++searchSequence.current;
     setLoading(true);
     setError(null);
+    setJobs([]);
+    setLocationFilter(''); setExperienceFilter(''); setDateFilter('');
     try {
       // We need to create a context object that matches what findJobOpportunities expects.
       // Since we only have title and location from the URL, we'll create a minimal context.
       const jobSearchContext = {
         jobTitle: title,
-        location: { city: loc || '' },
+        location: normalizeJobLocation(loc || ''),
         workPreferences: { remotePreference: 'no_preference' },
         // Add other properties with default values if needed by the function
         profile: { yearsOfExperience: 0 },
-        countryCode: 'us' // Default to US, could be enhanced to detect from user profile
+        countryCode: jobCountryCode(loc || '') // Default to US, could be enhanced to detect from user profile
       };
       const opportunities = await findJobOpportunities(jobSearchContext);
-      setJobs(opportunities);
+      if (sequence === searchSequence.current) setJobs(opportunities);
     } catch (err) {
-      setError('Failed to fetch job opportunities.');
+      if (sequence === searchSequence.current) setError('We could not complete this search. Please try again or change the role and location.');
       console.error(err);
     } finally {
-      setLoading(false);
+      if (sequence === searchSequence.current) setLoading(false);
     }
   };
 
@@ -123,7 +151,7 @@ const JobSearchPage = () => {
                 id="jobLocation"
                 value={jobLocation}
                 onChange={(e) => setJobLocation(e.target.value)}
-                placeholder="e.g., New York, Remote"
+                placeholder="e.g., Bangalore, India or Remote"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -151,8 +179,9 @@ const JobSearchPage = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        <div role="status" aria-live="polite" className="flex flex-col gap-4 justify-center items-center h-64">
           <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <p className="text-gray-600">{elapsedSeconds < 10 ? 'Searching current job listings…' : 'The job providers are still responding. Searches can take up to a minute.'}</p>
         </div>
       ) : error ? (
         <div className="max-w-4xl mx-auto">
@@ -166,10 +195,16 @@ const JobSearchPage = () => {
       ) : jobs.length > 0 ? (
         <div className="max-w-4xl mx-auto">
           <div className="mb-4">
-            <p className="text-gray-600">Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching your search</p>
+            <p className="text-gray-600">Showing {filteredJobs.length} of {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching your search</p>
           </div>
+          <div className="grid sm:grid-cols-3 gap-4 mb-6">
+            <div><label htmlFor="result-location" className="block text-sm font-medium mb-1">Filter by location</label><input id="result-location" value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="w-full border rounded-lg p-2" placeholder="City or Remote" /></div>
+            <div><label htmlFor="result-experience" className="block text-sm font-medium mb-1">Experience</label><select id="result-experience" value={experienceFilter} onChange={e => setExperienceFilter(e.target.value)} className="w-full border rounded-lg p-2"><option value="">All experience levels</option><option value="entry">Entry level / junior</option><option value="senior">Senior / lead</option></select></div>
+            <div><label htmlFor="result-date" className="block text-sm font-medium mb-1">Posted date</label><select id="result-date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="w-full border rounded-lg p-2"><option value="">Any date</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></div>
+          </div>
+          {filteredJobs.length === 0 && <p role="status" className="py-6">No jobs match these filters. Clear a filter to see more results.</p>}
           <div className="space-y-6">
-            {jobs.map((job, index) => (
+            {filteredJobs.map((job, index) => (
               <div key={index} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
                 <div className="flex flex-col sm:flex-row justify-between">
                   <div className="flex-grow">
@@ -194,7 +229,8 @@ const JobSearchPage = () => {
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-gray-700">{job.description}</p>
+                  <p className="text-gray-700 whitespace-pre-line break-words">{expandedJobs.has(job.id || String(index)) || job.description.length <= 500 ? job.description : `${job.description.slice(0, 500)}…`}</p>
+                  {job.description.length > 500 && <button type="button" className="text-blue-700 font-medium mt-2" aria-expanded={expandedJobs.has(job.id || String(index))} onClick={() => setExpandedJobs(previous => { const next = new Set(previous); const key = job.id || String(index); if (next.has(key)) next.delete(key); else next.add(key); return next; })}>{expandedJobs.has(job.id || String(index)) ? 'Show less' : 'Read full description'}</button>}
                   {job.requirements && job.requirements.length > 0 && (
                     <div className="mt-4">
                       <h4 className="font-semibold text-gray-800">Requirements:</h4>

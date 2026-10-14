@@ -14,7 +14,7 @@ const SEO: React.FC<SEOProps> = ({
   title = 'Skillsurger | AI Career Agent for Job Seekers',
   description = 'AI-powered career coach to optimize your resume, land interviews, and upskill for top jobs. Free trial—transform your job search with Skillsurger.',
   keywords = 'AI career coach, resume builder, job matching, mock interviews, career development, ATS optimization, interview practice, job search',
-  ogImage = 'https://skillsurger.com/og-image.jpg',
+  ogImage = 'https://skillsurger.com/og-image.png',
   canonicalUrl,
   noIndex = false,
   structuredData
@@ -41,15 +41,15 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:url" content={fullCanonicalUrl} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={new URL(ogImage, 'https://skillsurger.com').href} />
       <meta property="og:site_name" content="Skillsurger" />
 
       {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={fullCanonicalUrl} />
-      <meta property="twitter:title" content={title} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={ogImage} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content={fullCanonicalUrl} />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={new URL(ogImage, 'https://skillsurger.com').href} />
 
       {/* Structured Data */}
       {structuredData && (

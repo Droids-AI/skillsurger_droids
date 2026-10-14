@@ -109,16 +109,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/job-search"
-                element={
-                  <ProtectedRoute>
-                    <SubscriptionProtectedRoute>
-                      <JobSearchPage />
-                    </SubscriptionProtectedRoute>
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/job-search" element={<JobSearchPage />} />
               <Route path="/auth/callback/google" element={<GoogleAuthCallback />} />
               <Route 
                 path="/ai-resume-builder" 

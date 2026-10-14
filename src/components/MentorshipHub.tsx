@@ -146,6 +146,17 @@ export default function MentorshipHub() {
     loadAISessions();
   }, []);
 
+  useEffect(() => {
+    const refresh = () => { void loadSavedJobs(); };
+    refresh();
+    window.addEventListener('saved-jobs-changed', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('saved-jobs-changed', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [activeTab]);
+
   async function loadSavedJobs() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -665,13 +676,13 @@ export default function MentorshipHub() {
             <MessageSquare className="w-4 h-4 mr-2" />
             AI Mentor
           </Button>
-          <Button
+          {mentors.length > 0 && <Button
             variant={activeTab === 'human-mentors' ? 'primary' : 'outline'}
             onClick={() => setActiveTab('human-mentors')}
           >
             <Users className="w-4 h-4 mr-2" />
             Human Mentors
-          </Button>
+          </Button>}
         </div>
       </div>
 

@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.sheets-sync]
 verify_jwt = false
+
+[functions.register-resume-audit]
+verify_jwt = false

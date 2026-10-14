@@ -1,3 +1,4 @@
+import { normalizeJobLocation, matchesJobLocation, jobCountryCode, jobSalary } from './jobLocation';
 import { extractJsonFromMarkdown } from './utils';
 import { searchGoogleJobs, isGoogleJobsConfigured, type GoogleJobsSearchParams, type GoogleJobResult } from './googleJobsApi';
 import axios from 'axios';
@@ -749,13 +750,13 @@ export async function findJobOpportunities(
       jobSearchContext.location.state,
       jobSearchContext.location.country
     ].filter(Boolean).map((p: string) => String(p).trim());
-    location = parts.length > 0 ? parts.join(', ') : 'United States';
+    location = parts.length > 0 ? parts.join(', ') : '';
   } else {
-    location = 'United States';
+    location = '';
   }
 
   // Normalize location - trim whitespace and ensure proper format
-  location = location.trim();
+  location = normalizeJobLocation(location);
   
   // Log the location being used for debugging
   console.log('findJobOpportunities - Location being used:', location);
@@ -778,15 +779,18 @@ export async function findJobOpportunities(
         {
           query: title,
           location: location,
+          countryCode: jobCountryCode(location) || jobSearchContext.countryCode || undefined,
           limit: 20
         },
         {
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 45000
         }
       );
     } catch (newApiError) {
+      if (!axios.isAxiosError(newApiError) || ![400, 404, 422].includes(newApiError.response?.status || 0)) throw newApiError;
       console.log('New API failed, trying old API structure:', newApiError);
       // Fallback to old API structure
       response = await axios.post(
@@ -795,6 +799,7 @@ export async function findJobOpportunities(
           title: title,
           keyword_description: title,
           location: location,
+          countryCode: jobCountryCode(location) || jobSearchContext.countryCode || undefined,
           created_at_gte: ninetyDaysAgo,
           last_updated_gte: ninetyDaysAgo,
           application_active: true,
@@ -803,7 +808,8 @@ export async function findJobOpportunities(
         {
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 45000
         }
       );
     }
@@ -871,7 +877,7 @@ export async function findJobOpportunities(
         );
         if (benefits?.items) {
           const salaryItem = benefits.items.find((item: string) => 
-            item.includes('$') || item.includes('salary') || item.includes('compensation') || item.includes('/hr')
+            /[₹$€£]|\bINR\b/i.test(item) || item.includes('salary') || item.includes('compensation') || item.includes('/hr')
           );
           if (salaryItem) salary = salaryItem;
         }
@@ -880,7 +886,7 @@ export async function findJobOpportunities(
       // Also check extensions for salary info
       if (!salary && Array.isArray(job.extensions)) {
         const salaryExtension = job.extensions.find((ext: string) => 
-          ext.includes('$') || ext.includes('salary') || ext.includes('compensation')
+          /[₹$€£]|\bINR\b/i.test(ext) || ext.includes('salary') || ext.includes('compensation')
         );
         if (salaryExtension) salary = salaryExtension;
       }
@@ -947,7 +953,7 @@ export async function findJobOpportunities(
         description: job.description || '',
         requirements: requirements,
         type: jobType,
-        salary: salary,
+        salary: jobSalary(job, salary),
         applicationUrl: applicationUrl,
         postedDate: postedDate,
         seniority: job.seniority || '',
@@ -970,10 +976,10 @@ export async function findJobOpportunities(
         benefits: benefits,
         responsibilities: responsibilities
       };
-    });
+    }).filter(job => matchesJobLocation(job, location));
   } catch (error) {
     console.error('Error fetching jobs:', error);
-    return [];
+    throw new Error('Job search is unavailable right now. Please try again.');
   }
 }
 

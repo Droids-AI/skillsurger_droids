@@ -1,406 +1,101 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, X } from 'lucide-react';
 import Button from '../Button';
 import { supabase } from '../../lib/supabase';
-import { submitLead } from '../../lib/googleSheets';
+import { submitLead, LeadSubmissionError } from '../../lib/googleSheets';
 import { trackEvent, EVENTS } from '../../lib/analytics';
+import { phoneError } from '../../../supabase/functions/_shared/auditValidation';
 
-const countryCodes = [
-  { value: '+91', label: 'India (+91)' },
-  { value: '+1', label: 'United States (+1)' },
-  { value: '+44', label: 'United Kingdom (+44)' },
-  { value: '+971', label: 'UAE (+971)' },
-  { value: '+65', label: 'Singapore (+65)' },
-];
-
-const noticePeriodOptions = [
-  'Not on notice period',
-  'On notice period (0-30 days)',
-  'On notice period (30-60 days)',
-  'On notice period (60-90 days)',
-  'Already laid off',
-];
-
-const MAX_FILE_SIZE_MB = 10;
-
-interface FormState {
-  fullName: string;
-  email: string;
-  countryCode: string;
-  phoneNumber: string;
-  currentRole: string;
-  yearsOfExperience: string;
-  targetRole: string;
-  currentCTC: string;
-  expectedCTC: string;
-  noticePeriodStatus: string;
-  linkedinUrl: string;
-  jobDescription: string;
-}
-
-const initialState: FormState = {
-  fullName: '',
-  email: '',
-  countryCode: '+91',
-  phoneNumber: '',
-  currentRole: '',
-  yearsOfExperience: '',
-  targetRole: '',
-  currentCTC: '',
-  expectedCTC: '',
-  noticePeriodStatus: noticePeriodOptions[0],
-  linkedinUrl: '',
-  jobDescription: '',
+const initialState = {
+  fullName: '', email: '', countryCode: '+91', phoneNumber: '', currentRole: '',
+  yearsOfExperience: '', targetRole: '', currentCTC: '', expectedCTC: '',
+  noticePeriodStatus: 'Not on notice period', linkedinUrl: '', jobDescription: '',
 };
-
-function getAnonId(): string {
-  const key = 'ss_anon_id';
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
+const countryCodes = ['+91', '+1', '+44', '+971', '+65'];
+const noticePeriods = ['Not on notice period', 'On notice period (0-30 days)', 'On notice period (30-60 days)', 'On notice period (60-90 days)', 'Already laid off'];
 
 export default function ResumeAuditForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<FormState>(initialState);
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [form, setForm] = useState(initialState);
+  const [resume, setResume] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasTrackedStart = useRef(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    document.title = 'Free Resume Audit | Skillsurger';
-  }, []);
-
-  const trackStartOnce = () => {
-    if (!hasTrackedStart.current) {
-      hasTrackedStart.current = true;
-      trackEvent(EVENTS.LEAD_FORM_STARTED, { form: 'resume_audit' });
-    }
+  const [submitting, setSubmitting] = useState(false);
+  const tracked = useRef(false);
+  const submittingRef = useRef(false);
+  const requestId = useRef(crypto.randomUUID());
+  const uploadedPath = useRef<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const start = () => {
+    if (!tracked.current) { tracked.current = true; trackEvent(EVENTS.LEAD_FORM_STARTED, { form: 'resume_audit' }); }
   };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    trackStartOnce();
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
+  const change = (name: keyof typeof initialState, value: string) => {
+    start(); setForm(previous => ({ ...previous, [name]: value }));
+    setErrors(previous => ({ ...previous, [name]: '', ...(name === 'countryCode' ? { phoneNumber: '' } : {}) }));
   };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const chooseFile = (file?: File) => {
     if (!file) return;
-
-    if (file.type !== 'application/pdf') {
-      setErrors((prev) => ({ ...prev, resume: 'Please upload a PDF file.' }));
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, resume: `File must be under ${MAX_FILE_SIZE_MB}MB.` }));
-      return;
-    }
-
-    trackStartOnce();
-    setErrors((prev) => ({ ...prev, resume: '' }));
-    setResumeFile(file);
+    if (!/\.pdf$/i.test(file.name) || (file.type && file.type !== 'application/pdf')) { setErrors(previous => ({ ...previous, resume: 'Upload a PDF file.' })); return; }
+    if (file.size > 10 * 1024 * 1024 || file.size === 0) { setErrors(previous => ({ ...previous, resume: 'Upload a PDF between 1 byte and 10 MB.' })); return; }
+    start(); setResume(file); uploadedPath.current = null;
+    setErrors(previous => ({ ...previous, resume: '' }));
     trackEvent(EVENTS.RESUME_UPLOADED, { form: 'resume_audit' });
   };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^\d+$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
-    }
-    if (!formData.currentRole.trim()) newErrors.currentRole = 'Current role is required';
-    if (!formData.yearsOfExperience.trim()) newErrors.yearsOfExperience = 'Years of experience is required';
-    if (!formData.targetRole.trim()) newErrors.targetRole = 'Target role is required';
-    if (!resumeFile) newErrors.resume = 'Please upload your resume (PDF)';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    setErrors({});
-
+  const field = (name: keyof typeof initialState, label: string, type = 'text', required = false) => <div>
+    <label htmlFor={`audit-${name}`} className="block text-sm font-medium text-gray-700 mb-1">{label}{required ? ' *' : ' (optional)'}</label>
+    <input id={`audit-${name}`} name={name} type={type} required={required} value={form[name]} onChange={event => change(name, event.target.value)} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `audit-${name}-error` : undefined} className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500" />
+    {errors[name] && <p id={`audit-${name}-error`} role="alert" className="text-red-600 text-sm mt-1">{errors[name]}</p>}
+  </div>;
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (submittingRef.current) return;
+    const validation: Record<string, string> = {};
+    if (!form.fullName.trim()) validation.fullName = 'Enter your full name.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) validation.email = 'Enter a valid email address.';
+    const phone = form.phoneNumber.trim() ? `${form.countryCode}${form.phoneNumber.replace(/[\s()-]/g, '')}` : '';
+    const invalidPhone = phoneError(phone);
+    if (invalidPhone) validation.phoneNumber = invalidPhone;
+    if (!resume) validation.resume = 'Upload your resume as a PDF.';
+    if (form.yearsOfExperience && (!/^\d+(\.\d+)?$/.test(form.yearsOfExperience) || Number(form.yearsOfExperience) > 60)) validation.yearsOfExperience = 'Enter your experience as a number from 0 to 60.';
+    if (form.linkedinUrl && !/^https:\/\/(www\.)?linkedin\.com\/in\/[^\s]+$/i.test(form.linkedinUrl)) validation.linkedinUrl = 'Enter a LinkedIn URL starting with https://linkedin.com/in/.';
+    setErrors(validation);
+    if (Object.keys(validation).length) { document.getElementById(`audit-${Object.keys(validation)[0]}`)?.focus(); return; }
+    submittingRef.current = true; setSubmitting(true);
     try {
-      let resumeStoragePath: string | null = null;
-
-      if (resumeFile) {
-        const anonId = getAnonId();
-        const safeName = resumeFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const path = `${anonId}/${Date.now()}_${safeName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('resume-audits')
-          .upload(path, resumeFile);
-
-        if (uploadError) {
-          throw new Error(`Resume upload failed: ${uploadError.message}`);
-        }
-        resumeStoragePath = path;
+      if (!uploadedPath.current && resume) {
+        const storagePath = `${requestId.current}/${resume.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+        const { error } = await supabase.storage.from('resume-audits').upload(storagePath, resume, { upsert: false });
+        if (error) throw new LeadSubmissionError('Your resume could not be uploaded. Please try again.', { resume: 'Resume upload failed. Please try again.' });
+        uploadedPath.current = storagePath;
       }
-
-      await submitLead(
-        {
-          fullName: formData.fullName.trim(),
-          email: formData.email.trim(),
-          phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
-          currentRole: formData.currentRole.trim(),
-          yearsOfExperience: formData.yearsOfExperience.trim(),
-          targetRole: formData.targetRole.trim(),
-          currentCTC: formData.currentCTC.trim(),
-          expectedCTC: formData.expectedCTC.trim(),
-          noticePeriodStatus: formData.noticePeriodStatus,
-          linkedinUrl: formData.linkedinUrl.trim(),
-          jobDescription: formData.jobDescription.trim(),
-          resumeStoragePath,
-        },
-        'resume_audit'
-      );
-
+      const receipt = await submitLead({ ...form, email: form.email.trim(), phoneNumber: phone, resumeStoragePath: uploadedPath.current, requestId: requestId.current }, 'resume_audit');
       trackEvent(EVENTS.AUDIT_REQUESTED);
       trackEvent(EVENTS.LEAD_FORM_SUBMITTED, { form: 'resume_audit' });
-
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        navigate('/thank-you?type=resume-audit');
-      }, 1200);
+      navigate('/thank-you?type=resume-audit&email=' + (receipt?.emailStatus || 'unconfigured'));
     } catch (error) {
-      console.error('Resume audit submission failed:', error);
-      setErrors({ submit: 'Something went wrong submitting your audit request. Please try again.' });
-    } finally {
-      setIsSubmitting(false);
-    }
+      setErrors(error instanceof LeadSubmissionError ? { submit: error.message, ...error.fields } : { submit: 'We could not save your audit request. Please try again.' });
+    } finally { submittingRef.current = false; setSubmitting(false); }
   };
-
-  if (submitSuccess) {
-    return (
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-green-800">
-        <p className="font-semibold mb-1">Your resume has been received.</p>
-        <p className="text-sm">
-          We'll analyze it for ATS gaps, positioning issues, role-fit, and improvement opportunities.
-        </p>
+  return <form onSubmit={submit} noValidate className="space-y-6">
+    <p className="text-sm text-gray-600">Only your name, email, and resume are required. Add role details if you want a more targeted audit.</p>
+    {errors.submit && <p role="alert" className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">{errors.submit}</p>}
+    <div className="grid sm:grid-cols-2 gap-6">{field('fullName', 'Full name', 'text', true)}{field('email', 'Email', 'email', true)}</div>
+    <div>
+      <label htmlFor="audit-resume" className="block text-sm font-medium text-gray-700 mb-2">Resume (PDF) *</label>
+      <input ref={fileInput} id="audit-resume" type="file" accept="application/pdf,.pdf" onChange={event => chooseFile(event.target.files?.[0])} aria-invalid={Boolean(errors.resume)} aria-describedby="audit-resume-help" className="block w-full text-sm" />
+      <p id="audit-resume-help" className="text-sm text-gray-500 mt-2">PDF, up to 10 MB.</p>
+      {resume && <div className="flex items-center gap-2 text-sm mt-2"><FileText className="w-4 h-4 text-blue-600" /><span className="break-all">{resume.name}</span><button type="button" aria-label="Remove resume" onClick={() => { setResume(null); uploadedPath.current = null; if (fileInput.current) fileInput.current.value = ''; }}><X className="w-4 h-4" /></button></div>}
+      {errors.resume && <p role="alert" className="text-red-600 text-sm mt-1">{errors.resume}</p>}
+    </div>
+    <details className="border rounded-lg p-4" open={Boolean(errors.phoneNumber || errors.linkedinUrl || errors.yearsOfExperience)}>
+      <summary className="font-medium cursor-pointer">Optional contact and role details</summary>
+      <div className="grid sm:grid-cols-2 gap-6 mt-5">
+        <div className="sm:col-span-2"><label htmlFor="audit-phoneNumber" className="block text-sm font-medium mb-1">Phone number (optional)</label><div className="flex gap-2"><select aria-label="Phone country code" value={form.countryCode} onChange={event => change('countryCode', event.target.value)} className="border rounded-lg p-2">{countryCodes.map(code => <option key={code}>{code}</option>)}</select><input id="audit-phoneNumber" type="tel" value={form.phoneNumber} onChange={event => change('phoneNumber', event.target.value)} aria-invalid={Boolean(errors.phoneNumber)} aria-describedby="audit-phone-error" className="flex-1 min-w-0 border rounded-lg p-2" placeholder="9876543210" /></div>{errors.phoneNumber && <p id="audit-phone-error" role="alert" className="text-red-600 text-sm mt-1">{errors.phoneNumber}</p>}</div>
+        {field('currentRole', 'Current role')}{field('targetRole', 'Target role')}{field('yearsOfExperience', 'Years of experience')}{field('linkedinUrl', 'LinkedIn profile URL', 'url')}{field('currentCTC', 'Current CTC')}{field('expectedCTC', 'Expected CTC')}
+        <div className="sm:col-span-2"><label htmlFor="audit-notice" className="block text-sm font-medium mb-1">Notice period (optional)</label><select id="audit-notice" value={form.noticePeriodStatus} onChange={event => change('noticePeriodStatus', event.target.value)} className="w-full border rounded-lg p-2">{noticePeriods.map(period => <option key={period}>{period}</option>)}</select></div>
+        <div className="sm:col-span-2"><label htmlFor="audit-description" className="block text-sm font-medium mb-1">Target job description (optional)</label><textarea id="audit-description" rows={3} value={form.jobDescription} onChange={event => change('jobDescription', event.target.value)} className="w-full border rounded-lg p-2" /></div>
       </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {errors.submit && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
-          {errors.submit}
-        </div>
-      )}
-
-      <div className="grid sm:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name*</label>
-          <input
-            type="text"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.fullName && <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email*</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number*</label>
-          <div className="flex gap-2">
-            <select
-              name="countryCode"
-              value={formData.countryCode}
-              onChange={handleChange}
-              className="rounded-lg border border-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {countryCodes.map((c) => (
-                <option key={c.value} value={c.value}>{c.value}</option>
-              ))}
-            </select>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {errors.phoneNumber && <p className="text-red-600 text-xs mt-1">{errors.phoneNumber}</p>}
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notice Period Status</label>
-          <select
-            name="noticePeriodStatus"
-            value={formData.noticePeriodStatus}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {noticePeriodOptions.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Profile URL</label>
-          <input
-            type="url"
-            name="linkedinUrl"
-            placeholder="https://linkedin.com/in/..."
-            value={formData.linkedinUrl}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current Role*</label>
-          <input
-            type="text"
-            name="currentRole"
-            value={formData.currentRole}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.currentRole && <p className="text-red-600 text-xs mt-1">{errors.currentRole}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience*</label>
-          <input
-            type="text"
-            name="yearsOfExperience"
-            value={formData.yearsOfExperience}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.yearsOfExperience && <p className="text-red-600 text-xs mt-1">{errors.yearsOfExperience}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Target Role*</label>
-          <input
-            type="text"
-            name="targetRole"
-            value={formData.targetRole}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.targetRole && <p className="text-red-600 text-xs mt-1">{errors.targetRole}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current CTC</label>
-          <input
-            type="text"
-            name="currentCTC"
-            placeholder="e.g. ₹18 LPA"
-            value={formData.currentCTC}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Expected CTC</label>
-          <input
-            type="text"
-            name="expectedCTC"
-            placeholder="e.g. ₹30 LPA"
-            value={formData.expectedCTC}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Job Description (optional — the role you are targeting)
-        </label>
-        <textarea
-          name="jobDescription"
-          rows={3}
-          value={formData.jobDescription}
-          onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Resume Upload (PDF)*</label>
-        {resumeFile ? (
-          <div className="flex items-center justify-between rounded-lg border border-gray-300 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <FileText className="w-4 h-4 text-blue-600" />
-              {resumeFile.name}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setResumeFile(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              className="text-gray-400 hover:text-gray-600"
-              aria-label="Remove file"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <label className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-gray-500 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors">
-            <Upload className="w-5 h-5" />
-            <span className="text-sm">Click to upload your resume (PDF, max {MAX_FILE_SIZE_MB}MB)</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-        )}
-        {errors.resume && <p className="text-red-600 text-xs mt-1">{errors.resume}</p>}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Submitting...' : 'Get Free Resume Audit'}
-      </Button>
-    </form>
-  );
+    </details>
+    <Button type="submit" className="w-full" disabled={submitting}><Upload className="w-4 h-4 mr-2" />{submitting ? 'Submitting…' : 'Get Free Resume Audit'}</Button>
+  </form>;
 }

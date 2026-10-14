@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, Bot } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
 import Button from './Button';
 import { type AIMentorshipSession, sendMessageToAIMentor } from '../lib/mentorship';
 
@@ -13,8 +13,12 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (!sending) { setElapsedSeconds(0); return; }
+    const timer = setInterval(() => setElapsedSeconds(seconds => seconds + 1), 1000);
+    return () => clearInterval(timer);
+  }, [sending]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -32,7 +36,7 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
       setError('');
 
       // Optimistically update UI
-      const optimisticSession = {
+      const optimisticSession: AIMentorshipSession = {
         ...session,
         conversation: [
           ...session.conversation,
@@ -45,7 +49,7 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
       const response = await sendMessageToAIMentor(session.id, message);
       
       // Update with actual response
-      const updatedSession = {
+      const updatedSession: AIMentorshipSession = {
         ...session,
         conversation: [
           ...session.conversation,
@@ -56,20 +60,13 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
       
       onMessageSent(updatedSession);
       setMessage('');
-      setRetryCount(0); // Reset retry count on success
+
     } catch (error: any) {
       console.error('Chat error:', error);
       setError(error.message || 'Failed to send message. Please try again.');
       
-      // Implement retry logic
-      if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => handleSendMessage(e), 1000); // Retry after 1 second
-      } else {
-        // Revert to previous state on max retries
-        onMessageSent(session);
-        setRetryCount(0);
-      }
+      // Keep the draft for an explicit retry; uncertain sends must not duplicate messages.
+      onMessageSent(session);
     } finally {
       setSending(false);
     }
@@ -101,6 +98,7 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
+        {session.conversation.length === 0 && <p className="bg-gray-100 rounded-lg p-3 text-gray-900">Hi! I’m your AI career mentor. Let’s work on {session.topic}. What would you like to achieve?</p>}
         {session.conversation.map((msg, index) => (
           <div
             key={index}
@@ -119,7 +117,8 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
         ))}
         {sending && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
+            <div role="status" className="bg-gray-100 rounded-lg p-3">
+              <p className="text-sm text-gray-600 mb-2">{elapsedSeconds < 10 ? "Your mentor is preparing a response…" : "Still working on your response. You can keep this chat open."}</p>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -145,10 +144,11 @@ export default function AIMentorChat({ session, onMessageSent }: Props) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Message your AI mentor"
+            className="flex-1 min-w-0 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={sending}
           />
-          <Button type="submit" disabled={sending || !message.trim()}>
+          <Button type="submit" aria-label="Send message" disabled={sending || !message.trim()}>
             {sending ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (

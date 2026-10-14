@@ -1,9 +1,6 @@
-/**
- * Copy-only follow-up email content. There is no email-sending
- * infrastructure in this repo (no SMTP/SendGrid/Resend integration) — these
- * are content blocks for a human or a future email tool to use, not wired
- * to any sending mechanism.
- */
+/** Optional follow-up copy for operators. Immediate webinar and resume-audit
+ * receipts are implemented by the server handlers and leadConfirmation helper.
+ * Diagnosis follow-up scheduling remains an operator workflow. */
 export interface FollowUpEmailCopy {
   subject: string;
   body: string;

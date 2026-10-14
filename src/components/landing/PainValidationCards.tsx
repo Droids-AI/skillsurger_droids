@@ -12,7 +12,7 @@ const painPoints = [
     icon: Briefcase,
     title: 'Find Job Matches That Fit YOU',
     description:
-      'AI matches you with real jobs from 500+ companies based on your skills and goals',
+      'AI matches you with job opportunities based on your skills and goals',
     color: 'purple',
   },
   {

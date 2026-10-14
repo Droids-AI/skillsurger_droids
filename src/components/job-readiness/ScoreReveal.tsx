@@ -343,7 +343,7 @@ function Badge({ name }: { name: string }) {
     'ATS Optimized': {
       icon: <Shield className="w-6 h-6" />,
       color: 'bg-green-100 text-green-700 border-green-300',
-      description: 'Your resume will pass most ATS systems'
+      description: 'Your resume scored well on the ATS-readability checks'
     },
     'Skill Verified': {
       icon: <CheckCircle className="w-6 h-6" />,
@@ -358,9 +358,9 @@ function Badge({ name }: { name: string }) {
     'Elite Candidate': {
       icon: <Star className="w-6 h-6" />,
       color: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-      description: 'Top 10% of all job seekers'
+      description: 'Strong result on this assessment'
     },
-    'Perfect Score': {
+    'Quiz: Perfect Score': {
       icon: <Zap className="w-6 h-6" />,
       color: 'bg-pink-100 text-pink-700 border-pink-300',
       description: 'Aced the skill verification quiz!'
@@ -459,7 +459,7 @@ function ConversionModal({ onClose, score }: { onClose: () => void; score: JobRe
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          💡 93% of users improve their score within the first week
+          💡 Use the feedback to choose your next resume and interview improvements.
         </p>
       </div>
     </div>

@@ -70,6 +70,7 @@ export default function OnboardingForm() {
         years_of_experience: userType === 'fresher' ? 0 : (parseInt(formData.yearsOfExperience, 10) || 0),
         remote_preference: formData.workPreference,
         preferred_locations: formData.preferredLocations.split(',').map(loc => loc.trim()).filter(Boolean),
+        city: formData.preferredLocations.split(',').map(loc => loc.trim()).find(loc => !/^remote$/i.test(loc)) || '',
         onboarding_completed: true,
         user_type: userType
       };
@@ -157,7 +158,7 @@ export default function OnboardingForm() {
               <h2 className="text-2xl font-semibold text-gray-900">Final Touches</h2>
               <p className="text-gray-600 mt-2">
                 {userType === 'experienced' 
-                  ? 'The rest of your profile will be populated from your CV.' 
+                  ? 'After this step, upload your CV in Profile to add your skills and experience.'
                   : 'Complete your profile to get started with your career journey.'
                 }
               </p>
@@ -300,7 +301,7 @@ export default function OnboardingForm() {
                   value={formData.preferredLocations}
                   onChange={(e) => setFormData({ ...formData, preferredLocations: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., New York, Remote, San Francisco"
+                  placeholder="e.g., Bangalore, Mumbai, Remote"
                 />
                 <p className="text-sm text-gray-500 mt-1">Separate multiple locations with commas</p>
               </div>

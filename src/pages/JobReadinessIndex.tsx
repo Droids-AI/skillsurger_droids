@@ -107,7 +107,7 @@ export default function JobReadinessIndex() {
     if (skillScore >= 80) badges.push('Skill Verified');
     if (overall >= 80) badges.push('Interview-Ready');
     if (overall >= 90) badges.push('Elite Candidate');
-    if (quiz.correctAnswers === quiz.totalQuestions) badges.push('Perfect Score');
+    if (quiz.correctAnswers === quiz.totalQuestions) badges.push('Quiz: Perfect Score');
 
     return badges;
   };
@@ -216,7 +216,7 @@ function LandingSection({ onStart }: { onStart: () => void }) {
           </button>
 
           <p className="text-sm text-gray-500 mt-4">
-            Used by 10,000+ job seekers • Average improvement: +12 points
+            Review your resume, test your skills, and find areas to improve
           </p>
         </div>
 
@@ -301,7 +301,7 @@ function CalculatingScreen() {
 
         <div className="mt-8 bg-blue-50 rounded-lg p-4 text-center">
           <p className="text-sm text-blue-800">
-            💡 <strong>Did you know?</strong> 75% of resumes are rejected by ATS before a human ever sees them.
+            💡 <strong>Did you know?</strong> Resume structure and relevant keywords can affect how an ATS reads your application.
           </p>
         </div>
       </div>

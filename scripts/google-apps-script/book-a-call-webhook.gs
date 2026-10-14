@@ -48,6 +48,7 @@ var SHEET_CONFIG = {
 
 function doPost(e) {
   var data = JSON.parse(e.postData.contents);
+  if (data.confirmation) return sendLeadConfirmation(data.confirmation);
   var config = SHEET_CONFIG[data.formType] || genericConfig(data);
   var sheet = getOrCreateSheet(config.sheetName, config.columns);
 
@@ -105,4 +106,32 @@ function sendNotificationEmail(data) {
   });
 
   MailApp.sendEmail(NOTIFY_EMAIL, subject, lines.join('\n'));
+}
+
+// Server-only receipts: set LEAD_CONFIRMATION_WEBHOOK_SECRET in Script Properties.
+// Deploy this script, then set the same secret and its URL in Supabase secrets.
+function sendLeadConfirmation(confirmation) {
+  var properties = PropertiesService.getScriptProperties();
+  var secret = properties.getProperty('LEAD_CONFIRMATION_WEBHOOK_SECRET');
+  if (!secret || confirmation.secret !== secret) return jsonResponse({ success: false });
+  if (!/^[a-f0-9-]{36}$/i.test(confirmation.leadId || '') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(confirmation.email || '')) return jsonResponse({ success: false });
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var key = 'receipt:' + confirmation.leadId;
+    var previous = properties.getProperty(key);
+    if (previous === 'accepted') return jsonResponse({ success: true });
+    if (previous) return jsonResponse({ success: false });
+    // Mark before sending; a timeout or ambiguous response must never send twice.
+    properties.setProperty(key, 'sending');
+    MailApp.sendEmail({ to: confirmation.email, subject: confirmation.subject, body: confirmation.body, name: 'Skillsurger' });
+    properties.setProperty(key, 'accepted');
+    return jsonResponse({ success: true });
+  } catch (error) {
+    return jsonResponse({ success: false });
+  } finally { lock.releaseLock(); }
+}
+
+function jsonResponse(result) {
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }

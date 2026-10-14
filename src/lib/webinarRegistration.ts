@@ -5,6 +5,7 @@ import { reportError } from './safeLogging';
 export type RegistrationResult = {
   registrationId: string;
   alreadyRegistered: boolean;
+  emailStatus?: 'pending' | 'sending' | 'accepted' | 'failed' | 'unconfigured';
   whatsappStatus: 'pending' | 'accepted' | 'delivered' | 'read' | 'failed' | 'unconfigured';
 };
 

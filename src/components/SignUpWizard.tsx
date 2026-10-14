@@ -59,12 +59,8 @@ export default function SignUpWizard() {
         password: data.password,
       });
 
-      if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
-          setError('An account with this email already exists. Please log in instead.');
-        } else {
-          setError(signUpError.message);
-        }
+      if (signUpError || !signUpData.session) {
+        setError('If signup can be completed, check your inbox to continue. You can also log in or reset your password.');
         return;
       }
 
@@ -235,7 +231,9 @@ export default function SignUpWizard() {
         );
       } else {
         plan = await generateLearningPlan(
-          skillsArray[0] || ''
+          skillsArray[0] || '',
+          '',
+          skillsArray
         );
       }
 
@@ -251,7 +249,7 @@ export default function SignUpWizard() {
 
     } catch (error) {
       console.error('Error during sign up:', error);
-      setError('An unexpected error occurred. Please try again.');
+      setError('If signup can be completed, check your inbox to continue. You can also log in or reset your password.');
     } finally {
       setUploading(false);
     }

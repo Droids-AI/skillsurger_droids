@@ -1983,7 +1983,7 @@ export default function ProfileSection() {
                         <div key={key}>
                           <div className="flex justify-between text-xs mb-1">
                             <span className="text-gray-900 font-medium capitalize">
-                              {key.replace(/([A-Z])/g, ' $1').trim()}
+                              {key.replace(/([A-Z])/g, ' $1').replace(/\bats\b/gi, 'ATS').trim()}
                             </span>
                             <span className={`font-bold ${getScoreColor(value)}`}>
                               {value}/100

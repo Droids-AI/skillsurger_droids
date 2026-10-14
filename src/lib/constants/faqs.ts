@@ -7,7 +7,7 @@ export const faqs: FAQ[] = [
   {
     question: "How accurate is the AI feedback?",
     answer:
-      "Our AI is trained on thousands of successful resumes and interviews from IIT/MAANG professionals. It provides the same insights recruiters use to evaluate candidates, helping you understand exactly what employers look for.",
+      "Our tools help you review resume structure and keywords, explore job opportunities, and practice interview answers. Review the feedback against your experience and the requirements of your target role.",
   },
   {
     question: "Is my resume data safe and private?",

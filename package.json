@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:tracker": "node scripts/check-tracker-contracts.cjs && node scripts/check-course-evidence.cjs && node scripts/check-tracker-database.cjs && node scripts/check-tracker-edge.cjs && node scripts/check-ad-landing.cjs && node scripts/check-tracker-browser.cjs",
-    "postbuild": "node scripts/render-fde-page.cjs"
+    "postbuild": "node scripts/render-fde-page.cjs && node scripts/render-route-metadata.cjs",
+    "check:qa-report": "node scripts/check-qa-report-contracts.cjs && node scripts/check-tracker-database.cjs && node scripts/check-tracker-edge.cjs && node scripts/check-qa-report-browser.cjs"
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.2.0",

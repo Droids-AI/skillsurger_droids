@@ -12,7 +12,7 @@ interface CTASectionProps {
 
 export default function CTASection({
   title = 'Ready to land your dream job?',
-  subtitle = "Join thousands of job seekers who've transformed their careers with AI-powered guidance",
+  subtitle = "Prepare your next career move with AI-powered tools",
   ctaLabel = 'Start Free Trial',
   ctaHref = '/signup',
   footnote = 'No credit card required • 7-day free trial • Cancel anytime',

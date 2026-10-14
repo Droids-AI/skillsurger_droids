@@ -25,7 +25,7 @@ export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
   },
   'resume-audit': {
     headline: 'Your resume audit request is received.',
-    body: "We'll review your resume for ATS gaps, role-fit, structure, keywords, and job-search readiness. You'll receive next steps shortly.",
+    body: "We'll review your resume for ATS gaps, role-fit, structure, keywords, and job-search readiness. You can contact us or book a career diagnosis call for next steps.",
     primaryCtaLabel: 'Explore Job Switch Copilot',
     primaryCtaHref: '/job-switch-copilot',
     secondaryCtaLabel: 'Book Career Diagnosis',

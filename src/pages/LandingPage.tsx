@@ -87,10 +87,10 @@ const features = [
 ];
 
 const stats = [
-  { number: "5,000+", label: "Careers Transformed" },
-  { number: "98%", label: "Success Rate" },
-  { number: "24/7", label: "AI Agent Support" },
-  { number: "500+", label: "Companies Hiring" },
+  { number: "Resume", label: "ATS feedback and improvements" },
+  { number: "Jobs", label: "Search by role and location" },
+  { number: "Practice", label: "AI mock interviews" },
+  { number: "Learn", label: "Skill-based resources" },
 ];
 
 
@@ -135,7 +135,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center group">
-                <p className="text-4xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                <p className="text-2xl sm:text-4xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
                   {stat.number}
                 </p>
                 <p className="text-gray-600 mt-2">{stat.label}</p>
@@ -563,7 +563,7 @@ export default function LandingPage() {
             Ready to Land Your Dream Job?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Join thousands of job seekers who've transformed their careers with AI-powered guidance
+            Prepare your next career move with resume feedback, job search, and interview practice
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup">

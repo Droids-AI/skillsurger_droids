@@ -32,7 +32,9 @@ export default function UserTypeSelection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Experienced Professional Option */}
-          <div
+          <button
+            type="button"
+            aria-pressed={selectedType === 'experienced'}
             onClick={() => setSelectedType('experienced')}
             className="relative cursor-pointer transition-all duration-300 transform hover:scale-105"
           >
@@ -78,10 +80,12 @@ export default function UserTypeSelection() {
                 <div className="w-4 h-4 bg-white rounded-full"></div>
               </div>
             )}
-          </div>
+          </button>
 
           {/* Fresher Option */}
-          <div
+          <button
+            type="button"
+            aria-pressed={selectedType === 'fresher'}
             onClick={() => setSelectedType('fresher')}
             className="relative cursor-pointer transition-all duration-300 transform hover:scale-105"
           >
@@ -127,7 +131,7 @@ export default function UserTypeSelection() {
                 <div className="w-4 h-4 bg-white rounded-full"></div>
               </div>
             )}
-          </div>
+          </button>
         </div>
 
         <div className="text-center mt-12">

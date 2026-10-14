@@ -44,7 +44,7 @@ const server = http.createServer((req,res) => {
     await page.getByRole('link',{name:'Register for the free webinar'}).click();await page.waitForFunction(()=>document.activeElement?.id==='webinar-name');
     await page.getByLabel('Full name').fill('Smoke Test');await page.getByLabel('Email',{exact:true}).fill('smoke@example.com');await page.getByLabel('WhatsApp number with country code').fill('+91 98765 43210');
     failLead=true;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.getByRole('alert').waitFor();assert.equal(rows.length,0);
-    failLead=false;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured');
+    failLead=false;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured&email=unconfigured');
     assert.equal(rows.length,1);assert.equal(rows[0].form_type,'webinar_registration');assert.equal(rows[0].payload.durationMinutes,60);
     await page.getByRole('heading',{name:'Your free webinar registration is received.'}).waitFor();
     await page.goto('http://127.0.0.1:4173/pricing');await page.getByRole('heading',{name:'Choose your career growth plan'}).waitFor();assert.ok(new URL(page.url()).pathname==='/pricing');assert.equal(await page.getByRole('link',{name:/Start Free Trial/}).getAttribute('href'),'/signup');assert.ok((await page.getByRole('link',{name:/Get Monthly Pro/}).getAttribute('href')).startsWith('https://checkout.dodopayments.com/'));

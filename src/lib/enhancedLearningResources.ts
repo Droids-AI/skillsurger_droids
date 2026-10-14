@@ -383,6 +383,7 @@ export async function generateVerifiedLearningResources(
   jobDescription: string = '',
   requirements: string[] = []
 ): Promise<VerifiedResource[]> {
+  const targetSkills = [...requirements, jobTitle].filter(Boolean);
   try {
     const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
     const apiUrl = `${apiBase}/openai/skillsurger`;
@@ -437,12 +438,12 @@ export async function generateVerifiedLearningResources(
         r.title.toLowerCase() === resource.title.toLowerCase()
       ) === index;
     });
-    return completeLearningResources(await verifyCourseCandidates(finalResources), requirements) as VerifiedResource[];
+    return completeLearningResources(await verifyCourseCandidates(finalResources), targetSkills) as VerifiedResource[];
 
   } catch (error) {
     reportError('enhancedLearningResources', 'operation_failed');
     // Generation failed: still give official sources for the required skills.
-    return completeLearningResources([], requirements) as VerifiedResource[];
+    return completeLearningResources([], targetSkills) as VerifiedResource[];
   }
 }
 

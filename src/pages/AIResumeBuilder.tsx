@@ -43,7 +43,7 @@ const AIResumeBuilder = () => {
     <div className="min-h-screen bg-white">
       <SEO 
         title="AI Resume Builder | Beat ATS Filters | Skillsurger"
-        description="Create ATS-optimized resumes using AI. Tailor CVs to job roles instantly, get 95% ATS pass rate. Free trial—build your perfect resume in minutes."
+        description="Create ATS-optimized resumes using AI. Tailor CVs to job roles instantly, review ATS formatting and keywords. Free trial—build your perfect resume in minutes."
         keywords="AI resume builder, ATS optimization, resume maker, CV builder, keyword optimization, resume templates"
         canonicalUrl="/ai-resume-builder"
       />
@@ -149,7 +149,7 @@ const AIResumeBuilder = () => {
                     <Check className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">ATS Compliance</h4>
-                      <p className="text-gray-600">Ensures your resume passes through 95% of ATS systems with proper formatting and structure.</p>
+                      <p className="text-gray-600">Review formatting and structure that can affect how ATS systems read your resume.</p>
                     </div>
                   </div>
                   
@@ -168,9 +168,9 @@ const AIResumeBuilder = () => {
                   <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Target className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">ATS Success Rate</h3>
-                  <div className="text-5xl font-bold text-blue-600 mb-2">95%</div>
-                  <p className="text-gray-600">of resumes pass through ATS systems</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">ATS Readability</h3>
+                  <div className="text-5xl font-bold text-blue-600 mb-2">Review</div>
+                  <p className="text-gray-600">check structure and role-specific keywords</p>
                 </div>
               </div>
             </div>
@@ -223,7 +223,7 @@ const AIResumeBuilder = () => {
                   </li>
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-                    <span className="text-gray-700">95% ATS compliance guarantee</span>
+                    <span className="text-gray-700">ATS formatting feedback</span>
                   </li>
                   <li className="flex items-start">
                     <Check className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
@@ -267,7 +267,7 @@ const AIResumeBuilder = () => {
                 How many keywords should I add?
               </h3>
               <p className="text-gray-700 leading-relaxed">
-                Aim for a 70–80% match to the job ad. Our AI optimizes keyword density automatically to avoid spam filters while maximizing relevance.
+                Use relevant keywords from the job description where they accurately describe your experience. Review every suggestion before applying it.
               </p>
             </div>
 
@@ -299,7 +299,7 @@ const AIResumeBuilder = () => {
             Ready to Beat ATS Filters?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Join thousands of job seekers who are getting more interviews with our AI-powered resume builder.
+            Build a resume tailored to your experience and target role.
           </p>
           <Link to="/signup">
             <Button

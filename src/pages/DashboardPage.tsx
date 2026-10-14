@@ -21,7 +21,7 @@ import LearningPaths from '../components/LearningPaths';
 import CVScoring from '../components/CVScoring';
 import Subscription from './Subscription';
 import TrialWarning from '../components/TrialWarning';
-import { UserProvider, useUser } from '../context/UserContext';
+import { useUser } from '../context/UserContext';
 import { hasAIFeatureAccess } from '../lib/subscriptionUtils';
 import SEO from '../components/SEO';
 import DashboardSkeleton from '../components/DashboardSkeleton';
@@ -31,154 +31,32 @@ type DashboardSection = 'overview' | 'profile' | 'career' | 'cv-scoring' | 'ment
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
-  
-  // Debug: Track activeSection changes
-  useEffect(() => {
-    console.log(`activeSection changed to: ${activeSection}`);
-    console.log(`localStorage at this moment: ${localStorage.getItem('dashboardActiveSection')}`);
-    console.trace('activeSection change stack trace');
-  }, [activeSection]);
+  const sections: DashboardSection[] = ['overview', 'profile', 'career', 'cv-scoring', 'mentorship', 'learning', 'subscription'];
+  const requestedSection = searchParams.get('section') as DashboardSection;
+  const activeSection = sections.includes(requestedSection) ? requestedSection : 'overview';
+  const setActiveSection = (section: DashboardSection) => {
+    navigate(`/dashboard?section=${section}`);
+    setIsMobileMenuOpen(false);
+  };
   const [selectedJobForLearning, setSelectedJobForLearning] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(true);
-
-  // Persist job suggestions and selected career for CareerExplorer
-  const [careerExplorerJobs, setCareerExplorerJobs] = useState<any[]>(() => {
-    // Load jobs from localStorage on mount
-    try {
-      const savedJobs = localStorage.getItem('careerExplorerJobs');
-      return savedJobs ? JSON.parse(savedJobs) : [];
-    } catch (error) {
-      console.error('Error loading jobs from localStorage:', error);
-      return [];
-    }
-  });
-  const [careerExplorerSelectedCareer, setCareerExplorerSelectedCareer] = useState<string>('');
-
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [careerExplorerJobs, setCareerExplorerJobs] = useState<any[]>([]);
+  const [careerExplorerSelectedCareer, setCareerExplorerSelectedCareer] = useState('');
   const { subscription, loading: contextLoading } = useUser();
-  
-  // Save jobs to localStorage whenever they change
-  useEffect(() => {
-    if (careerExplorerJobs.length > 0) {
-      localStorage.setItem('careerExplorerJobs', JSON.stringify(careerExplorerJobs));
-    }
-  }, [careerExplorerJobs]);
-
-  // Check if user has AI access
   const hasAI = hasAIFeatureAccess(subscription);
 
+  useEffect(() => { checkUser(); }, []);
   useEffect(() => {
-    // Read section directly from window.location to avoid stale searchParams
-    const urlParams = new URLSearchParams(window.location.search);
-    const sectionFromQuery = urlParams.get('section');
-    console.log(`Dashboard useEffect: URL section=${sectionFromQuery}, activeSection=${activeSection}`);
-    
-    // Only update if the URL section is different from current activeSection
-    // AND the activeSection is not already set correctly (prevent loops)
-    if (sectionFromQuery && ['overview', 'profile', 'career', 'cv-scoring', 'mentorship', 'learning', 'subscription'].includes(sectionFromQuery)) {
-      if (activeSection !== sectionFromQuery) {
-        console.log(`Setting section from URL: ${sectionFromQuery} (was ${activeSection})`);
-        setActiveSection(sectionFromQuery as DashboardSection);
-        localStorage.setItem('dashboardActiveSection', sectionFromQuery);
-      } else {
-        console.log(`Section already matches URL: ${sectionFromQuery}`);
-      }
-    } else {
-      // If no URL param, only restore from localStorage if activeSection is still 'overview' (initial state)
-      // This prevents overriding user selections
-      if (activeSection === 'overview') {
-        const savedSection = localStorage.getItem('dashboardActiveSection') as DashboardSection;
-        console.log(`No URL section, checking localStorage: ${savedSection}`);
-        if (savedSection && ['overview', 'profile', 'career', 'mentorship', 'learning', 'subscription'].includes(savedSection)) {
-          console.log(`Restoring section from localStorage: ${savedSection}`);
-          setActiveSection(savedSection);
-          // Update URL to match localStorage
-          const newSearchParams = new URLSearchParams(window.location.search);
-          newSearchParams.set('section', savedSection);
-          const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
-          window.history.replaceState({}, '', newUrl);
-        }
-      } else {
-        console.log(`No URL section but activeSection is ${activeSection}, keeping current section`);
-      }
-    }
-    
-    checkUser();
-
-    // Listen for section change events from achievements
-    const handleSectionChange = (event: CustomEvent) => {
-      const section = event.detail;
-      switch (section) {
-        case 'profile':
-          setActiveSection('profile');
-          break;
-        case 'mock-interviews':
-        case 'mentorship':
-          setActiveSection('mentorship');
-          break;
-        case 'skills':
-        case 'learning':
-          setActiveSection('learning');
-          break;
-        case 'subscription':
-          setActiveSection('subscription');
-          break;
-      }
-      setIsMobileMenuOpen(false);
+    const handleSectionChange = (event: Event) => {
+      const section = (event as CustomEvent).detail;
+      const aliases: Record<string, DashboardSection> = { 'mock-interviews': 'mentorship', skills: 'learning' };
+      const target = aliases[section] || section;
+      if (sections.includes(target)) setActiveSection(target);
     };
-
-    window.addEventListener('changeSection', handleSectionChange as EventListener);
-
-    return () => {
-      window.removeEventListener('changeSection', handleSectionChange as EventListener);
-    };
-  }, [searchParams]); // Only depend on searchParams - read fresh values from window.location
-
-  // Update URL when activeSection changes - simplified approach
-  useEffect(() => {
-    console.log(`URL update effect triggered: activeSection=${activeSection}`);
-    
-    // Skip if activeSection is not initialized yet
-    if (!activeSection) {
-      console.log('Skipping URL update - activeSection not initialized');
-      return;
-    }
-    
-    // Only update URL if we have a valid activeSection and it's different from URL
-    if (activeSection && activeSection !== 'overview') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const currentSection = urlParams.get('section');
-      
-      console.log(`URL update check: currentSection=${currentSection}, activeSection=${activeSection}`);
-      
-      if (currentSection !== activeSection) {
-        console.log(`Updating URL: ${currentSection} -> ${activeSection}`);
-        const newSearchParams = new URLSearchParams(window.location.search);
-        newSearchParams.set('section', activeSection);
-        localStorage.setItem('dashboardActiveSection', activeSection);
-        console.log(`Updated localStorage to: ${activeSection}`);
-        
-        const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
-        window.history.replaceState({}, '', newUrl);
-        console.log(`Updated URL to: ${newUrl}`);
-      } else {
-        console.log(`URL already matches activeSection: ${activeSection}`);
-      }
-    } else if (activeSection === 'overview') {
-      // For overview, only remove section if URL currently has a section
-      // This prevents unnecessary URL changes during initial render
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('section')) {
-        console.log('Removing section from URL for overview');
-        urlParams.delete('section');
-        localStorage.removeItem('dashboardActiveSection');
-        
-        const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
-        window.history.replaceState({}, '', newUrl);
-      }
-    }
-  }, [activeSection]);
+    window.addEventListener('changeSection', handleSectionChange);
+    return () => window.removeEventListener('changeSection', handleSectionChange);
+  }, [navigate]);
 
   async function checkUser() {
     try {
@@ -254,7 +132,7 @@ export default function DashboardPage() {
 
   return (
     <OnboardingCheck>
-      <UserProvider>
+      <>
         <SEO 
           title="Dashboard | Skillsurger"
           description="Access your personalized career dashboard. Track progress, optimize your resume, practice interviews, and explore career opportunities."
@@ -262,10 +140,12 @@ export default function DashboardPage() {
           canonicalUrl="/dashboard"
           noIndex={true}
         />
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 flex w-full">
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
+            aria-label={isMobileMenuOpen ? "Close dashboard menu" : "Open dashboard menu"}
+            aria-expanded={isMobileMenuOpen}
+            className="lg:hidden fixed top-20 left-4 z-40 p-2 bg-white rounded-lg shadow-lg"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
@@ -279,7 +159,7 @@ export default function DashboardPage() {
           <div
             className={`fixed lg:static inset-y-0 left-0 transform ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-            } lg:translate-x-0 transition-transform duration-200 ease-in-out z-30 w-64 bg-white border-r shadow-lg lg:shadow-none pt-24 h-screen overflow-y-auto`}
+            } lg:translate-x-0 transition-transform duration-200 ease-in-out z-30 w-64 shrink-0 bg-white border-r shadow-lg lg:shadow-none pt-24 h-screen overflow-y-auto overflow-x-hidden`}
           >
             <nav className="p-4 space-y-2">
               {menuItems.map((item) => {
@@ -320,7 +200,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Main Content - Adjusted padding for fixed sidebar */}
-          <div className="flex-1 pt-24 pb-12 px-4 lg:px-8 lg">
+          <div className="flex-1 min-w-0 pt-24 pb-12 px-4 lg:px-8">
             <div className="max-w-6xl mx-auto space-y-8">
               {/* Trial Warning */}
               <TrialWarning />
@@ -453,7 +333,7 @@ export default function DashboardPage() {
             ></div>
           )}
         </div>
-      </UserProvider>
+      </>
     </OnboardingCheck>
   );
 }

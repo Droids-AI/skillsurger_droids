@@ -29,7 +29,7 @@ export default function AboutUs() {
     <div className="min-h-screen bg-gray-50 pt-24">
       <SEO 
         title="About Skillsurger | AI-Powered Career Platform"
-        description="Learn about Skillsurger's mission to transform careers through AI innovation. Discover how we help thousands of professionals achieve their career goals."
+        description="Learn about Skillsurger's mission to transform careers through AI innovation. Discover how we help professionals prepare for their next career move."
         keywords="about Skillsurger, AI career platform, career development mission, AI career technology"
         canonicalUrl="/about"
       />
@@ -57,7 +57,7 @@ export default function AboutUs() {
                 Founded in 2023, Skillsurger emerged from a simple observation: traditional career guidance wasn't keeping pace with the rapidly evolving job market. Our founders, experienced professionals from tech and career development backgrounds, saw an opportunity to leverage AI to provide personalized, scalable career guidance.
               </p>
               <p className="mb-4">
-                What started as a small team with a big vision has grown into a platform that helps thousands of professionals navigate their career journeys. We've combined advanced AI technology with human expertise to create a unique approach to career development that's both powerful and accessible.
+                What started as a small team with a big vision has grown into a platform that helps professionals navigate their career journeys. We've combined advanced AI technology with human expertise to create a unique approach to career development that's both powerful and accessible.
               </p>
               <p>
                 Today, Skillsurger is at the forefront of career development technology, continuously innovating to provide the most effective tools and guidance for professional growth.
@@ -120,29 +120,7 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-gray-900 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">50K+</div>
-              <div className="text-gray-400">Active Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">100+</div>
-              <div className="text-gray-400">Countries</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">95%</div>
-              <div className="text-gray-400">Success Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-gray-400">AI Support</div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
     </div>
   );

@@ -64,7 +64,7 @@ export async function startAIMentorshipSession(topic: string): Promise<AIMentors
       .insert([{
         user_id: user.id,
         topic,
-        conversation: []
+        conversation: [{ role: 'assistant', content: `Hi! I’m your AI career mentor. Let’s work on ${topic}. What would you like to achieve, and what is your biggest challenge right now?` }]
       }])
       .select()
       .single();

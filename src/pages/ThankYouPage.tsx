@@ -69,6 +69,7 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
   const [params] = useSearchParams();
   const existing = type === 'webinar' && params.get('existing') === '1';
   const delivery = params.get('delivery');
+  const emailStatus = params.get('email');
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-20">
@@ -98,6 +99,9 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
             {(delivery === 'delivered' || delivery === 'read' || delivery === 'accepted') && <p className="mt-3 text-sm text-gray-600">We've also sent the joining message to your WhatsApp number.</p>}
             <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2024%20October%202026">Trouble joining? Message us</a>
           </div>}
+          {(type === 'webinar' || type === 'resume-audit') && emailStatus === 'accepted' && <p className="mt-4 text-gray-600" role="status">Your confirmation email has been sent. Check your inbox and spam folder.</p>}
+          {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'failed' || emailStatus === 'unconfigured') && <p className="mt-4 text-gray-600" role="status">Your request is saved, but email confirmation is unavailable. Save these details and <a className="underline text-blue-700" href="/contact">contact us if you need help</a>.</p>}
+          {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'pending' || emailStatus === 'sending') && <p className="mt-4 text-gray-600" role="status">Your confirmation email is being prepared. Save these details while you wait.</p>}
           {type === 'webinar' && <div className="mt-5"><AddToCalendarButton /></div>}
         </div>
 

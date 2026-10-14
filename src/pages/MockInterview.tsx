@@ -187,8 +187,8 @@ const MockInterview = () => {
                     <BarChart3 className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">Interview Readiness Score</h3>
-                  <div className="text-5xl font-bold text-green-600 mb-2">85%</div>
-                  <p className="text-gray-600">average improvement after 5 sessions</p>
+                  <div className="text-5xl font-bold text-green-600 mb-2">Practice</div>
+                  <p className="text-gray-600">review feedback after each session</p>
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ const MockInterview = () => {
             Ready to Ace Your Next Interview?
           </h2>
           <p className="text-xl text-green-100 mb-8 max-w-3xl mx-auto">
-            Join thousands of job seekers who are landing offers with our AI-powered interview practice.
+            Practice answers and review feedback before your next interview.
           </p>
           <Link to="/signup">
             <Button

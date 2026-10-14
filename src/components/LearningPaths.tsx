@@ -511,7 +511,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         .eq('company', selectedJob.company)
         .single();
 
-      if (existingPath) {
+      if (existingPath && Array.isArray(existingPath.resources) && existingPath.resources.length > 0) {
         setError(`A learning path for "${selectedJob.title}" at ${selectedJob.company} already exists. Please delete the existing one first or choose a different job.`);
         return;
       }
@@ -530,10 +530,13 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         ) === index;
       });
 
+      if (uniquePlan.length === 0) throw new Error("No learning resources were found. Add skills to your profile and try again.");
+
       // Save the new path to the database
       const { data: savedPath, error: saveError } = await supabase
         .from('learning_paths')
-        .insert({
+        .upsert({
+          ...(existingPath ? { id: existingPath.id } : {}),
           user_id: user.id,
           career_path: careerPath,
           job_title: selectedJob.title,
@@ -627,7 +630,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         .eq('job_title', jobTitle)
         .maybeSingle();
 
-      if (existingPath) {
+      if (existingPath && Array.isArray(existingPath.resources) && existingPath.resources.length > 0) {
         setError('A personalized learning path already exists for your current role.');
         setGeneratingPlan(false);
         return;
@@ -648,10 +651,13 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         ) === index;
       });
 
+      if (uniquePlan.length === 0) throw new Error("No learning resources were found. Add skills to your profile and try again.");
+
       // Save the new path to the database
       const { data: savedPath, error: saveError } = await supabase
         .from('learning_paths')
-        .insert({
+        .upsert({
+          ...(existingPath ? { id: existingPath.id } : {}),
           user_id: user.id,
           career_path: 'Personalized',
           job_title: profileJob.title,
@@ -1099,6 +1105,10 @@ export default function LearningPaths({ job }: LearningPathsProps) {
           <div className="space-y-6">
             {learningPaths.map(path => (
               <div key={path.id} className="bg-white rounded-lg shadow-lg p-6">
+                {path.resources.length === 0 && <div role="status" className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <p className="mb-3">This learning path has no resources. Add skills to your profile, then generate it again.</p>
+                  <Button disabled={generatingPlan} onClick={() => path.career_path === 'Personalized' ? handleGeneratePersonalizedLearningPath() : handleGenerateLearningPath({ id: path.id, title: path.job_title, company: path.company || '', location: '', description: '', requirements: path.skills_to_learn })}>Retry learning path</Button>
+                </div>}
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-semibold">
@@ -1116,7 +1126,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                       <span className="text-sm text-gray-500">Progress:</span>
                       <span className="font-medium ml-1">{path.progress}%</span>
                       <span className="text-xs text-gray-500 block">
-                        ({path.resources.filter(r => r.completed).length}/{path.resources.length} courses)
+                        ({path.resources.filter(r => r.completed).length}/{path.resources.length} resources)
                       </span>
                       {path.progress === 100 && (
                         <CheckCircle className="w-5 h-5 text-green-600 inline ml-1" />
@@ -1416,7 +1426,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
                         <span className="text-sm text-gray-500">Progress:</span>
                         <span className="font-medium ml-1">{path.progress}%</span>
                         <span className="text-xs text-gray-500 block">
-                          ({path.resources.filter(r => r.completed).length}/{path.resources.length} courses)
+                          ({path.resources.filter(r => r.completed).length}/{path.resources.length} resources)
                         </span>
                         {path.progress === 100 && (
                           <CheckCircle className="w-5 h-5 text-green-600 inline ml-1" />

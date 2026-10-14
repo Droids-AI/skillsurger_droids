@@ -39,7 +39,7 @@ export default function OnboardingModal() {
     const hasCompleted = localStorage.getItem('onboarding_completed');
 
     // Show modal on /get-started or /dashboard if not completed
-    if ((location.pathname === '/get-started' || location.pathname === '/dashboard') && !hasCompleted) {
+    if (location.pathname === '/get-started' && !hasCompleted) {
       setIsOpen(true);
     }
   }, [location.pathname]);
