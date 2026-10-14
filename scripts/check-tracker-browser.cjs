@@ -13,7 +13,7 @@ const server = http.createServer((req,res) => {
   fs.createReadStream(file).pipe(res);
 });
 const base='http://127.0.0.1:4174';
-const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
+const schedule='Saturday, 24 October 2026 at 3:00 PM IST';
 
 (async()=>{
   await new Promise(resolve=>server.listen(4174,'127.0.0.1',resolve));
@@ -79,6 +79,8 @@ const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
     const events=await conversions();assert.equal(events.length,1);assert.equal(events[0].send_to,'AW-18357417979/018aCPbEh5gdEPvvv7FE');assert.equal(events[0].transaction_id,'synthetic-1');
     passed('QA-003','Forced 500 emits zero conversion; successful retry emits exactly one.');passed('QA-004','Exact Ads destination/label and registration transaction_id checked.');
     assert.ok((await page.locator('main').innerText()).includes(schedule));
+    const calendarUrl=new URL(await page.getByRole('link',{name:'Add to Google Calendar'}).getAttribute('href'));
+    assert.equal(calendarUrl.searchParams.get('dates'),'20261024T093000Z/20261024T103000Z');
     await page.reload();assert.equal((await conversions()).length,0);
     await page.goto(base+'/job-switch-copilot');
     await page.getByLabel('Full name').fill('Synthetic QA');await page.getByLabel('Email',{exact:true}).fill('QA@EXAMPLE.COM');await page.getByLabel('WhatsApp number with country code').fill('+919876543210');
@@ -142,7 +144,7 @@ const schedule='Saturday, 17 October 2026 at 3:00 PM IST';
     await page.setViewportSize({width:390,height:844});await page.goto(base+'/job-switch-copilot');await page.screenshot({path:'artifacts/tracker-webinar-mobile.png',fullPage:true});
     const expiredAttempts=attempts;
     await page.getByLabel('Full name').fill('Synthetic Expired');await page.getByLabel('Email',{exact:true}).fill('expired@example.com');await page.getByLabel('WhatsApp number with country code').fill('+919876543210');
-    await page.evaluate(()=>{Date.now=()=>Date.parse('2026-10-17T09:30:00Z');document.querySelector('#webinar form').requestSubmit()});
+    await page.evaluate(()=>{Date.now=()=>Date.parse('2026-10-24T09:30:00Z');document.querySelector('#webinar form').requestSubmit()});
     await page.getByRole('button',{name:'Registration closed',exact:true}).waitFor();assert.equal(attempts,expiredAttempts);assert.equal((await conversions()).length,0);
     passed('Webinar expiry','At the confirmed start boundary the form closes without a request or conversion.');
     await context.close();

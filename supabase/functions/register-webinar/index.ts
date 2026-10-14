@@ -1,8 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const sessionId = 'job-switch-2026-10-17';
-const startsAt = '2026-10-17T15:00:00+05:30';
-const schedule = 'Saturday, 17 October 2026 at 3:00 PM IST';
+const sessionId = 'job-switch-2026-10-24';
+const startsAt = '2026-10-24T15:00:00+05:30';
+const schedule = 'Saturday, 24 October 2026 at 3:00 PM IST';
 const origins = (Deno.env.get('WEBINAR_ALLOWED_ORIGINS') || 'https://skillsurger.com,https://www.skillsurger.com').split(',');
 const cors = (origin: string) => ({ 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', Vary: 'Origin' });
 

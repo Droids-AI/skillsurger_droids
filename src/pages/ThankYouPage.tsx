@@ -96,7 +96,7 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
               <MessageCircle className="w-5 h-5" /> Join WhatsApp group
             </a>
             {(delivery === 'delivered' || delivery === 'read' || delivery === 'accepted') && <p className="mt-3 text-sm text-gray-600">We've also sent the joining message to your WhatsApp number.</p>}
-            <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2017%20October%202026">Trouble joining? Message us</a>
+            <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2024%20October%202026">Trouble joining? Message us</a>
           </div>}
           {type === 'webinar' && <div className="mt-5"><AddToCalendarButton /></div>}
         </div>

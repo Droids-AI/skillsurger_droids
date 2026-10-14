@@ -28,15 +28,16 @@ function load(file){
   const output=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   class ClockDate extends Date{constructor(...args){super(...(args.length?args:[now]))}static now(){return now}}
   const context={exports:{},require(){return {createClient(){return admin}}},Date:ClockDate,Response,Request,URL,Uint8Array,TextEncoder,AbortSignal,crypto:webcrypto,console:{error(){}},Deno:{env:{get:k=>env[k]},serve:fn=>{handler=fn}},async fetch(url,options){
-    if(String(url).endsWith('/functions/v1/sheets-sync')){const row=JSON.parse(options.body);assert.equal(row.formType,'webinar_registration');sheetRows.push(row.email);return new Response('{"success":true}',{status:200});}
+    if(String(url).endsWith('/functions/v1/sheets-sync')){const row=JSON.parse(options.body);assert.equal(row.formType,'webinar_registration');assert.equal(row.startsAt,'2026-10-24T15:00:00+05:30');sheetRows.push(row.email);return new Response('{"success":true}',{status:200});}
     sendCount++;const body=JSON.parse(options.body);assert.equal(body.to,'919876543210');assert.equal(body.type,'template');assert.equal(body.template.components[0].parameters[2].text,env.WEBINAR_JOIN_URL);
+    assert.equal(body.template.components[0].parameters[1].text,'Saturday, 24 October 2026 at 3:00 PM IST');
     if(failProvider)throw new Error('synthetic timeout');
     return new Response(JSON.stringify({messages:[{id:'message-'+sendCount}]}),{status:200,headers:{'Content-Type':'application/json'}});
   }};
   vm.runInNewContext(output,context,{filename:file});return handler;
 }
 const register=load('supabase/functions/register-webinar/index.ts');
-const input={name:'Synthetic QA',email:'qa@example.com',phoneNumber:'+919876543210',sessionId:'job-switch-2026-10-17'};
+const input={name:'Synthetic QA',email:'qa@example.com',phoneNumber:'+919876543210',sessionId:'job-switch-2026-10-24'};
 const request=(body=input,origin='https://skillsurger.com')=>new Request('https://synthetic.invalid/register-webinar',{method:'POST',headers:{origin,'Content-Type':'application/json','x-forwarded-for':'192.0.2.1'},body:JSON.stringify(body)});
 (async()=>{
   assert.equal((await register(request(input,'https://attacker.invalid'))).status,403);assert.equal(sendCount,0);
@@ -50,7 +51,7 @@ const request=(body=input,origin='https://skillsurger.com')=>new Request('https:
   await register(request({...input,email:'fail@example.com'}));assert.equal(sendCount,2,'Uncertain provider sends must not auto-repeat');
   delete env.WHATSAPP_ACCESS_TOKEN;const unavailable=await (await register(request({...input,email:'unconfigured@example.com'}))).json();assert.equal(unavailable.whatsappStatus,'unconfigured');assert.equal(sendCount,2);
   rateAllowed=false;assert.equal((await register(request())).status,429);assert.equal(sendCount,2);rateAllowed=true;
-  now=Date.parse('2026-10-17T09:30:00Z');assert.equal((await register(request())).status,409);assert.equal(sendCount,2);
+  now=Date.parse('2026-10-24T09:30:00Z');assert.equal((await register(request())).status,409);assert.equal(sendCount,2);
   const webhook=load('supabase/functions/whatsapp-status/index.ts');
   assert.equal((await webhook(new Request('https://synthetic.invalid?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=123'))).status,403);
   assert.equal(await (await webhook(new Request('https://synthetic.invalid?hub.mode=subscribe&hub.verify_token=test-verify&hub.challenge=123'))).text(),'123');
