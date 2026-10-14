@@ -5,7 +5,7 @@ Source: `skillsurger-qa-bugs-12-oct-2026-be4786db.pdf`. The report contains four
 | Report item | Change or verified behavior | Verification / remaining work |
 | --- | --- | --- |
 | 1. Unsupported marketing claims | Removed homepage counters, unverified named testimonials, unsupported success/improvement percentages, percentile claims, and structured-data rating. Kept explicitly labelled sample previews. | Browser checks plus source scan. |
-| 2. Webinar confirmation | Added a server-side email receipt containing schedule, WhatsApp group and calendar link. It runs after persistence, claims one outbox record, and never automatically repeats an ambiguous send. WhatsApp template integration is retained. Confirmation pages distinguish accepted, pending and failed/unconfigured delivery. | Mock delivery, duplicate and failure checks pass. Production sender configuration and actual receipt remain pending; no Supabase CLI access token is available. |
+| 2. Webinar confirmation | Added a server-side email receipt containing schedule, WhatsApp group and calendar link. It runs after persistence, claims one outbox record, and never automatically repeats an ambiguous send. WhatsApp template integration is retained. Confirmation pages distinguish accepted, pending and failed/unconfigured delivery. | Mock delivery, duplicate and failure checks pass. Backend is deployed (see production record below). Sender configuration and actual receipt remain pending. |
 | 3. Empty learning paths | Reject empty generation before saving; Python/AWS profiles get official resources if AI output is empty. Existing empty paths can be regenerated into their existing row. Counts say resources rather than calling every guide a course. | Contract and browser generation/retry checks. |
 | 4. Location ignored | Onboarding saves preferred location and profile city. Existing missing cities are backfilled by migration. Both job-search entry points use preferred location, normalize Bangalore/Bengaluru, send country code, and filter out mismatched locations. Removed implicit US default; preserve actual published currencies, including INR. | Browser checks assert Bangalore request, India results and INR pay. |
 | 5. Audit validation / heavy form / receipt | Name, email and PDF are required; contact/role details are optional and collapsed. Invalid numbers have field-specific feedback before upload and on server validation. Valid international numbers and omitted phone are accepted. Added validated, rate-limited, idempotent server submission and receipt flow. Reuse uploaded PDF on retry. | Browser and server checks cover invalid/local/server errors, optional phone, retry and email result. Actual email receipt requires production setup. |
@@ -21,7 +21,7 @@ Source: `skillsurger-qa-bugs-12-oct-2026-be4786db.pdf`. The report contains four
 
 ## Production prerequisites for receipts
 
-The updated audit form requires its new endpoint. Deploy backend prerequisites before deploying this frontend.
+The updated audit form requires its new endpoint. Database and endpoint deployment steps below were completed on 14 October; confirmation sender setup remains outstanding.
 
 1. Apply outstanding migrations in chronological order, including `20261014000000_reschedule_webinar_october_24.sql` and `20261014010000_lead_confirmations_and_audit_validation.sql`. The latter adds email outbox/audit request storage, restricts audit inserts to the validated endpoint, updates webinar RPC results and backfills missing profile locations.
 2. Update the existing Google Apps Script deployment with `scripts/google-apps-script/book-a-call-webhook.gs`. In Script Properties set `LEAD_CONFIRMATION_WEBHOOK_SECRET` to a server-only secret; authorize MailApp. Confirmation requests require that secret and deduplicate by lead UUID. Existing sheet/owner notification behavior remains available.
@@ -42,3 +42,19 @@ Email records in `failed` or `sending` need operator review before a retry becau
 All external requests in browser/Edge tests are mocked. No live messages, real payments or production data cleanup were performed. The PDF and original spreadsheet inputs remain unchanged. Listed synthetic test-data deletion is an operational task separate from the reported product bugs.
 
 Supabase documents signup behavior separately from the app UI: [signUp API reference](https://supabase.com/docs/reference/javascript/auth-signup). Verify new and existing addresses against the production Auth API before marking enumeration protection complete.
+
+## Production deployment record — 14 October 2026
+
+Project: `jpnunlbnthcfvstyymdl` (Skillsurger). Application source commit: `4b58b4f`.
+
+- Applied the previously missing authenticated-lead insertion policy and both October 14 migrations through the authenticated Supabase Management API. Recorded nine older migrations only after checking that their schema, policies and function bodies were already present. No database reset was used.
+- Deployed `register-webinar` version 3 at `2026-10-14T09:18:23Z` and `register-resume-audit` version 1 at `2026-10-14T09:19:27Z`; both are ACTIVE. Existing `sheets-sync`, `whatsapp-status` and `verify-courses` remain deployed.
+- Verified the audit RPC, email outbox, audit request table, October 24 webinar function, and row-level security in the live database.
+- Live database registration/audit duplicate tests passed in a transaction that was rolled back. Lead count stayed at 27. No test registrations or messages were retained.
+- Live HTTP checks passed: webinar invalid fields (400), retired October 17 session (400), audit phone field validation (400), and untrusted audit origin (403).
+- Homepage, resume audit, webinar and FDE pages returned 200 with route-specific title/description/OG metadata. The live FDE page has the new Udemy URL.
+- Added exact password-recovery and OAuth callback URLs for `skillsurger.com` and `www.skillsurger.com` to the Auth redirect allowlist.
+
+Remaining configuration: confirmation-email webhook URL/secret, approved WhatsApp sender/template secrets if WhatsApp delivery is required, and a production Auth mail sender. The project has no custom SMTP configured and email accounts are currently auto-confirmed; that setting was preserved to avoid blocking signup. Backend signup enumeration protection and actual message delivery remain unverified. Do not mark notification delivery complete until a controlled recipient actually receives the message.
+
+Local deployment evidence is in ignored `artifacts/qa-live-database-checks.json`, `artifacts/qa-live-http-checks.json`, and `artifacts/qa-migration-plan.json`. The deployment helper reads the existing CLI Keychain credential in memory and contains no stored token or database password.
