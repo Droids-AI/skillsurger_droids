@@ -2,7 +2,7 @@ import { ArrowUpRight, CheckCircle2, Code2, ShieldCheck, Network } from 'lucide-
 import SEO from '../components/SEO';
 import curriculum from '../data/fdeCurriculum.json';
 
-export const FDE_UDEMY_URL = 'https://www.udemy.com/course/draft/7361879/?referralCode=059C9E3DEB7126402751';
+export const FDE_UDEMY_URL = 'https://www.udemy.com/course/ai-forward-deployed-engineer-extensive-program/?referralCode=059C9E3DEB7126402751';
 const outcomes = ['Scope an enterprise AI problem and connect the build to business KPIs.', 'Build retrieval, tool and agent workflows with evaluation and observability.', 'Design permission-aware integrations and test security boundaries.', 'Prepare deployment, runbooks, UAT and a portfolio architecture review.'];
 
 export default function FDECourse() {
