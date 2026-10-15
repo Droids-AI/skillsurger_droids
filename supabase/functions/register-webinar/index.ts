@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { sendLeadConfirmation } from '../_shared/leadConfirmation.ts';
+import { sendWebinarConfirmation, webinarEmailStatus } from '../_shared/webinarEmail.ts';
 
 const sessionId = 'job-switch-2026-10-24';
 const startsAt = '2026-10-24T15:00:00+05:30';
@@ -91,7 +91,9 @@ Deno.serve(async request => {
     }
     const calendarStamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const calendarDates = `${calendarStamp(new Date(startsAt))}/${calendarStamp(new Date(new Date(startsAt).getTime() + 60 * 60 * 1000))}`;
-    const emailStatus = await sendLeadConfirmation(admin, {
+    const emailStatus = alreadyRegistered
+      ? await webinarEmailStatus(admin, result.data.leadId)
+      : await sendWebinarConfirmation(admin, {
       leadId: result.data.leadId, email, name,
       subject: 'Your Skillsurger webinar registration is confirmed',
       body: `Hi ${name},\n\nYou are registered for the free Skillsurger job switch webinar.\n${schedule} — 60 minutes online.\n\nJoin the WhatsApp group for the meeting link and reminders: https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE\n\nAdd the session to your calendar: https://calendar.google.com/calendar/render?action=TEMPLATE&text=Skillsurger%20webinar&dates=${calendarDates}\n\nTeam Skillsurger`,

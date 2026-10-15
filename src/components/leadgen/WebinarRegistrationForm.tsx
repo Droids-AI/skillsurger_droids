@@ -51,7 +51,7 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
   }} className="space-y-5">
     <h3 className={`text-2xl font-bold ${dark ? 'text-white' : 'text-gray-900'}`}>Reserve your free webinar seat</h3>
     <p className={muted}><strong>{WEBINAR.schedule}</strong></p>
-    <p className={muted}>1 hour online. Free registration. After registering, you can join the webinar WhatsApp group where the joining link is shared.</p>
+    <p className={muted}>1 hour online. Free registration. After registering, we’ll email your confirmation. You can also join the webinar WhatsApp group where the joining link is shared.</p>
     {closed && <p role="status" className={muted}>Registration for this session is closed. <a href="/contact" className="underline">Contact us about the next webinar.</a></p>}
     <fieldset disabled={busy || closed} className="space-y-4">
       <div><label htmlFor="webinar-name" className="block font-medium mb-1">Full name</label><input id="webinar-name" name="name" required maxLength={120} autoComplete="name" className={inputClass} /></div>
