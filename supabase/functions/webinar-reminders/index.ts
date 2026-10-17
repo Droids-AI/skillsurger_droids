@@ -7,20 +7,19 @@
 //   post_event     within 2h after the end    WhatsApp + email (summary + enrolment info)
 //   next_day       next morning               WhatsApp
 //   final_reminder 48–72h after the end       WhatsApp (final cohort reminder)
-// WhatsApp goes only to registrants who ticked consent and have not replied STOP.
+// WhatsApp (Green API, plain text) goes only to registrants who ticked consent and
+// have not replied STOP; each run first reads recent STOP/START replies.
 // Post-event messages skip anyone who has already paid. Each send is claimed in
 // public.webinar_reminders first, so nothing is sent twice.
 //
 // Secrets:
 //   WEBINAR_REMINDERS_SECRET     shared with the cron job (x-cron-secret header)
-//   WHATSAPP_REMINDER_TEMPLATES  JSON {"reminder_24h":"<approved template>",...}; a stage
-//                                without a template sends no WhatsApp. Each template takes
-//                                {{1}} first name, {{2}} schedule, {{3}} link.
-//   WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, WHATSAPP_GRAPH_VERSION, WHATSAPP_TEMPLATE_LANGUAGE
+//   GREENAPI_API_URL, GREENAPI_ID_INSTANCE, GREENAPI_API_TOKEN (see _shared/greenApi.ts)
 //   WEBINAR_JOIN_URL             meeting link for the pre-event reminders
 //   WEBINAR_EMAIL_ENABLED=true, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_EMAIL_FROM
 // POST {"dryRun":true} returns who would be messaged without sending anything.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { greenApiConfigured, recentOptOutReplies, sendGreenApiMessage } from '../_shared/greenApi.ts';
 
 const sessionId = 'job-switch-2026-10-24';
 const startsAt = Date.parse('2026-10-24T15:00:00+05:30');
@@ -57,18 +56,15 @@ function emailFor(stage: Stage, name: string, joinUrl: string): { subject: strin
   return null;
 }
 
-async function sendWhatsApp(phone: string, template: string, params: string[]): Promise<{ ok: boolean; id: string | null }> {
-  const response = await fetch(`https://graph.facebook.com/${Deno.env.get('WHATSAPP_GRAPH_VERSION')}/${Deno.env.get('WHATSAPP_PHONE_NUMBER_ID')}/messages`, {
-    method: 'POST', headers: { Authorization: `Bearer ${Deno.env.get('WHATSAPP_ACCESS_TOKEN')}`, 'Content-Type': 'application/json' },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({ messaging_product: 'whatsapp', to: phone.slice(1), type: 'template', template: {
-      name: template, language: { code: Deno.env.get('WHATSAPP_TEMPLATE_LANGUAGE') || 'en' },
-      components: [{ type: 'body', parameters: params.map(text => ({ type: 'text', text })) }],
-    } }),
-  });
-  const body = await response.json().catch(() => null);
-  const id = response.ok ? body?.messages?.[0]?.id ?? null : null;
-  return { ok: !!id, id };
+function whatsappFor(stage: Stage, name: string, joinUrl: string): string {
+  const stop = '\n\nReply STOP to stop WhatsApp messages.';
+  switch (stage) {
+    case 'reminder_24h': return `Hi ${name}, a reminder: the free Skillsurger job switch webinar is tomorrow, ${schedule}.\n\nJoin here: ${joinUrl}\n\nKeep your resume handy and note 2–3 roles you want next.${stop}`;
+    case 'reminder_1h': return `Hi ${name}, we start in 1 hour (3:00 PM IST).\n\nJoin here: ${joinUrl}${stop}`;
+    case 'post_event': return `Hi ${name}, thanks for registering for today's webinar.\n\nIf you want a mentor and a structured 30 days for your switch, the Job Switch Copilot is ₹5,000 incl. GST: 6 group + 2 personal 1-to-1 sessions, 7-day refund before the 2nd session.\n\nDetails: ${programmeUrl}${stop}`;
+    case 'next_day': return `Hi ${name}, any questions after yesterday's webinar? Reply here and the Skillsurger team will answer.\n\nProgramme details: ${programmeUrl}${stop}`;
+    case 'final_reminder': return `Hi ${name}, a final note about the next Job Switch Copilot cohort, as shared in the webinar. ₹5,000 incl. GST, 7-day refund before the 2nd session.\n\n${programmeUrl}${stop}`;
+  }
 }
 
 async function sendEmail(to: string, subject: string, body: string): Promise<{ ok: boolean; id: string | null }> {
@@ -99,9 +95,23 @@ Deno.serve(async request => {
   if (!due.length) return Response.json({ due: [], sent: 0 });
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  let templates: Record<string, string> = {};
-  try { templates = JSON.parse(Deno.env.get('WHATSAPP_REMINDER_TEMPLATES') || '{}'); } catch { /* treated as none */ }
-  const whatsappReady = !!(Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') && Deno.env.get('WHATSAPP_ACCESS_TOKEN') && Deno.env.get('WHATSAPP_GRAPH_VERSION'));
+  let whatsappReady = greenApiConfigured();
+  if (whatsappReady) {
+    // Record STOP/START replies from the last 3 hours (runs every 10 minutes, so windows overlap).
+    try {
+      for (const reply of await recentOptOutReplies(180)) {
+        const saved = reply.optOut
+          ? await admin.from('messaging_opt_outs').upsert({ phone: reply.phone, channel: 'whatsapp' }, { onConflict: 'phone', ignoreDuplicates: true })
+          : await admin.from('messaging_opt_outs').delete().eq('phone', reply.phone);
+        if (saved.error) throw new Error('opt_out_failed');
+      }
+    } catch {
+      // Without fresh opt-outs we must not risk messaging someone who said STOP:
+      // skip WhatsApp this run (emails still go); the next run retries.
+      console.error(JSON.stringify({ area: 'webinar-reminders', code: 'opt_out_sync_failed' }));
+      whatsappReady = false;
+    }
+  }
   const emailReady = Deno.env.get('WEBINAR_EMAIL_ENABLED') === 'true' && !!(Deno.env.get('TWILIO_API_KEY') && Deno.env.get('TWILIO_API_SECRET') && Deno.env.get('TWILIO_EMAIL_FROM'));
   const joinUrl = Deno.env.get('WEBINAR_JOIN_URL') || groupUrl;
 
@@ -124,9 +134,8 @@ Deno.serve(async request => {
       if (s.postEvent && (lead.paymentStatus === 'paid' || ['Paid', 'Onboarded', 'Completed', 'Refunded'].includes(lead.stage))) continue;
       const name = String(lead.name || '').trim().split(/\s+/)[0] || 'there';
       const phone = String(lead.phoneNumber || '');
-      const template = templates[s.stage];
-      if (whatsappReady && template && lead.whatsappConsent === 'yes' && /^\+\d{7,15}$/.test(phone) && !optedOut.has(phone) && !done.has(`${row.id}:${s.stage}:whatsapp`)) {
-        jobs.push({ registrationId: row.id, stage: s.stage, channel: 'whatsapp', send: () => sendWhatsApp(phone, template, [name, schedule, s.postEvent ? programmeUrl : joinUrl]) });
+      if (whatsappReady && lead.whatsappConsent === 'yes' && /^\+\d{7,15}$/.test(phone) && !optedOut.has(phone) && !done.has(`${row.id}:${s.stage}:whatsapp`)) {
+        jobs.push({ registrationId: row.id, stage: s.stage, channel: 'whatsapp', send: () => sendGreenApiMessage(phone, whatsappFor(s.stage, name, joinUrl)) });
       }
       const email = emailFor(s.stage, name, joinUrl);
       if (s.email && email && emailReady && row.email && !done.has(`${row.id}:${s.stage}:email`)) {

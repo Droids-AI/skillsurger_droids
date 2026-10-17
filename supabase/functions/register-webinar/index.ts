@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendWebinarConfirmation, webinarEmailStatus } from '../_shared/webinarEmail.ts';
+import { greenApiConfigured, sendGreenApiMessage } from '../_shared/greenApi.ts';
 
 const sessionId = 'job-switch-2026-10-24';
 const startsAt = '2026-10-24T15:00:00+05:30';
@@ -68,17 +69,14 @@ Deno.serve(async request => {
     const { registrationId, alreadyRegistered } = result.data;
     let whatsappStatus = 'pending';
     try {
-    const sender = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
-    const token = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-    const template = Deno.env.get('WHATSAPP_WEBINAR_TEMPLATE');
-    const joinUrl = Deno.env.get('WEBINAR_JOIN_URL');
+    const joinUrl = Deno.env.get('WEBINAR_JOIN_URL') || 'https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE';
     if (!alreadyRegistered && !whatsappConsent) {
       // No messaging consent: never send WhatsApp messages to this number.
       whatsappStatus = 'unconfigured';
       const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, error_code: 'no_consent', request_id: requestId }).eq('registration_id', registrationId);
       if (saved.error) throw new Error('notification_log_failed');
     } else if (!alreadyRegistered) {
-      if (!sender || !token || !template || !joinUrl || !Deno.env.get('WHATSAPP_GRAPH_VERSION')) {
+      if (!greenApiConfigured()) {
         whatsappStatus = 'unconfigured';
         const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, error_code: 'sender_not_configured', request_id: requestId }).eq('registration_id', registrationId);
         if (saved.error) throw new Error('notification_log_failed');
@@ -89,16 +87,9 @@ Deno.serve(async request => {
         let messageId: string | null = null;
         let errorCode: string | null = null;
         try {
-          const response = await fetch(`https://graph.facebook.com/${Deno.env.get('WHATSAPP_GRAPH_VERSION')}/${sender}/messages`, {
-            method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(10000),
-            body: JSON.stringify({ messaging_product: 'whatsapp', to: phone.slice(1), type: 'template', template: {
-              name: template, language: { code: Deno.env.get('WHATSAPP_TEMPLATE_LANGUAGE') || 'en' },
-              components: [{ type: 'body', parameters: [name, schedule, joinUrl].map(text => ({ type: 'text', text })) }],
-            } }),
-          });
-          const body = await response.json();
-          messageId = response.ok ? body.messages?.[0]?.id : null;
+          const firstName = name.split(/\s+/)[0];
+          const sent = await sendGreenApiMessage(phone, `Hi ${firstName}, you're registered for the free Skillsurger job switch webinar.\n\n${schedule}, 60 minutes online.\n\nJoin here: ${joinUrl}\n\nBefore the webinar: keep your resume handy and note 2–3 roles you want next.\n\nWe'll remind you before it starts. Reply STOP to stop WhatsApp messages.`);
+          messageId = sent.id;
           whatsappStatus = messageId ? 'accepted' : 'failed';
           errorCode = messageId ? null : 'provider_rejected';
         } catch { whatsappStatus = 'failed'; errorCode = 'provider_response_unknown'; }

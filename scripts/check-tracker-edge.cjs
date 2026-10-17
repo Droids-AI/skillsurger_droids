@@ -3,7 +3,7 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const ts=require('typescript');
 const {webcrypto,createHmac}=require('node:crypto');
-const env={SUPABASE_URL:'https://synthetic.invalid',SUPABASE_SERVICE_ROLE_KEY:'test-only',WHATSAPP_PHONE_NUMBER_ID:'test-sender',WHATSAPP_ACCESS_TOKEN:'test-only',WHATSAPP_WEBINAR_TEMPLATE:'approved_test_template',WEBINAR_JOIN_URL:'https://meeting.invalid/private',WHATSAPP_GRAPH_VERSION:'v-test',WHATSAPP_APP_SECRET:'test-signature-secret',WHATSAPP_WEBHOOK_VERIFY_TOKEN:'test-verify',LEAD_CONFIRMATION_WEBHOOK_URL:'https://confirmation.invalid',LEAD_CONFIRMATION_WEBHOOK_SECRET:'test-secret',TWILIO_API_KEY:'test-key',TWILIO_API_SECRET:'test-only',TWILIO_EMAIL_FROM:'webinar@synthetic.invalid',WEBINAR_EMAIL_ENABLED:'true'};
+const env={SUPABASE_URL:'https://synthetic.invalid',SUPABASE_SERVICE_ROLE_KEY:'test-only',GREENAPI_API_URL:'https://7000.api.greenapi.invalid',GREENAPI_ID_INSTANCE:'7000',GREENAPI_API_TOKEN:'test-only',WEBINAR_JOIN_URL:'https://meeting.invalid/private',WHATSAPP_GRAPH_VERSION:'v-test',WHATSAPP_APP_SECRET:'test-signature-secret',WHATSAPP_WEBHOOK_VERIFY_TOKEN:'test-verify',LEAD_CONFIRMATION_WEBHOOK_URL:'https://confirmation.invalid',LEAD_CONFIRMATION_WEBHOOK_SECRET:'test-secret',TWILIO_API_KEY:'test-key',TWILIO_API_SECRET:'test-only',TWILIO_EMAIL_FROM:'webinar@synthetic.invalid',WEBINAR_EMAIL_ENABLED:'true'};
 let now=Date.parse('2026-10-12T10:00:00Z'),failInsert=false,failProvider=false,sendCount=0,rateAllowed=true;
 const sheetRows=[];
 const registrations=new Map(),notifications=new Map(),emailNotifications=new Map(),reminders=new Map(),optOuts=new Map();
@@ -32,14 +32,14 @@ function load(file){
   let handler;
   const output=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   class ClockDate extends Date{constructor(...args){super(...(args.length?args:[now]))}static now(){return now}}
-  const context={exports:{},require(name){if(name.includes('webinarEmail'))return load('supabase/functions/_shared/webinarEmail.ts');return name.includes('leadConfirmation')?load('supabase/functions/_shared/leadConfirmation.ts'):{createClient(){return admin}}},btoa,Date:ClockDate,Response,Request,URL,Uint8Array,TextEncoder,AbortSignal,crypto:webcrypto,console:{error(){}},Deno:{env:{get:k=>env[k]},serve:fn=>{handler=fn}},async fetch(url,options){
+  const context={exports:{},require(name){if(name.includes('webinarEmail'))return load('supabase/functions/_shared/webinarEmail.ts');if(name.includes('greenApi'))return load('supabase/functions/_shared/greenApi.ts');return name.includes('leadConfirmation')?load('supabase/functions/_shared/leadConfirmation.ts'):{createClient(){return admin}}},btoa,Date:ClockDate,Response,Request,URL,Uint8Array,TextEncoder,AbortSignal,crypto:webcrypto,console:{error(){}},Deno:{env:{get:k=>env[k]},serve:fn=>{handler=fn}},async fetch(url,options){
     if(String(url)==='https://comms.twilio.com/v1/Emails'){confirmationCount++;const mail=JSON.parse(options.body);const text=mail.to[0].variables.confirmation_body;assert.ok(text.includes('Saturday, 24 October 2026 at 3:00 PM IST'));assert.ok(text.includes('chat.whatsapp.com'));assert.ok(text.includes('Before the webinar'));return new Response('{"operationId":"comms_operation_test1"}',{status:202});}
     if(String(url)==='https://confirmation.invalid'){confirmationCount++;const receipt=JSON.parse(options.body).confirmation;assert.equal(receipt.secret,'test-secret');assert.ok(receipt.body.includes('Saturday, 24 October 2026 at 3:00 PM IST'));assert.ok(receipt.body.includes('chat.whatsapp.com'));return new Response('{"success":true}',{status:200});}
     if(String(url).endsWith('/functions/v1/sheets-sync')){const row=JSON.parse(options.body);assert.equal(row.formType,'webinar_registration');assert.equal(row.startsAt,'2026-10-24T15:00:00+05:30');assert.equal(row.utmSource,'google');assert.equal(row.utmCampaign,'webinar-oct');assert.equal(row.stage,'Registered');assert.equal(row.qualified,'yes');assert.equal(row.experience,'6–8 years');sheetRows.push(row.email);return new Response('{"success":true}',{status:200});}
-    sendCount++;const body=JSON.parse(options.body);assert.equal(body.to,'919876543210');assert.equal(body.type,'template');assert.equal(body.template.components[0].parameters[2].text,env.WEBINAR_JOIN_URL);
-    assert.equal(body.template.components[0].parameters[1].text,'Saturday, 24 October 2026 at 3:00 PM IST');
+    sendCount++;assert.equal(String(url),'https://7000.api.greenapi.invalid/waInstance7000/sendMessage/test-only');const body=JSON.parse(options.body);assert.equal(body.chatId,'919876543210@c.us');assert.ok(body.message.includes(env.WEBINAR_JOIN_URL));
+    assert.ok(body.message.includes('Saturday, 24 October 2026 at 3:00 PM IST'));assert.ok(body.message.startsWith('Hi Synthetic,'));assert.ok(body.message.includes('Reply STOP'));
     if(failProvider)throw new Error('synthetic timeout');
-    return new Response(JSON.stringify({messages:[{id:'message-'+sendCount}]}),{status:200,headers:{'Content-Type':'application/json'}});
+    return new Response(JSON.stringify({idMessage:'message-'+sendCount}),{status:200,headers:{'Content-Type':'application/json'}});
   }};
   vm.runInNewContext(output,context,{filename:file});return handler || context.exports;
 }
@@ -57,7 +57,7 @@ const request=(body=input,origin='https://skillsurger.com')=>new Request('https:
   failProvider=true;const failed=await register(request({...input,email:'fail@example.com'}));assert.equal(failed.status,200);const failedBody=await failed.json();assert.equal(failedBody.whatsappStatus,'failed');assert.equal(registrations.size,2);assert.equal(notifications.get(failedBody.registrationId).error_code,'provider_response_unknown');failProvider=false;
   await register(request({...input,email:'fail@example.com'}));assert.equal(sendCount,2,'Uncertain provider sends must not auto-repeat');
   const noConsent=await (await register(request({...input,email:'noconsent@example.com',whatsappConsent:false}))).json();assert.equal(noConsent.whatsappStatus,'unconfigured');assert.equal(sendCount,2,'No WhatsApp message without consent');
-  delete env.WHATSAPP_ACCESS_TOKEN;const unavailable=await (await register(request({...input,email:'unconfigured@example.com'}))).json();assert.equal(unavailable.whatsappStatus,'unconfigured');assert.equal(sendCount,2);
+  delete env.GREENAPI_API_TOKEN;const unavailable=await (await register(request({...input,email:'unconfigured@example.com'}))).json();assert.equal(unavailable.whatsappStatus,'unconfigured');assert.equal(sendCount,2);
   rateAllowed=false;assert.equal((await register(request())).status,429);assert.equal(sendCount,2);rateAllowed=true;
   now=Date.parse('2026-10-24T09:30:00Z');assert.equal((await register(request())).status,409);assert.equal(sendCount,2);
   const webhook=load('supabase/functions/whatsapp-status/index.ts');
