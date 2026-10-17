@@ -32,6 +32,17 @@ Deno.serve(async request => {
     payload.email = String(payload.email).toLowerCase();
     payload.phoneNumber = String(payload.phoneNumber).replace(/[\s()-]/g, '');
     payload.timestamp = new Date().toISOString();
+    // First-touch lead source and CRM entry stage, for the same funnel as webinar leads.
+    const attribution = input.attribution && typeof input.attribution === 'object' && !Array.isArray(input.attribution) ? input.attribution : {};
+    const clip = (value: unknown, max = 100) => String(value ?? '').trim().slice(0, max);
+    payload.utmSource = clip(attribution.utmSource) || (clip(attribution.referrer) ? `referral:${clip(attribution.referrer)}` : 'direct');
+    payload.utmMedium = clip(attribution.utmMedium);
+    payload.utmCampaign = clip(attribution.utmCampaign);
+    payload.gclid = clip(attribution.gclid, 200);
+    payload.landingPage = clip(attribution.landingPage, 200);
+    payload.offer = 'free_audit → job_switch_copilot';
+    payload.stage = 'New';
+    payload.paymentStatus = 'unpaid';
     const result = await admin.rpc('register_resume_audit', { p_request_id: input.requestId, p_payload: payload });
     if (result.error) throw new Error('audit_persistence_failed');
     const emailStatus = await sendLeadConfirmation(admin, {

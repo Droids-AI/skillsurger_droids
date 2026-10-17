@@ -1,4 +1,4 @@
-﻿import { ArrowRight, CheckCircle2, Clock, Users, Target, Briefcase, TrendingUp, Sparkles, Video, FileText, MessageSquare, ShieldCheck, ArrowUpRight } from 'lucide-react';
+﻿import { ArrowRight, CheckCircle2, Clock, Sparkles, Video, ShieldCheck, ArrowUpRight, IndianRupee, RotateCcw, UserRound, CalendarDays, LifeBuoy, Timer, CreditCard, PlayCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 import WebinarRegistrationForm from '../components/leadgen/WebinarRegistrationForm';
 import ApplicationTrackerMockup from '../components/jobSwitchCopilot/ApplicationTrackerMockup';
@@ -6,18 +6,27 @@ import ResumeAuditReportPreview from '../components/jobSwitchCopilot/ResumeAudit
 import { trackEvent, EVENTS } from '../lib/analytics';
 
 import { WEBINAR } from '../lib/constants/webinar';
+import { JOB_SWITCH_PROGRAM as PROGRAM, PROGRAM_SESSIONS } from '../lib/constants/jobSwitchProgram';
 
+// 60-minute webinar, minute by minute.
 const agenda = [
-  { icon: Target, title: 'Find the right salary opportunity', text: 'Choose roles and companies where your experience solves a valuable problem. Understand what a realistic salary jump could look like for you.', takeaway: 'A clearer target for your next move' },
-  { icon: FileText, title: 'Make your profile worth a callback', text: 'Learn how to replace a generic resume with role-specific positioning, measurable achievements, and a LinkedIn story that supports it.', takeaway: 'Know what to change in your resume' },
-  { icon: Sparkles, title: 'Build a smarter job-search system', text: 'See how AI can support resume tailoring and interview preparation, alongside targeted applications, recruiter outreach, and consistent follow-ups.', takeaway: 'A repeatable weekly search routine' },
-  { icon: MessageSquare, title: 'Interview and negotiate with a plan', text: 'Turn your experience into strong interview examples, prepare for salary questions, and understand how to compare an offer beyond the headline number.', takeaway: 'A better way to communicate your value' },
+  ['0–5', 'Why strong tech resumes still fail', 'What recruiters and ATS filters see in the first few seconds.'],
+  ['5–15', 'Five mistakes in senior tech job searches', 'The patterns that keep experienced engineers stuck at the same level.'],
+  ['15–30', 'Live resume diagnosis', 'A real resume reviewed on screen, with the fixes explained.'],
+  ['30–40', 'Outreach and interview workflow', 'How applications, recruiter messages and interview prep fit into one weekly routine.'],
+  ['40–48', 'Programme walkthrough', 'What happens in each Job Switch Copilot session and what you leave with.'],
+  ['48–55', 'Price, cohort limits and enrolment', `${PROGRAM.priceLabel} ${PROGRAM.taxNote}, refund policy and how to join the next cohort.`],
+  ['55–60', 'Q&A', 'Your questions, answered live.'],
 ];
-const sessions = [
-  ['Week 1', 'Clarity & positioning', 'Choose target roles, identify skill gaps, and strengthen your resume and career story.', 'Your target-role shortlist and positioning plan'],
-  ['Week 2', 'Applications & outreach', 'Tailor applications, improve LinkedIn alignment, and build a recruiter outreach and follow-up routine.', 'Your application pipeline and outreach approach'],
-  ['Week 3', 'Interview preparation', 'Practice your introduction, role-specific questions, and examples that demonstrate measurable impact.', 'Your interview stories and preparation priorities'],
-  ['Week 4', 'Offers & negotiation', 'Prepare for salary conversations, compare opportunities, and review the next steps in your job search.', 'Your offer-evaluation and negotiation plan'],
+const details = [
+  { icon: IndianRupee, label: 'Price and taxes', value: `${PROGRAM.priceLabel} for the full month, ${PROGRAM.taxNote}. No other fees.` },
+  { icon: RotateCcw, label: 'Refund policy', value: PROGRAM.refundPolicy },
+  { icon: UserRound, label: 'Your mentor', value: `${PROGRAM.mentor.name}, ${PROGRAM.mentor.role}.` },
+  { icon: CalendarDays, label: 'Cohort dates', value: PROGRAM.cohortDates },
+  { icon: Timer, label: 'Session duration', value: PROGRAM.format + '.' },
+  { icon: LifeBuoy, label: 'Support', value: PROGRAM.support },
+  { icon: CreditCard, label: 'Payment methods', value: PROGRAM.paymentMethods + '.' },
+  { icon: PlayCircle, label: 'Recordings', value: PROGRAM.recordings },
 ];
 const faqs = [
   ['Is the webinar really free?', 'Yes. This form reserves a free one-hour online webinar. No payment or programme purchase is required.'],
@@ -25,9 +34,37 @@ const faqs = [
   ['Who should attend?', 'Professionals planning a job switch, including software, data, cloud, DevOps, and AI professionals; people on notice period or returning after a layoff; and applicants who want to improve their callbacks, interview preparation, or salary conversations.'],
   ['Do I need to prepare anything?', 'Come with a target role in mind and a sense of where your current job search is getting stuck. Keeping your resume handy can help you relate the discussion to your own experience.'],
   ['Is 1.5x to 5x salary growth guaranteed?', 'No. This is a target to explore, not a promised result. Your starting salary, experience, skills, target role, market conditions, and execution all affect what is achievable. No job offer or salary increase is guaranteed.'],
-  ['What does the one-month programme include?', 'Job Switch Copilot costs ₹9,999 for one month and includes eight sessions of two hours each: six group sessions and two personal 1-to-1 sessions, for 16 hours total. The two personal sessions are included within the eight sessions.'],
+  ['What does the one-month programme include?', `Job Switch Copilot costs ${PROGRAM.priceLabel} (${PROGRAM.taxNote}) for one month and includes eight sessions of two hours each: six group sessions and two personal 1-to-1 sessions, for 16 hours total. The two personal sessions are included within the eight sessions.`],
+  ['Can I get a refund?', PROGRAM.refundPolicy],
+  ['Are sessions recorded?', PROGRAM.recordings],
+  ['When does the next cohort start, and how do I pay?', `${PROGRAM.cohortDates} You can pay by ${PROGRAM.paymentMethods}.`],
   ['Does registering enrol me in the paid programme?', 'No. You are registering only for the free webinar. You can learn the approach first and decide separately whether the one-month programme fits your goals.'],
 ];
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Course',
+      name: PROGRAM.name,
+      description: `30-day job switch programme: ${PROGRAM.format}.`,
+      provider: { '@type': 'Organization', name: 'Skillsurger', url: 'https://skillsurger.com' },
+      offers: { '@type': 'Offer', price: PROGRAM.price, priceCurrency: 'INR', url: 'https://skillsurger.com/job-switch-copilot', category: 'Paid' },
+      hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: 'PT16H', instructor: { '@type': 'Person', name: PROGRAM.mentor.name } },
+    },
+    {
+      '@type': 'Event',
+      name: `Free webinar: ${WEBINAR.title}`,
+      startDate: WEBINAR.startsAt,
+      endDate: WEBINAR.endsAt,
+      eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      location: { '@type': 'VirtualLocation', url: 'https://skillsurger.com/job-switch-copilot' },
+      organizer: { '@type': 'Organization', name: 'Skillsurger', url: 'https://skillsurger.com' },
+      offers: { '@type': 'Offer', price: 0, priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: 'https://skillsurger.com/job-switch-copilot#webinar' },
+    },
+  ],
+};
 
 export default function JobSwitchCopilot() {
   // Every webinar CTA lands the visitor in the form's first field, not just near it.
@@ -40,9 +77,10 @@ export default function JobSwitchCopilot() {
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => name.focus({ preventScroll: true }), 450);
   };
+  const startCheckout = (placement: string) => () => trackEvent(EVENTS.CHECKOUT_STARTED, { placement, value: PROGRAM.price, currency: 'INR', offer: 'job_switch_copilot' });
   const ctaClass = 'inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500';
   return <div className="min-h-screen bg-[#020420] text-white">
-    <SEO title="Free Job Switch Webinar | Job Switch Copilot — Skillsurger" description="Join a free one-hour webinar on planning a job switch and targeting 1.5x to 5x salary growth. Explore our optional ₹9,999 one-month Job Switch Copilot programme." canonicalUrl="/job-switch-copilot" />
+    <SEO title="Job Switch Copilot: 30-Day Job Switch Programme for Tech Professionals | Skillsurger" description="A 30-day AI + human programme for Indian tech professionals with 3–12 years of experience: 8 live sessions, 2 personal 1-to-1s. ₹5,000 incl. 18% GST. Free webinar on 24 October." canonicalUrl="/job-switch-copilot" structuredData={structuredData} />
 
     <section className="relative overflow-hidden pt-28 pb-16 lg:pt-32 lg:pb-20 bg-[#020420] text-white">
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none bg-gradient-to-br from-blue-950/60 via-[#020420] to-indigo-950/60" />
@@ -58,6 +96,7 @@ export default function JobSwitchCopilot() {
             <span key={label} className="flex items-center gap-2 text-sm rounded-lg bg-white/5 border border-white/10 px-3 py-2"><Icon className="w-4 h-4 text-cyan-300" />{label}</span>
           )}</div>
           <a href="#webinar" onClick={reserve('hero')} className={`${ctaClass} lg:hidden`}>Register for the free webinar <ArrowRight className="w-5 h-5" /></a>
+          <p className="mt-4"><a href="#programme" className="font-semibold text-cyan-200 underline underline-offset-4">Already decided? See the {PROGRAM.priceLabel} programme</a></p>
           <p className="text-sm text-slate-400 mt-4 max-w-lg">Salary growth is a target, not a guarantee. What is achievable depends on your starting point, skills, role, and market.</p>
         </div>
         <div id="webinar" className="scroll-mt-24 rounded-3xl bg-white/5 text-white border border-white/10 p-6 sm:p-8 shadow-2xl shadow-blue-950/40 border border-blue-400/20">
@@ -69,11 +108,11 @@ export default function JobSwitchCopilot() {
 
     <section className="py-16 lg:py-20 bg-[#080d2b]">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="max-w-2xl mb-10"><p className="text-blue-300 text-sm font-bold tracking-wider uppercase mb-3">Inside the free webinar</p><h2 className="text-3xl sm:text-4xl font-bold mb-4">One hour. Four parts of a smarter job switch.</h2><p className="text-slate-300 text-lg">Understand where your search is getting stuck and what to work on next, from choosing a role to discussing an offer.</p></div>
-        <div className="grid md:grid-cols-2 gap-5">{agenda.map(({ icon: Icon, title, text, takeaway }, index) => <article key={title} className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-7 transition-shadow hover:shadow-lg">
-          <div className="flex justify-between items-center mb-5"><span className="inline-flex p-3 rounded-xl bg-blue-500/15 text-blue-300"><Icon className="w-6 h-6" /></span><span className="text-3xl font-bold text-blue-300/40">0{index + 1}</span></div>
-          <h3 className="text-xl font-bold mb-3">{title}</h3><p className="text-slate-300 leading-relaxed mb-5">{text}</p><p className="flex gap-2 items-start text-sm font-semibold text-blue-300"><CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />{takeaway}</p>
-        </article>)}</div>
+        <div className="max-w-2xl mb-10"><p className="text-blue-300 text-sm font-bold tracking-wider uppercase mb-3">Inside the free webinar</p><h2 className="text-3xl sm:text-4xl font-bold mb-4">One hour, minute by minute.</h2><p className="text-slate-300 text-lg">A practical session built around real resumes and a working job-search routine, not generic motivation.</p></div>
+        <ol className="rounded-2xl border border-white/10 divide-y divide-white/10 bg-white/5">{agenda.map(([minutes, title, text]) => <li key={title} className="flex gap-4 sm:gap-6 p-5 sm:p-6">
+          <span className="w-16 sm:w-20 shrink-0 font-mono text-sm font-bold text-cyan-300 pt-0.5">{minutes} min</span>
+          <div><h3 className="font-bold text-lg">{title}</h3><p className="text-slate-300 mt-1">{text}</p></div>
+        </li>)}</ol>
         <div className="mt-8 text-center"><a href="#webinar" onClick={reserve('agenda')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-3">{WEBINAR.schedule}. No payment required. Joining link sent privately via WhatsApp.</p></div>
       </div>
     </section>
@@ -95,10 +134,13 @@ export default function JobSwitchCopilot() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-12"><p className="text-cyan-300 text-sm font-bold tracking-wider uppercase mb-3">After the webinar · Optional paid programme</p><h2 className="text-3xl sm:text-4xl font-bold mb-5">Learn the approach. Then put it to work.</h2><p className="text-slate-300 text-lg">If you want guided practice and personal feedback, Job Switch Copilot turns the strategy into one month of focused action.</p></div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">{[['1 month', 'A focused programme'], ['8 × 2 hours', '16 hours of live sessions'], ['6 group sessions', 'Learn and practise together'], ['2 personal sessions', '1-to-1 support, included in the 8']].map(([value, label]) => <div key={value} className="p-5 rounded-2xl border border-white/10 bg-white/5"><p className="font-bold text-2xl text-cyan-200 mb-2">{value}</p><p className="text-sm text-slate-300">{label}</p></div>)}</div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">{sessions.map(([week, title, description, output], i) => {
-          const Icon = [Target, Briefcase, Users, TrendingUp][i];
-          return <article key={week} className="rounded-2xl bg-white/5 text-white border border-white/10 p-6"><Icon className="w-7 h-7 text-blue-300 mb-5" /><p className="text-blue-300 font-bold text-sm mb-2">{week}</p><h3 className="text-xl font-bold mb-3">{title}</h3><p className="text-slate-300 mb-5">{description}</p><p className="border-t border-white/10 pt-4 text-sm font-medium text-blue-100">Work towards: {output}</p></article>;
-        })}</div>
+        <h3 className="text-2xl font-bold mb-5">Session by session</h3>
+        <ol className="grid sm:grid-cols-2 gap-4">{PROGRAM_SESSIONS.map((session, i) => <li key={session.title} className="rounded-2xl bg-white/5 border border-white/10 p-5 flex gap-4">
+          <span className={`shrink-0 h-9 min-w-[3rem] px-2 rounded-lg text-xs font-bold flex items-center justify-center ${session.kind === 'Personal' ? 'bg-purple-500/20 text-purple-200' : 'bg-blue-500/20 text-blue-200'}`}>{session.kind === 'Personal' ? `1:1 #${i - 5}` : session.id}</span>
+          <div><p className="font-bold">{session.title}</p><p className="text-sm text-slate-300 mt-1"><span className="text-cyan-200 font-semibold">Deliverable:</span> {session.deliverable}</p></div>
+        </li>)}</ol>
+        <h3 className="text-2xl font-bold mt-14 mb-5">Before you pay</h3>
+        <dl className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">{details.map(({ icon: Icon, label, value }) => <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5"><Icon className="w-6 h-6 text-cyan-300 mb-3" /><dt className="font-bold mb-1">{label}</dt><dd className="text-sm text-slate-300 leading-relaxed">{value}</dd></div>)}</dl>
       </div>
     </section>
 
@@ -110,9 +152,10 @@ export default function JobSwitchCopilot() {
             <div className="grid sm:grid-cols-2 gap-4 [&_.bg-white]:bg-[#0a1238] [&_.bg-gray-50]:bg-white/5 [&_.border-gray-200]:border-white/10 [&_.border-gray-100]:border-white/10 [&_.text-gray-900]:text-white [&_.text-gray-700]:text-blue-100 [&_.text-gray-600]:text-slate-300 [&_.text-gray-500]:text-slate-400"><ResumeAuditReportPreview compact /><ApplicationTrackerMockup compact /></div><p className="text-xs text-slate-400 mt-3">Illustrative previews of resume feedback and application tracking. Sample data is not a participant result.</p>
           </div>
           <div className="rounded-3xl border-2 border-blue-500 bg-[#0a1238] p-6 sm:p-9 shadow-xl shadow-blue-900/5">
-            <p className="text-blue-300 font-bold text-sm tracking-wider uppercase mb-3">One programme · One fee</p><h3 className="text-3xl font-bold mb-5">Job Switch Copilot</h3><p className="text-5xl font-extrabold mb-2">₹9,999</p><p className="text-slate-400 mb-7">For the complete one-month programme</p>
+            <p className="text-blue-300 font-bold text-sm tracking-wider uppercase mb-3">One programme · One fee</p><h3 className="text-3xl font-bold mb-5">Job Switch Copilot</h3><p className="text-5xl font-extrabold mb-2">{PROGRAM.priceLabel}</p><p className="text-slate-400 mb-7">For the complete one-month programme, {PROGRAM.taxNote}</p>
             <div className="border-y border-white/10 py-5 mb-7 space-y-3"><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />8 live sessions of 2 hours each</p><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />6 group + 2 personal 1-to-1 sessions</p><p className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />16 hours total, across one month</p></div>
-            <p className="text-slate-300 mb-6">Start with the free webinar to understand the approach. Choose the paid programme only if it fits your goals.</p><a href="#webinar" onClick={reserve('programme')} className={`${ctaClass} w-full`}>Explore it in the free webinar <ArrowRight className="w-5 h-5 shrink-0" /></a><p className="text-xs text-slate-400 mt-4">Registering for the webinar does not enrol you in the programme. No job or salary outcome is guaranteed.</p>
+            <a href={PROGRAM.checkoutUrl} onClick={startCheckout('price_card')} rel="noopener" className={`${ctaClass} w-full`}>Enrol now: {PROGRAM.priceLabel} <ArrowRight className="w-5 h-5 shrink-0" /></a><p className="text-xs text-slate-400 mt-3">Secure checkout by Dodo Payments: {PROGRAM.paymentMethods.replace(', via secure Dodo Payments checkout', '')}. {PROGRAM.refundPolicy}</p>
+            <a href="#webinar" onClick={reserve('programme')} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10">Not sure yet? Join the free webinar first</a><p className="text-xs text-slate-400 mt-4">Registering for the webinar does not enrol you in the programme. No job or salary outcome is guaranteed.</p>
           </div>
         </div>
       </div>

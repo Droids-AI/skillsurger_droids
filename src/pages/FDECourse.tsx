@@ -5,10 +5,20 @@ import curriculum from '../data/fdeCurriculum.json';
 export const FDE_UDEMY_URL = 'https://www.udemy.com/course/ai-forward-deployed-engineer-extensive-program/?referralCode=059C9E3DEB7126402751';
 const outcomes = ['Scope an enterprise AI problem and connect the build to business KPIs.', 'Build retrieval, tool and agent workflows with evaluation and observability.', 'Design permission-aware integrations and test security boundaries.', 'Prepare deployment, runbooks, UAT and a portfolio architecture review.'];
 
+const courseSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  name: 'Forward Deployed AI Engineer: Enterprise GenAI, RAG & AI Agents',
+  description: 'Learn to deliver enterprise GenAI, RAG and AI agent systems inside real client workflows, from discovery and secure integrations to evaluation, deployment and handoff.',
+  provider: { '@type': 'Organization', name: 'Skillsurger', url: 'https://skillsurger.com' },
+  url: 'https://skillsurger.com/courses/forward-deployed-ai-engineer',
+  hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online' },
+};
+
 export default function FDECourse() {
   const count = curriculum.sections.reduce((sum, section) => sum + section.items.length, 0);
   return <div className="bg-gray-50 text-slate-900">
-    <SEO title="Forward Deployed AI Engineer: Enterprise GenAI, RAG & AI Agents | Skillsurger" description="Explore 18 sections and 156 curriculum items covering enterprise AI integration, RAG, agents, deployment and the OmniGuard and AuditMesh capstones." canonicalUrl="/courses/forward-deployed-ai-engineer" />
+    <SEO title="Forward Deployed AI Engineer Course: Enterprise GenAI, RAG & AI Agents | Skillsurger" description="Forward Deployed AI Engineer course: learn to deliver enterprise GenAI, RAG and AI agents inside real client workflows. 18 sections, 156 lessons, 2 capstones. Enroll on Udemy." keywords="forward deployed AI engineer course, forward deployed engineer, enterprise GenAI course, RAG course, AI agents course" canonicalUrl="/courses/forward-deployed-ai-engineer" structuredData={courseSchema} />
     <section className="bg-[#020420] text-white pt-24 pb-16 sm:pt-32 px-4">
       <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.4fr_1fr] gap-10 items-center">
         <div><p className="text-cyan-300 font-semibold mb-4">Skillsurger learning</p><h1 className="text-4xl sm:text-5xl font-extrabold leading-tight mb-6">Forward Deployed AI Engineer<span className="block text-2xl sm:text-3xl font-bold text-cyan-200 mt-3">Enterprise GenAI, RAG &amp; AI Agents</span></h1><p className="text-xl text-slate-300 mb-7">Connect AI engineering with real enterprise workflows, from discovery and secure integrations to evaluation, deployment and handoff.</p><a href={FDE_UDEMY_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 rounded-xl px-6 py-4 font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">Enroll on Udemy <ArrowUpRight className="w-5 h-5" /></a></div>

@@ -38,11 +38,11 @@ const server = http.createServer((req,res) => {
     assert.equal(await page.getByRole('dialog').getByText('Services',{exact:true}).count(),0);
     await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});
     await page.goto('http://127.0.0.1:4173/training');await page.waitForURL('**/job-switch-copilot');
-    assert.ok((await page.locator('main').innerText()).includes('₹9,999'));
+    assert.ok((await page.locator('main').innerText()).includes('₹5,000'));
     assert.equal(await page.getByText('JSC Lite',{exact:true}).count(),0);
     assert.ok(await page.evaluate(() => document.getElementById('webinar').getBoundingClientRect().top < document.getElementById('programme').getBoundingClientRect().top), 'Registration must precede the paid programme');
     await page.getByRole('link',{name:'Register for the free webinar'}).click();await page.waitForFunction(()=>document.activeElement?.id==='webinar-name');
-    await page.getByLabel('Full name').fill('Smoke Test');await page.getByLabel('Email',{exact:true}).fill('smoke@example.com');await page.getByLabel('WhatsApp number with country code').fill('+91 98765 43210');
+    await page.getByLabel('Full name').fill('Smoke Test');await page.getByLabel('Email',{exact:true}).fill('smoke@example.com');await page.getByLabel('WhatsApp number with country code').fill('+91 98765 43210');await page.getByLabel('Current role').fill('Senior Engineer');await page.getByLabel('Target role').fill('Engineering Manager');await page.getByLabel('Experience').selectOption('6–8 years');await page.getByLabel('When do you want to switch?').selectOption('1–3 months');
     failLead=true;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.getByRole('alert').waitFor();assert.equal(rows.length,0);
     failLead=false;await page.getByRole('button',{name:'Reserve my free seat'}).click();await page.waitForURL('**/thank-you?type=webinar&existing=0&delivery=unconfigured&email=unconfigured');
     assert.equal(rows.length,1);assert.equal(rows[0].form_type,'webinar_registration');assert.equal(rows[0].payload.durationMinutes,60);

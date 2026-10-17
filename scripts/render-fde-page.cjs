@@ -12,7 +12,7 @@ export function render() {
  const context = {};
  const body = renderToString(<HelmetProvider context={context}><FDECourse /></HelmetProvider>);
  const head = context.helmet;
- return { body, head: head.title.toString() + head.meta.toString() + head.link.toString() };
+ return { body, head: head.title.toString() + head.meta.toString() + head.link.toString() + head.script.toString() };
 }`,resolveDir:process.cwd(),loader:'jsx'},outfile:output,bundle:true,platform:'node',format:'cjs',jsx:'automatic',external:['react','react-dom/server','react-helmet-async','lucide-react'],logLevel:'silent'});
 const rendered=require(output).render();
 let html=fs.readFileSync('dist/index.html','utf8');

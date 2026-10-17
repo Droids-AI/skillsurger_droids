@@ -28,7 +28,17 @@ interface SheetConfig {
 const SHEET_CONFIG: Record<string, SheetConfig> = {
   webinar_registration: {
     tab: "Webinar Registrations",
-    columns: ["receivedAt", "name", "email", "phoneNumber", "webinarTitle", "startsAt", "durationMinutes", "source", "pageUrl", "timestamp", "requestId"],
+    // New columns go at the end so rows written before them stay aligned.
+    columns: [
+      "receivedAt", "name", "email", "phoneNumber", "webinarTitle", "startsAt", "durationMinutes", "source", "pageUrl", "timestamp", "requestId",
+      "currentRole", "targetRole", "experience", "timeline", "whatsappConsent",
+      "utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm", "gclid", "landingPage",
+      "offer", "registrationDate", "stage", "qualified", "expectedValue", "paymentStatus", "owner", "lastContact",
+    ],
+  },
+  payment: {
+    tab: "Payments",
+    columns: ["receivedAt", "eventType", "paymentId", "refundId", "status", "amountInr", "currency", "email", "name", "productIds", "eventId"],
   },
   diagnosis_booking: {
     tab: "Book a Call",
@@ -45,6 +55,7 @@ const SHEET_CONFIG: Record<string, SheetConfig> = {
       "targetRole", "yearsOfExperience", "currentCTC", "expectedCTC",
       "noticePeriodStatus", "linkedinUrl", "jobDescription",
       "resumeStoragePath", "timestamp",
+      "utmSource", "utmMedium", "utmCampaign", "gclid", "landingPage", "offer", "stage", "paymentStatus",
     ],
   },
 };
@@ -100,6 +111,19 @@ async function appendRow(accessToken: string, tab: string, row: unknown[]): Prom
   if (!res.ok) throw new Error(`Failed to append row to "${tab}": ${res.status} ${await res.text()}`);
 }
 
+async function writeHeader(accessToken: string, tab: string, columns: string[]): Promise<void> {
+  const range = encodeURIComponent(`${tab}!A1`);
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`,
+    {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ values: [columns] }),
+    },
+  );
+  if (!res.ok) throw new Error(`Failed to write header for "${tab}": ${res.status} ${await res.text()}`);
+}
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -130,6 +154,9 @@ Deno.serve(async (req: Request) => {
 
     if (!(await sheetExists(accessToken, config.tab))) {
       await createSheetTab(accessToken, config.tab, config.columns);
+    } else if (SHEET_CONFIG[formType]) {
+      // Known tabs gain columns over time; rewrite row 1 so headers match.
+      await writeHeader(accessToken, config.tab, config.columns);
     }
 
     const row = config.columns.map((col) => {

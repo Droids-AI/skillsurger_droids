@@ -3,7 +3,7 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const ts=require('typescript');
 const {webcrypto,createHmac}=require('node:crypto');
-const env={SUPABASE_URL:'https://synthetic.invalid',SUPABASE_SERVICE_ROLE_KEY:'test-only',WHATSAPP_PHONE_NUMBER_ID:'test-sender',WHATSAPP_ACCESS_TOKEN:'test-only',WHATSAPP_WEBINAR_TEMPLATE:'approved_test_template',WEBINAR_JOIN_URL:'https://meeting.invalid/private',WHATSAPP_GRAPH_VERSION:'v-test',WHATSAPP_APP_SECRET:'test-signature-secret',WHATSAPP_WEBHOOK_VERIFY_TOKEN:'test-verify',LEAD_CONFIRMATION_WEBHOOK_URL:'https://confirmation.invalid',LEAD_CONFIRMATION_WEBHOOK_SECRET:'test-secret'};
+const env={SUPABASE_URL:'https://synthetic.invalid',SUPABASE_SERVICE_ROLE_KEY:'test-only',WHATSAPP_PHONE_NUMBER_ID:'test-sender',WHATSAPP_ACCESS_TOKEN:'test-only',WHATSAPP_WEBINAR_TEMPLATE:'approved_test_template',WEBINAR_JOIN_URL:'https://meeting.invalid/private',WHATSAPP_GRAPH_VERSION:'v-test',WHATSAPP_APP_SECRET:'test-signature-secret',WHATSAPP_WEBHOOK_VERIFY_TOKEN:'test-verify',LEAD_CONFIRMATION_WEBHOOK_URL:'https://confirmation.invalid',LEAD_CONFIRMATION_WEBHOOK_SECRET:'test-secret',TWILIO_API_KEY:'test-key',TWILIO_API_SECRET:'test-only',TWILIO_EMAIL_FROM:'webinar@synthetic.invalid',WEBINAR_EMAIL_ENABLED:'true'};
 let now=Date.parse('2026-10-12T10:00:00Z'),failInsert=false,failProvider=false,sendCount=0,rateAllowed=true;
 const sheetRows=[];
 const registrations=new Map(),notifications=new Map(),emailNotifications=new Map();
@@ -13,7 +13,7 @@ function query(table){
   const storage=table==='webinar_notifications'?notifications:emailNotifications;
   const primary=table==='webinar_notifications'?'registration_id':'lead_id';
   let update,filters=[],select=false,single=false;
-  const q={upsert(v){if(!storage.has(v[primary]))storage.set(v[primary],{status:v.status});return q},update(v){update=v;return q},eq(k,v){filters.push([k,[v]]);return q},in(k,v){filters.push([k,v]);return q},select(){select=true;return q},single(){single=true;return q},then(resolve,reject){
+  const q={upsert(v){if(!storage.has(v[primary]))storage.set(v[primary],{status:v.status});return q},update(v){update=v;return q},eq(k,v){filters.push([k,[v]]);return q},in(k,v){filters.push([k,v]);return q},select(){select=true;return q},maybeSingle(){return q.single()},single(){single=true;return q},then(resolve,reject){
     const entries=[...storage.entries()].filter(([id,row])=>filters.every(([k,vs])=>vs.includes(k===primary?id:row[k])));
     const result=entries.map(([id,row])=>{if(update)Object.assign(row,update);return {...row,[primary]:id}});
     return Promise.resolve({data:single?result[0]:select?result:null,error:single&&!result.length?{message:'not found'}:null}).then(resolve,reject);
@@ -31,9 +31,10 @@ function load(file){
   let handler;
   const output=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   class ClockDate extends Date{constructor(...args){super(...(args.length?args:[now]))}static now(){return now}}
-  const context={exports:{},require(name){return name.includes('leadConfirmation')?load('supabase/functions/_shared/leadConfirmation.ts'):{createClient(){return admin}}},Date:ClockDate,Response,Request,URL,Uint8Array,TextEncoder,AbortSignal,crypto:webcrypto,console:{error(){}},Deno:{env:{get:k=>env[k]},serve:fn=>{handler=fn}},async fetch(url,options){
+  const context={exports:{},require(name){if(name.includes('webinarEmail'))return load('supabase/functions/_shared/webinarEmail.ts');return name.includes('leadConfirmation')?load('supabase/functions/_shared/leadConfirmation.ts'):{createClient(){return admin}}},btoa,Date:ClockDate,Response,Request,URL,Uint8Array,TextEncoder,AbortSignal,crypto:webcrypto,console:{error(){}},Deno:{env:{get:k=>env[k]},serve:fn=>{handler=fn}},async fetch(url,options){
+    if(String(url)==='https://comms.twilio.com/v1/Emails'){confirmationCount++;const mail=JSON.parse(options.body);const text=mail.to[0].variables.confirmation_body;assert.ok(text.includes('Saturday, 24 October 2026 at 3:00 PM IST'));assert.ok(text.includes('chat.whatsapp.com'));assert.ok(text.includes('Before the webinar'));return new Response('{"operationId":"comms_operation_test1"}',{status:202});}
     if(String(url)==='https://confirmation.invalid'){confirmationCount++;const receipt=JSON.parse(options.body).confirmation;assert.equal(receipt.secret,'test-secret');assert.ok(receipt.body.includes('Saturday, 24 October 2026 at 3:00 PM IST'));assert.ok(receipt.body.includes('chat.whatsapp.com'));return new Response('{"success":true}',{status:200});}
-    if(String(url).endsWith('/functions/v1/sheets-sync')){const row=JSON.parse(options.body);assert.equal(row.formType,'webinar_registration');assert.equal(row.startsAt,'2026-10-24T15:00:00+05:30');sheetRows.push(row.email);return new Response('{"success":true}',{status:200});}
+    if(String(url).endsWith('/functions/v1/sheets-sync')){const row=JSON.parse(options.body);assert.equal(row.formType,'webinar_registration');assert.equal(row.startsAt,'2026-10-24T15:00:00+05:30');assert.equal(row.utmSource,'google');assert.equal(row.utmCampaign,'webinar-oct');assert.equal(row.stage,'Registered');assert.equal(row.qualified,'yes');assert.equal(row.experience,'6–8 years');sheetRows.push(row.email);return new Response('{"success":true}',{status:200});}
     sendCount++;const body=JSON.parse(options.body);assert.equal(body.to,'919876543210');assert.equal(body.type,'template');assert.equal(body.template.components[0].parameters[2].text,env.WEBINAR_JOIN_URL);
     assert.equal(body.template.components[0].parameters[1].text,'Saturday, 24 October 2026 at 3:00 PM IST');
     if(failProvider)throw new Error('synthetic timeout');
@@ -42,7 +43,7 @@ function load(file){
   vm.runInNewContext(output,context,{filename:file});return handler || context.exports;
 }
 const register=load('supabase/functions/register-webinar/index.ts');
-const input={name:'Synthetic QA',email:'qa@example.com',phoneNumber:'+919876543210',sessionId:'job-switch-2026-10-24'};
+const input={name:'Synthetic QA',email:'qa@example.com',phoneNumber:'+919876543210',sessionId:'job-switch-2026-10-24',currentRole:'Senior Engineer',targetRole:'Engineering Manager',experience:'6–8 years',timeline:'1–3 months',whatsappConsent:true,attribution:{utmSource:'google',utmCampaign:'webinar-oct'}};
 const request=(body=input,origin='https://skillsurger.com')=>new Request('https://synthetic.invalid/register-webinar',{method:'POST',headers:{origin,'Content-Type':'application/json','x-forwarded-for':'192.0.2.1'},body:JSON.stringify(body)});
 (async()=>{
   assert.equal((await register(request(input,'https://attacker.invalid'))).status,403);assert.equal(sendCount,0);
@@ -54,6 +55,7 @@ const request=(body=input,origin='https://skillsurger.com')=>new Request('https:
   const duplicate=await (await register(request({...input,email:'QA@EXAMPLE.COM'}))).json();assert.equal(duplicate.alreadyRegistered,true);assert.equal(confirmationCount,1);assert.equal(sendCount,1);assert.deepEqual(sheetRows,['qa@example.com'],'One sheet row per new registration, none for duplicates');
   failProvider=true;const failed=await register(request({...input,email:'fail@example.com'}));assert.equal(failed.status,200);const failedBody=await failed.json();assert.equal(failedBody.whatsappStatus,'failed');assert.equal(registrations.size,2);assert.equal(notifications.get(failedBody.registrationId).error_code,'provider_response_unknown');failProvider=false;
   await register(request({...input,email:'fail@example.com'}));assert.equal(sendCount,2,'Uncertain provider sends must not auto-repeat');
+  const noConsent=await (await register(request({...input,email:'noconsent@example.com',whatsappConsent:false}))).json();assert.equal(noConsent.whatsappStatus,'unconfigured');assert.equal(sendCount,2,'No WhatsApp message without consent');
   delete env.WHATSAPP_ACCESS_TOKEN;const unavailable=await (await register(request({...input,email:'unconfigured@example.com'}))).json();assert.equal(unavailable.whatsappStatus,'unconfigured');assert.equal(sendCount,2);
   rateAllowed=false;assert.equal((await register(request())).status,429);assert.equal(sendCount,2);rateAllowed=true;
   now=Date.parse('2026-10-24T09:30:00Z');assert.equal((await register(request())).status,409);assert.equal(sendCount,2);

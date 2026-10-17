@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Shield, Clock, Download, BarChart3, Check, RefreshCcw, CheckCircle, ArrowRight } from "lucide-react";
 import SEO from "../components/SEO";
 import { trackEvent, EVENTS } from "../lib/analytics";
+import { JOB_SWITCH_PROGRAM } from "../lib/constants/jobSwitchProgram";
 
 // Subscription plans: public at /pricing (with the free trial) and for signed-in users at /upgrade.
 const plans = [
@@ -77,7 +78,7 @@ export default function Plans({ publicPage = false }: { publicPage?: boolean }) 
       {publicPage ? (
         <SEO
           title="Pricing Plans | Skillsurger AI Career Coach"
-          description="Start with a free 7-day trial, then choose Monthly Pro at ₹799 or Yearly Pro at ₹7,999 for AI career guidance, mock interviews, CV optimization and job matching."
+          description="Skillsurger pricing: free 7-day trial, Monthly Pro at ₹799, Yearly Pro at ₹7,999, and the 30-day Job Switch Copilot programme at ₹5,000 incl. GST."
           keywords="AI career coach pricing India, resume builder cost, career development pricing, job search tools pricing India"
           canonicalUrl="/pricing"
         />
@@ -110,6 +111,20 @@ export default function Plans({ publicPage = false }: { publicPage?: boolean }) 
             </p>
           </div>
         </div>
+
+        {publicPage && (
+          <div className="max-w-6xl mx-auto mb-12 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-6 sm:p-8 text-white grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wider text-blue-100 mb-1">AI + human coaching</p>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2">{JOB_SWITCH_PROGRAM.name}: {JOB_SWITCH_PROGRAM.priceLabel} <span className="text-base font-medium text-blue-100">{JOB_SWITCH_PROGRAM.taxNote}</span></h2>
+              <p className="text-blue-50">{JOB_SWITCH_PROGRAM.durationLabel} for {JOB_SWITCH_PROGRAM.audience}. {JOB_SWITCH_PROGRAM.format}.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
+              <Link to="/job-switch-copilot#programme" onClick={() => trackEvent(EVENTS.PLAN_SELECTED, { plan: JOB_SWITCH_PROGRAM.name })} className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50">View Program <ArrowRight className="w-4 h-4" /></Link>
+              <Link to="/free-resume-audit" className="inline-flex items-center justify-center rounded-lg border border-white/60 px-6 py-3 font-semibold text-white hover:bg-white/10">Free Career Audit</Link>
+            </div>
+          </div>
+        )}
 
         <div className={`grid gap-8 mx-auto ${publicPage ? "md:grid-cols-2 lg:grid-cols-3 max-w-6xl" : "md:grid-cols-2 max-w-4xl"}`}>
           {publicPage && (

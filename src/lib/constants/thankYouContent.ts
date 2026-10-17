@@ -1,5 +1,5 @@
 import { WEBINAR } from './webinar';
-export type ThankYouType = 'resume-audit' | 'diagnosis-booking' | 'webinar';
+export type ThankYouType = 'resume-audit' | 'diagnosis-booking' | 'webinar' | 'purchase';
 
 export interface ThankYouContent {
   headline: string;
@@ -23,12 +23,20 @@ export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
     secondaryCtaLabel: 'Back to home',
     secondaryCtaHref: '/',
   },
+  purchase: {
+    headline: 'Payment received. Welcome to Job Switch Copilot.',
+    body: 'Your seat in the next cohort is reserved. Our team will message you on WhatsApp and email within 24 hours with your cohort dates, session calendar and onboarding form.',
+    primaryCtaLabel: 'Contact us',
+    primaryCtaHref: '/contact',
+    secondaryCtaLabel: 'View programme details',
+    secondaryCtaHref: '/job-switch-copilot#programme',
+  },
   'resume-audit': {
     headline: 'Your resume audit request is received.',
-    body: "We'll review your resume for ATS gaps, role-fit, structure, keywords, and job-search readiness. You can contact us or book a career diagnosis call for next steps.",
+    body: "We'll review your resume for ATS gaps, role-fit, structure, keywords, and job-search readiness. If the audit shows the programme is a good fit, you can book an optional consultation call. No sales sequence.",
     primaryCtaLabel: 'Explore Job Switch Copilot',
     primaryCtaHref: '/job-switch-copilot',
-    secondaryCtaLabel: 'Book Career Diagnosis',
+    secondaryCtaLabel: 'Book an optional consultation',
     secondaryCtaHref: '/book-a-call',
   },
   'diagnosis-booking': {

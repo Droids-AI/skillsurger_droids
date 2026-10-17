@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.register-resume-audit]
 verify_jwt = false
+
+[functions.dodo-webhook]
+verify_jwt = false

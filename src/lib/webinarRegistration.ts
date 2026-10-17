@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { WEBINAR } from './constants/webinar';
 import { reportError } from './safeLogging';
+import { getAttribution } from './attribution';
 
 export type RegistrationResult = {
   registrationId: string;
@@ -9,10 +10,15 @@ export type RegistrationResult = {
   whatsappStatus: 'pending' | 'accepted' | 'delivered' | 'read' | 'failed' | 'unconfigured';
 };
 
-export async function registerForWebinar(input: { name: string; email: string; phoneNumber: string }): Promise<RegistrationResult> {
+export type WebinarRegistrationInput = {
+  name: string; email: string; phoneNumber: string;
+  currentRole: string; targetRole: string; experience: string; timeline: string; whatsappConsent: boolean;
+};
+
+export async function registerForWebinar(input: WebinarRegistrationInput): Promise<RegistrationResult> {
   const requestId = crypto.randomUUID();
   const { data, error } = await supabase.functions.invoke('register-webinar', {
-    body: { ...input, sessionId: WEBINAR.id, pageUrl: window.location.href, requestId },
+    body: { ...input, attribution: getAttribution(), sessionId: WEBINAR.id, pageUrl: window.location.href, requestId },
   });
   if (error || typeof data?.registrationId !== 'string' || !data.registrationId || typeof data.alreadyRegistered !== 'boolean' || !['pending','accepted','delivered','read','failed','unconfigured'].includes(data.whatsappStatus)) {
     const status = error && 'context' in error && error.context instanceof Response ? error.context.status : 0;

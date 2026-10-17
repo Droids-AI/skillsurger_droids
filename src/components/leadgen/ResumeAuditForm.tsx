@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { submitLead, LeadSubmissionError } from '../../lib/googleSheets';
 import { trackEvent, EVENTS } from '../../lib/analytics';
 import { phoneError } from '../../../supabase/functions/_shared/auditValidation';
+import { getAttribution } from '../../lib/attribution';
 
 const initialState = {
   fullName: '', email: '', countryCode: '+91', phoneNumber: '', currentRole: '',
@@ -27,7 +28,7 @@ export default function ResumeAuditForm() {
   const uploadedPath = useRef<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const start = () => {
-    if (!tracked.current) { tracked.current = true; trackEvent(EVENTS.LEAD_FORM_STARTED, { form: 'resume_audit' }); }
+    if (!tracked.current) { tracked.current = true; trackEvent(EVENTS.LEAD_FORM_STARTED, { form: 'resume_audit' }); trackEvent(EVENTS.AUDIT_STARTED); }
   };
   const change = (name: keyof typeof initialState, value: string) => {
     start(); setForm(previous => ({ ...previous, [name]: value }));
@@ -68,8 +69,9 @@ export default function ResumeAuditForm() {
         if (error) throw new LeadSubmissionError('Your resume could not be uploaded. Please try again.', { resume: 'Resume upload failed. Please try again.' });
         uploadedPath.current = storagePath;
       }
-      const receipt = await submitLead({ ...form, email: form.email.trim(), phoneNumber: phone, resumeStoragePath: uploadedPath.current, requestId: requestId.current }, 'resume_audit');
+      const receipt = await submitLead({ ...form, email: form.email.trim(), phoneNumber: phone, resumeStoragePath: uploadedPath.current, requestId: requestId.current, attribution: getAttribution() }, 'resume_audit');
       trackEvent(EVENTS.AUDIT_REQUESTED);
+      trackEvent(EVENTS.AUDIT_COMPLETED);
       trackEvent(EVENTS.LEAD_FORM_SUBMITTED, { form: 'resume_audit' });
       navigate('/thank-you?type=resume-audit&email=' + (receipt?.emailStatus || 'unconfigured'));
     } catch (error) {

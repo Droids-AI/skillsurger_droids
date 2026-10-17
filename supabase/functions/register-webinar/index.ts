@@ -4,6 +4,9 @@ import { sendWebinarConfirmation, webinarEmailStatus } from '../_shared/webinarE
 const sessionId = 'job-switch-2026-10-24';
 const startsAt = '2026-10-24T15:00:00+05:30';
 const schedule = 'Saturday, 24 October 2026 at 3:00 PM IST';
+const experienceOptions = ['Under 3 years', '3–5 years', '6–8 years', '9–12 years', 'More than 12 years'];
+const timelineOptions = ['Within 1 month', '1–3 months', '3–6 months', 'Just exploring'];
+const text = (value: unknown, max = 100) => String(value ?? '').trim().slice(0, max);
 const origins = (Deno.env.get('WEBINAR_ALLOWED_ORIGINS') || 'https://skillsurger.com,https://www.skillsurger.com').split(',');
 const cors = (origin: string) => ({ 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', Vary: 'Origin' });
 
@@ -27,6 +30,14 @@ Deno.serve(async request => {
     if (input.sessionId !== sessionId || !name || name.length > 120 || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\+[1-9]\d{6,14}$/.test(phone)) {
       return respond({ error: 'Enter a valid name, email and WhatsApp number including +country code.', requestId }, 400);
     }
+    // Qualification fields are optional server-side so a stale cached page can still register.
+    const currentRole = text(input.currentRole);
+    const targetRole = text(input.targetRole);
+    const experience = experienceOptions.includes(input.experience) ? input.experience : '';
+    const timeline = timelineOptions.includes(input.timeline) ? input.timeline : '';
+    const whatsappConsent = input.whatsappConsent === true;
+    const attribution = input.attribution && typeof input.attribution === 'object' ? input.attribution : {};
+    const qualified = ['3–5 years', '6–8 years', '9–12 years'].includes(experience) && timeline !== '' && timeline !== 'Just exploring';
     if (Date.now() >= new Date(startsAt).getTime()) return respond({ error: 'Registration for this session is closed.', requestId }, 409);
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
@@ -40,6 +51,17 @@ Deno.serve(async request => {
       startsAt, durationMinutes: 60, source: 'job-switch-copilot', timestamp: new Date().toISOString(),
       // URL is normalized: no arbitrary query parameters/contact details in logs or leads.
       pageUrl: `${origin}/job-switch-copilot`, requestId,
+      currentRole, targetRole, experience, timeline,
+      whatsappConsent: whatsappConsent ? 'yes' : 'no',
+      // Lead source and campaign, first touch, from the visitor's landing URL.
+      utmSource: text(attribution.utmSource) || (text(attribution.referrer) ? `referral:${text(attribution.referrer)}` : 'direct'),
+      utmMedium: text(attribution.utmMedium), utmCampaign: text(attribution.utmCampaign),
+      utmContent: text(attribution.utmContent), utmTerm: text(attribution.utmTerm), gclid: text(attribution.gclid, 200),
+      landingPage: text(attribution.landingPage, 200),
+      // CRM fields: stage moves New → Qualified → Registered → Attended → Sales Follow-up → Paid → Onboarded → Completed/Refunded.
+      offer: 'free_webinar → job_switch_copilot', registrationDate: new Date().toISOString().slice(0, 10),
+      stage: 'Registered', qualified: qualified ? 'yes' : 'no', expectedValue: qualified ? 5000 : 0,
+      paymentStatus: 'unpaid', owner: '', lastContact: '',
     };
     const result = await admin.rpc('register_webinar', { p_session_id: sessionId, p_payload: lead });
     if (result.error) throw new Error('registration_failed');
@@ -50,7 +72,12 @@ Deno.serve(async request => {
     const token = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
     const template = Deno.env.get('WHATSAPP_WEBINAR_TEMPLATE');
     const joinUrl = Deno.env.get('WEBINAR_JOIN_URL');
-    if (!alreadyRegistered) {
+    if (!alreadyRegistered && !whatsappConsent) {
+      // No messaging consent: never send WhatsApp messages to this number.
+      whatsappStatus = 'unconfigured';
+      const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, error_code: 'no_consent', request_id: requestId }).eq('registration_id', registrationId);
+      if (saved.error) throw new Error('notification_log_failed');
+    } else if (!alreadyRegistered) {
       if (!sender || !token || !template || !joinUrl || !Deno.env.get('WHATSAPP_GRAPH_VERSION')) {
         whatsappStatus = 'unconfigured';
         const saved = await admin.from('webinar_notifications').update({ status: whatsappStatus, error_code: 'sender_not_configured', request_id: requestId }).eq('registration_id', registrationId);
@@ -96,7 +123,7 @@ Deno.serve(async request => {
       : await sendWebinarConfirmation(admin, {
       leadId: result.data.leadId, email, name,
       subject: 'Your Skillsurger webinar registration is confirmed',
-      body: `Hi ${name},\n\nYou are registered for the free Skillsurger job switch webinar.\n${schedule} — 60 minutes online.\n\nJoin the WhatsApp group for the meeting link and reminders: https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE\n\nAdd the session to your calendar: https://calendar.google.com/calendar/render?action=TEMPLATE&text=Skillsurger%20webinar&dates=${calendarDates}\n\nTeam Skillsurger`,
+      body: `Hi ${name},\n\nYou are registered for the free Skillsurger job switch webinar.\n${schedule} — 60 minutes online.\n\nJoin the WhatsApp group for the meeting link and reminders: https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE\n\nAdd the session to your calendar: https://calendar.google.com/calendar/render?action=TEMPLATE&text=Skillsurger%20webinar&dates=${calendarDates}\n\nBefore the webinar (10 minutes):\n1. Keep your current resume handy as a PDF.\n2. Write down 2–3 roles or companies you want next.\n3. Note where your search is stuck: callbacks, interviews or offers.\n\nTeam Skillsurger`,
     });
     if (!alreadyRegistered) {
       // Same Google Sheet sync the other lead forms use ("Webinar Registrations" tab).

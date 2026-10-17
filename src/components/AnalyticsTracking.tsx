@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import HotjarTracking from './HotjarTracking';
 import FacebookPixel from './FacebookPixel';
+import { useLocation } from 'react-router-dom';
+import { trackPageView } from '../lib/analytics';
+import { captureAttribution } from '../lib/attribution';
 
 interface AnalyticsTrackingProps {
   hotjarId?: string;
@@ -14,6 +17,7 @@ const AnalyticsTracking: React.FC<AnalyticsTrackingProps> = ({
   googleAnalyticsId = import.meta.env.VITE_GA_ID || "YOUR_GA_ID"
 }) => {
   const hasInitializedGA = useRef(false);
+  const location = useLocation();
 
   useEffect(() => {
     // Prevent double initialization of Google Analytics
@@ -31,9 +35,13 @@ const AnalyticsTracking: React.FC<AnalyticsTrackingProps> = ({
         script.src = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`;
         document.head.appendChild(script);
       }
-      window.gtag?.('config', googleAnalyticsId);
+      // Page views are sent below on every route change, including the first.
+      window.gtag?.('config', googleAnalyticsId, { send_page_view: false });
     }
   }, [googleAnalyticsId]);
+
+  useEffect(() => { captureAttribution(); }, []);
+  useEffect(() => { trackPageView(location.pathname); }, [location.pathname]);
 
   return (
     <>

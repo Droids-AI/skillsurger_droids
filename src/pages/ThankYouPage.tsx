@@ -1,8 +1,59 @@
+import { useEffect } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Calendar, ArrowRight, MessageCircle } from 'lucide-react';
+import { CheckCircle, Calendar, ArrowRight, MessageCircle, AlertCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 import { thankYouContent, ThankYouType } from '../lib/constants/thankYouContent';
 import { WEBINAR } from '../lib/constants/webinar';
+import { JOB_SWITCH_PROGRAM } from '../lib/constants/jobSwitchProgram';
+import { trackEvent, EVENTS } from '../lib/analytics';
+
+const SUPPORT_WHATSAPP = 'https://wa.me/917310768702';
+
+// Dodo redirects here with ?payment_id=…&status=succeeded. The purchase event fires
+// once per payment; the Dodo webhook is the record of truth for reconciliation.
+function PurchaseResult() {
+  const [params] = useSearchParams();
+  const paymentId = (params.get('payment_id') || '').slice(0, 80);
+  const status = params.get('status');
+  const succeeded = status === 'succeeded' || status === 'success';
+  useEffect(() => {
+    if (!succeeded || !paymentId) return;
+    const key = `purchase-tracked:${paymentId}`;
+    try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch { /* Fire anyway; transaction_id deduplicates. */ }
+    trackEvent(EVENTS.PURCHASE, { transaction_id: paymentId, value: JOB_SWITCH_PROGRAM.price, currency: 'INR', items: [{ item_name: JOB_SWITCH_PROGRAM.name, price: JOB_SWITCH_PROGRAM.price, quantity: 1 }] });
+  }, [succeeded, paymentId]);
+  if (status && !succeeded) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-24">
+      <SEO title="Payment not completed | Skillsurger" description="Your payment was not completed." canonicalUrl="/thank-you" noIndex />
+      <div className="max-w-xl text-center space-y-5">
+        <AlertCircle className="w-14 h-14 text-amber-500 mx-auto" />
+        <h1 className="text-3xl font-bold text-gray-900">Your payment was not completed</h1>
+        <p className="text-gray-600">No money has been taken for this attempt. You can try again, or message us if the amount was debited.</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href={JOB_SWITCH_PROGRAM.checkoutUrl} className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Try payment again</a>
+          <a href={`${SUPPORT_WHATSAPP}?text=${encodeURIComponent('My Job Switch Copilot payment did not complete' + (paymentId ? ` (payment ${paymentId})` : ''))}`} className="px-6 py-3 rounded-xl border border-gray-300 font-semibold text-gray-700 hover:bg-gray-100">Message us on WhatsApp</a>
+        </div>
+      </div>
+    </div>;
+  }
+  return <ParameterizedThankYou type="purchase" />;
+}
+
+function PurchaseNextSteps() {
+  const [params] = useSearchParams();
+  const paymentId = (params.get('payment_id') || '').slice(0, 80);
+  const message = `Hi, I just enrolled in Job Switch Copilot${paymentId ? ` (payment ${paymentId})` : ''}. Please share my onboarding details.`;
+  return <div className="mt-6 rounded-2xl border border-blue-200 bg-white p-6 text-left">
+    <h2 className="font-bold text-lg text-gray-900 mb-3">Your onboarding, step by step</h2>
+    <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+      <li>Check your email for the Dodo Payments receipt{paymentId ? <> (payment reference <span className="font-mono text-sm">{paymentId}</span>)</> : null}.</li>
+      <li>Within 24 hours we send your cohort dates, session calendar and a short onboarding form.</li>
+      <li>Fill the onboarding form and upload your current resume before session 1.</li>
+      <li>{JOB_SWITCH_PROGRAM.refundPolicy}</li>
+    </ol>
+    <a href={`${SUPPORT_WHATSAPP}?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-6 py-3 font-semibold text-white"><MessageCircle className="w-5 h-5" /> Start onboarding on WhatsApp</a>
+  </div>;
+}
 
 const toUtcStamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
@@ -103,6 +154,15 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'failed' || emailStatus === 'unconfigured') && <p className="mt-4 text-gray-600" role="status">Your request is saved, but email confirmation is unavailable. Save these details and <a className="underline text-blue-700" href="/contact">contact us if you need help</a>.</p>}
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'pending' || emailStatus === 'sending') && <p className="mt-4 text-gray-600" role="status">Your confirmation email is being prepared. Save these details while you wait.</p>}
           {type === 'webinar' && <div className="mt-5"><AddToCalendarButton /></div>}
+          {type === 'webinar' && <div className="mt-6 rounded-2xl border border-blue-200 bg-white p-6 text-left">
+            <h2 className="font-bold text-lg text-gray-900 mb-3">Before the webinar: 10 minutes of pre-work</h2>
+            <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+              <li>Keep your current resume handy as a PDF. We do a live resume diagnosis.</li>
+              <li>Write down 2–3 roles or companies you want to move to next.</li>
+              <li>Note where your search is stuck: callbacks, interviews or offers.</li>
+            </ol>
+          </div>}
+          {type === 'purchase' && <PurchaseNextSteps />}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -129,6 +189,9 @@ export default function ThankYouPage() {
   const [searchParams] = useSearchParams();
   const type = searchParams.get('type');
 
+  if (type === 'purchase') {
+    return <PurchaseResult />;
+  }
   if (type === 'resume-audit' || type === 'diagnosis-booking' || type === 'webinar') {
     return <ParameterizedThankYou type={type} />;
   }
