@@ -6,9 +6,15 @@ export default function ScrollToTop() {
 
   useEffect(() => {
     if (hash) {
-      const frame = requestAnimationFrame(() => {
-        document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
-      });
+      // Pages load on demand, so the target may appear a moment after navigation.
+      let frame = 0;
+      const deadline = Date.now() + 3000;
+      const tryScroll = () => {
+        const target = document.getElementById(decodeURIComponent(hash.slice(1)));
+        if (target) target.scrollIntoView();
+        else if (Date.now() < deadline) frame = requestAnimationFrame(tryScroll);
+      };
+      frame = requestAnimationFrame(tryScroll);
       return () => cancelAnimationFrame(frame);
     }
     window.scrollTo({

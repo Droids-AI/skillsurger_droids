@@ -1,52 +1,54 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import Header from './components/Header';
 import MobileNavigation from './components/MobileNavigation';
 import LandingPage from './pages/LandingPage';
-import SignUpPage from './pages/SignUpPage';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import JobSearchPage from './pages/JobSearchPage';
-import GoogleAuthCallback from './pages/GoogleAuthCallback';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsAndConditions from './pages/TermsAndConditions';
-import ContactUs from './pages/ContactUs';
-import AboutUs from './pages/AboutUs';
-import Blog from './pages/Blog';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import SubscriptionProtectedRoute from './components/SubscriptionProtectedRoute';
 import ProfileProtectedRoute from './components/ProfileProtectedRoute';
 import { UserProvider } from './context/UserContext';
-import Plans from './pages/Plans';
-import Subscription from './pages/Subscription';
-import AIResumeBuilder from "./pages/AIResumeBuilder";
-import MockInterview from "./pages/MockInterview";
-import BlogPost from "./pages/BlogPost";
-import JobReadinessIndex from "./pages/JobReadinessIndex";
-import LinkedInProfileOptimizer from "./pages/LinkedInProfileOptimizer";
 import WhatsAppChat from './components/WhatsAppChat';
 import Footer from './components/Footer';
 import AnalyticsTracking from './components/AnalyticsTracking';
 import PerformanceMonitor from './components/PerformanceMonitor';
-import UserTypeSelection from './components/UserTypeSelection';
-import OnboardingForm from './components/OnboardingForm';
-import Onboarding from './pages/Onboarding';
 import OnboardingModal from './components/OnboardingModal';
 import ScrollToTop from './components/ScrollToTop';
-import ThankYouPage from './pages/ThankYouPage';
-import JobSwitchCopilot from './pages/JobSwitchCopilot';
-import FreeResumeAudit from './pages/FreeResumeAudit';
-import SuccessStories from './pages/SuccessStories';
-import ResumeExamples from './pages/ResumeExamples';
-import ForColleges from './pages/ForColleges';
-import ForEdtechPartners from './pages/ForEdtechPartners';
-import BookACall from './pages/BookACall';
-import SEOLandingPage from './pages/seo/SEOLandingPage';
 
-import PasswordRecovery from './pages/PasswordRecovery';
-import FDECourse from './pages/FDECourse';
+// Pages load on demand so the homepage only downloads its own code.
+const SignUpPage = lazy(() => import('./pages/SignUpPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const JobSearchPage = lazy(() => import('./pages/JobSearchPage'));
+const GoogleAuthCallback = lazy(() => import('./pages/GoogleAuthCallback'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const Blog = lazy(() => import('./pages/Blog'));
+const Plans = lazy(() => import('./pages/Plans'));
+const Subscription = lazy(() => import('./pages/Subscription'));
+const AIResumeBuilder = lazy(() => import('./pages/AIResumeBuilder'));
+const MockInterview = lazy(() => import('./pages/MockInterview'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const JobReadinessIndex = lazy(() => import('./pages/JobReadinessIndex'));
+const LinkedInProfileOptimizer = lazy(() => import('./pages/LinkedInProfileOptimizer'));
+const UserTypeSelection = lazy(() => import('./components/UserTypeSelection'));
+const OnboardingForm = lazy(() => import('./components/OnboardingForm'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
+const JobSwitchCopilot = lazy(() => import('./pages/JobSwitchCopilot'));
+const FreeResumeAudit = lazy(() => import('./pages/FreeResumeAudit'));
+const SuccessStories = lazy(() => import('./pages/SuccessStories'));
+const ResumeExamples = lazy(() => import('./pages/ResumeExamples'));
+const ForColleges = lazy(() => import('./pages/ForColleges'));
+const ForEdtechPartners = lazy(() => import('./pages/ForEdtechPartners'));
+const BookACall = lazy(() => import('./pages/BookACall'));
+const SEOLandingPage = lazy(() => import('./pages/seo/SEOLandingPage'));
+const PasswordRecovery = lazy(() => import('./pages/PasswordRecovery'));
+const FDECourse = lazy(() => import('./pages/FDECourse'));
+
 
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -69,6 +71,7 @@ function App() {
           />
           <OnboardingModal />
           <main>
+            <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/signup" element={<SignUpPage />} />
@@ -166,6 +169,7 @@ function App() {
               {/* 404 Not Found - Must be last */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </main>
           
           {/* WhatsApp Chat - Fixed position on all pages */}
