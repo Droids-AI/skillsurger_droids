@@ -16,7 +16,7 @@ const ProductHuntUpvote: React.FC<ProductHuntUpvoteProps> = ({
   return (
     <div 
       onClick={handleUpvoteClick}
-      className={`inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 ${className}`}
+      className={`inline-flex items-center gap-2 bg-orange-700 hover:bg-orange-800 text-white px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 ${className}`}
       title="Upvote us on ProductHunt"
     >
       <svg 

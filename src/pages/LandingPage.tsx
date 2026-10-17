@@ -492,10 +492,10 @@ export default function LandingPage() {
                     )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">
                           Name
                         </label>
-                        <input
+                        <input id="contact-name"
                           type="text"
                           value={contactForm.name}
                           onChange={(e) =>
@@ -509,10 +509,10 @@ export default function LandingPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">
                           Email
                         </label>
-                        <input
+                        <input id="contact-email"
                           type="email"
                           value={contactForm.email}
                           onChange={(e) =>
@@ -528,10 +528,10 @@ export default function LandingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="contact-company" className="block text-sm font-medium text-gray-700 mb-2">
                         Company (Optional)
                       </label>
-                      <input
+                      <input id="contact-company"
                         type="text"
                         value={contactForm.company}
                         onChange={(e) =>
@@ -545,10 +545,10 @@ export default function LandingPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-2">
                         Message
                       </label>
-                      <textarea
+                      <textarea id="contact-message"
                         value={contactForm.message}
                         onChange={(e) =>
                           setContactForm({
