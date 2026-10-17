@@ -82,8 +82,8 @@ export default function TermsAndConditions() {
               </p>
               <p className="text-gray-700 mt-2">
                 Email: legal@skillsurger.com<br />
-                Phone: +1 (555) 123-4567<br />
-                Address: 123 Innovation Drive, Tech Valley, CA 94025
+                Phone: +91 8095451980<br />
+                Address: Hennur Road, Bangalore, Karnataka, India
               </p>
             </section>
           </div>

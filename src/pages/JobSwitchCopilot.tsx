@@ -1,4 +1,5 @@
 ﻿import { ArrowRight, CheckCircle2, Clock, Sparkles, Video, ShieldCheck, ArrowUpRight, IndianRupee, RotateCcw, UserRound, CalendarDays, LifeBuoy, Timer, CreditCard, PlayCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import WebinarRegistrationForm from '../components/leadgen/WebinarRegistrationForm';
 import ApplicationTrackerMockup from '../components/jobSwitchCopilot/ApplicationTrackerMockup';
@@ -7,6 +8,7 @@ import { trackEvent, EVENTS } from '../lib/analytics';
 
 import { WEBINAR } from '../lib/constants/webinar';
 import { JOB_SWITCH_PROGRAM as PROGRAM, PROGRAM_SESSIONS } from '../lib/constants/jobSwitchProgram';
+import { CONTENT_CLUSTERS, clusterLinks } from '../lib/constants/contentClusters';
 
 // 60-minute webinar, minute by minute.
 const agenda = [
@@ -162,6 +164,24 @@ export default function JobSwitchCopilot() {
     </section>
 
     <section className="py-16 max-w-3xl mx-auto px-4"><h2 className="text-3xl font-bold text-center mb-8">Your questions, answered</h2>{faqs.map(([question, answer]) => <details key={question} className="border-b border-white/10 py-5"><summary className="font-semibold text-lg cursor-pointer pr-2">{question}</summary><p className="text-slate-300 mt-3 leading-relaxed">{answer}</p></details>)}</section>
+    <section aria-labelledby="free-guides" className="py-16 bg-[#080d2b]">
+      <div className="max-w-6xl mx-auto px-4">
+        <h2 id="free-guides" className="text-3xl font-bold text-center mb-3">Free guides for your job switch</h2>
+        <p className="text-slate-300 text-center mb-10">Start on your own with these, then bring your questions to the webinar.</p>
+        <div className="grid gap-8 md:grid-cols-3">
+          {CONTENT_CLUSTERS.map(cluster => (
+            <div key={cluster.id}>
+              <h3 className="font-bold text-lg mb-3">{cluster.title}</h3>
+              <ul className="space-y-2">
+                {clusterLinks(cluster).map(link => (
+                  <li key={link.slug}><Link to={link.href} className="text-blue-300 hover:text-white hover:underline">{link.label}</Link></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
     <section className="py-16 bg-gradient-to-br from-blue-950 to-[#020420]"><div className="max-w-3xl mx-auto px-4 text-center"><p className="text-blue-300 font-bold text-sm uppercase tracking-wider mb-3">Start with one hour</p><h2 className="text-3xl sm:text-4xl font-bold mb-5">Make your next application part of a plan.</h2><p className="text-slate-300 text-lg mb-8">Join the free job-switch webinar and see how a more focused approach could change your next move.</p><a href="#webinar" onClick={reserve('final')} className={ctaClass}>Reserve my free webinar seat <ArrowRight className="w-5 h-5" /></a><p className="text-sm text-slate-400 mt-4">Free registration · 60 minutes online · No programme purchase required</p></div></section>
   </div>;
 }

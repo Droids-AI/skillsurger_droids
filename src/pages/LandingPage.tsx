@@ -27,6 +27,8 @@ import { AiVsHumanSection, ProgramOfferSection, ProgramProofSection, StickyAudit
 import RoleTrackCard from "../components/roleTracks/RoleTrackCard";
 import { roleTracks } from "../lib/constants/roleTracks";
 import { WEBINAR } from "../lib/constants/webinar";
+import { submitLead } from "../lib/googleSheets";
+import { getAttribution } from "../lib/attribution";
 
 const features = [
   {
@@ -104,6 +106,7 @@ export default function LandingPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   useEffect(() => {
@@ -116,14 +119,17 @@ export default function LandingPage() {
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setSubmitSuccess(true);
-    setContactForm({ name: "", email: "", company: "", message: "" });
-    setIsSubmitting(false);
-
-    setTimeout(() => setSubmitSuccess(false), 5000);
+    setSubmitError("");
+    try {
+      await submitLead({ ...contactForm, source: "home_contact", pageUrl: window.location.href, ...getAttribution() }, "contact_message");
+      setSubmitSuccess(true);
+      setContactForm({ name: "", email: "", company: "", message: "" });
+      setTimeout(() => setSubmitSuccess(false), 5000);
+    } catch {
+      setSubmitError("We could not send your message. Please try again, or email us directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -481,6 +487,9 @@ export default function LandingPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleContactSubmit} className="space-y-6">
+                    {submitError && (
+                      <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{submitError}</p>
+                    )}
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">

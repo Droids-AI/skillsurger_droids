@@ -7,6 +7,7 @@ import RoleTrackCard from '../../components/roleTracks/RoleTrackCard';
 import NotFound from '../NotFound';
 import { seoLandingPages } from '../../lib/constants/seoLandingPages';
 import { roleTracks } from '../../lib/constants/roleTracks';
+import { clusterForSlug, clusterLinks } from '../../lib/constants/contentClusters';
 import { trackEvent, EVENTS } from '../../lib/analytics';
 
 interface SEOLandingPageProps {
@@ -23,6 +24,8 @@ export default function SEOLandingPage({ slug }: SEOLandingPageProps) {
   const relatedTrack = content.relatedRoleTrackId
     ? roleTracks.find((track) => track.id === content.relatedRoleTrackId)
     : undefined;
+  const cluster = clusterForSlug(content.slug);
+  const siblings = cluster ? clusterLinks(cluster).filter((link) => link.slug !== content.slug) : [];
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -93,6 +96,28 @@ export default function SEOLandingPage({ slug }: SEOLandingPageProps) {
             <div className="max-w-md">
               <RoleTrackCard track={relatedTrack} />
             </div>
+          </div>
+        </section>
+      )}
+
+      {cluster && siblings.length > 0 && (
+        <section className="pb-12" aria-labelledby="related-guides">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 id="related-guides" className="text-2xl font-bold text-gray-900 mb-4">More {cluster.title.toLowerCase()}</h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {siblings.map((link) => (
+                <li key={link.slug}>
+                  <Link to={link.href} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 font-medium text-gray-900 hover:border-blue-400 hover:text-blue-700">
+                    {link.label}
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link to={cluster.hub.href} className="mt-4 inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
+              {cluster.hub.label}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </section>
       )}

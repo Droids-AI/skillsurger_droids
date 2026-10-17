@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
           
           <div className="prose max-w-none">
             <p className="text-gray-600 mb-6">
-              Last updated: {new Date().toLocaleDateString()}
+              Last updated: 17 October 2026
             </p>
 
             <section className="mb-8">
@@ -51,14 +51,24 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">4. Data Protection</h2>
+              <h2 className="text-2xl font-semibold mb-4">4. Advertising, Measurement and Messages</h2>
+              <ul className="list-disc list-inside text-gray-700 space-y-2">
+                <li>When you arrive from an ad or campaign link, we store the campaign tags and ad click ID with any form you submit, so we know which campaigns bring registrations and enrolments.</li>
+                <li>If you buy a programme after clicking a Google ad, we may share the click ID and a one-way hashed (SHA-256) copy of your email address with Google Ads to measure that purchase. We do not share your name, phone number or resume for advertising.</li>
+                <li>We send webinar confirmations and reminders by email. We send WhatsApp messages only if you ticked the WhatsApp consent box; reply STOP at any time to stop them.</li>
+                <li>To opt out of any of this, email support@skillsurger.com.</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4">5. Data Protection</h2>
               <p className="text-gray-700 mb-4">
                 We implement a variety of security measures to maintain the safety of your personal information when you enter, submit, or access your personal information.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">5. Your Rights</h2>
+              <h2 className="text-2xl font-semibold mb-4">6. Your Rights</h2>
               <p className="text-gray-700 mb-4">
                 You have the right to:
               </p>
@@ -73,14 +83,14 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">6. Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
               <p className="text-gray-700">
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
               <p className="text-gray-700 mt-2">
-                Email: privacy@skillsurger.com<br />
-                Phone: +1 (555) 123-4567<br />
-                Address: 123 Innovation Drive, Tech Valley, CA 94025
+                Email: support@skillsurger.com<br />
+                Phone: +91 8095451980<br />
+                Address: Hennur Road, Bangalore, Karnataka, India
               </p>
             </section>
           </div>

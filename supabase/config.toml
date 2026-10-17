@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.dodo-webhook]
 verify_jwt = false
+
+[functions.webinar-reminders]
+verify_jwt = false

@@ -6,15 +6,16 @@ const {webcrypto,createHmac}=require('node:crypto');
 const env={SUPABASE_URL:'https://synthetic.invalid',SUPABASE_SERVICE_ROLE_KEY:'test-only',WHATSAPP_PHONE_NUMBER_ID:'test-sender',WHATSAPP_ACCESS_TOKEN:'test-only',WHATSAPP_WEBINAR_TEMPLATE:'approved_test_template',WEBINAR_JOIN_URL:'https://meeting.invalid/private',WHATSAPP_GRAPH_VERSION:'v-test',WHATSAPP_APP_SECRET:'test-signature-secret',WHATSAPP_WEBHOOK_VERIFY_TOKEN:'test-verify',LEAD_CONFIRMATION_WEBHOOK_URL:'https://confirmation.invalid',LEAD_CONFIRMATION_WEBHOOK_SECRET:'test-secret',TWILIO_API_KEY:'test-key',TWILIO_API_SECRET:'test-only',TWILIO_EMAIL_FROM:'webinar@synthetic.invalid',WEBINAR_EMAIL_ENABLED:'true'};
 let now=Date.parse('2026-10-12T10:00:00Z'),failInsert=false,failProvider=false,sendCount=0,rateAllowed=true;
 const sheetRows=[];
-const registrations=new Map(),notifications=new Map(),emailNotifications=new Map();
+const registrations=new Map(),notifications=new Map(),emailNotifications=new Map(),reminders=new Map(),optOuts=new Map();
 let confirmationCount=0;
 function query(table){
-  assert.ok(['webinar_notifications','lead_email_notifications'].includes(table));
-  const storage=table==='webinar_notifications'?notifications:emailNotifications;
-  const primary=table==='webinar_notifications'?'registration_id':'lead_id';
-  let update,filters=[],select=false,single=false;
-  const q={upsert(v){if(!storage.has(v[primary]))storage.set(v[primary],{status:v.status});return q},update(v){update=v;return q},eq(k,v){filters.push([k,[v]]);return q},in(k,v){filters.push([k,v]);return q},select(){select=true;return q},maybeSingle(){return q.single()},single(){single=true;return q},then(resolve,reject){
+  const tables={webinar_notifications:[notifications,'registration_id'],lead_email_notifications:[emailNotifications,'lead_id'],webinar_reminders:[reminders,'provider_message_id'],messaging_opt_outs:[optOuts,'phone']};
+  assert.ok(tables[table]);
+  const [storage,primary]=tables[table];
+  let update,remove=false,filters=[],select=false,single=false;
+  const q={upsert(v){if(!storage.has(v[primary]))storage.set(v[primary],{status:v.status});return q},update(v){update=v;return q},delete(){remove=true;return q},eq(k,v){filters.push([k,[v]]);return q},in(k,v){filters.push([k,v]);return q},select(){select=true;return q},maybeSingle(){return q.single()},single(){single=true;return q},then(resolve,reject){
     const entries=[...storage.entries()].filter(([id,row])=>filters.every(([k,vs])=>vs.includes(k===primary?id:row[k])));
+    if(remove)entries.forEach(([id])=>storage.delete(id));
     const result=entries.map(([id,row])=>{if(update)Object.assign(row,update);return {...row,[primary]:id}});
     return Promise.resolve({data:single?result[0]:select?result:null,error:single&&!result.length?{message:'not found'}:null}).then(resolve,reject);
   }};return q;
@@ -68,5 +69,13 @@ const request=(body=input,origin='https://skillsurger.com')=>new Request('https:
   await webhook(statusRequest('sent'));assert.equal(notifications.get(body.registrationId).status,'delivered');
   await webhook(statusRequest('read'));assert.equal(notifications.get(body.registrationId).status,'read');
   await webhook(statusRequest('failed'));assert.equal(notifications.get(body.registrationId).status,'read');
-  console.log('PASS: Edge validation/origin/rate limit/expiry, no message on persistence failure, one send on success, duplicate/uncertain-send protection, private link, logged provider failure/configuration state, signed delivery webhook, monotonic statuses and one Google Sheet row per new registration. Mock providers only.');
+  reminders.set('message-r1',{status:'accepted'});
+  const reminderStatus=JSON.stringify({entry:[{changes:[{value:{statuses:[{id:'message-r1',status:'delivered'}]}}]}]});
+  await webhook(new Request('https://synthetic.invalid',{method:'POST',headers:{'x-hub-signature-256':'sha256='+createHmac('sha256',env.WHATSAPP_APP_SECRET).update(reminderStatus).digest('hex')},body:reminderStatus}));
+  assert.equal(reminders.get('message-r1').status,'delivered','Reminder delivery statuses are tracked');
+  function reply(text){const payload=JSON.stringify({entry:[{changes:[{value:{messages:[{from:'919876543210',type:'text',text:{body:text}}]}}]}]});return new Request('https://synthetic.invalid',{method:'POST',headers:{'x-hub-signature-256':'sha256='+createHmac('sha256',env.WHATSAPP_APP_SECRET).update(payload).digest('hex')},body:payload});}
+  assert.equal((await webhook(reply(' stop '))).status,200);assert.ok(optOuts.has('+919876543210'),'STOP opts the number out');
+  await webhook(reply('hello'));assert.ok(optOuts.has('+919876543210'));
+  await webhook(reply('START'));assert.ok(!optOuts.has('+919876543210'),'START opts back in');
+  console.log('PASS: Edge validation/origin/rate limit/expiry, no message on persistence failure, one send on success, duplicate/uncertain-send protection, private link, logged provider failure/configuration state, signed delivery webhook, monotonic statuses, reminder statuses, STOP/START opt-out and one Google Sheet row per new registration. Mock providers only.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

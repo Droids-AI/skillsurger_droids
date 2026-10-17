@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import Button from '../components/Button';
 import SEO from '../components/SEO';
+import { submitLead } from '../lib/googleSheets';
+import { getAttribution } from '../lib/attribution';
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -21,12 +23,11 @@ export default function ContactUs() {
     setSuccess(false);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await submitLead({ ...formData, source: 'contact_page', pageUrl: window.location.href, ...getAttribution() }, 'contact_message');
       setSuccess(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
-      setError('Failed to send message. Please try again.');
+      setError('We could not send your message. Please try again, or email us directly.');
     } finally {
       setLoading(false);
     }

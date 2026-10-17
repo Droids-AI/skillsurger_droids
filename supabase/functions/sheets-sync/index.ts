@@ -40,6 +40,10 @@ const SHEET_CONFIG: Record<string, SheetConfig> = {
     tab: "Payments",
     columns: ["receivedAt", "eventType", "paymentId", "refundId", "status", "amountInr", "currency", "email", "name", "productIds", "eventId"],
   },
+  contact_message: {
+    tab: "Contact Messages",
+    columns: ["receivedAt", "name", "email", "company", "subject", "message", "source", "pageUrl", "utmSource", "utmMedium", "utmCampaign", "gclid", "landingPage", "timestamp"],
+  },
   diagnosis_booking: {
     tab: "Book a Call",
     columns: [

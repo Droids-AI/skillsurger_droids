@@ -93,6 +93,40 @@ const { PGlite } = require('@electric-sql/pglite');
     const repeated=await Promise.all(Array.from({length:5},audit));
     assert.ok(repeated.every(result=>result.alreadyRegistered&&result.leadId===receipt.leadId));
     assert.equal((await db.query("select count(*)::integer as count from leads where form_type='resume_audit'")).rows[0].count,1);
-    console.log('PASS: PostgreSQL registration uniqueness, original record preservation, outbox uniqueness, anonymous RPC/read denial, rate limits, expiry, private bucket, owner/non-owner RLS and legacy broad-policy fence. Synthetic in-memory database only.');
+
+    // Payments, attendance, CRM stages, reminders and Google Ads export.
+    await db.exec(fs.readFileSync('supabase/migrations/20261017000000_job_switch_payments_and_funnel.sql','utf8'));
+    await db.exec(fs.readFileSync('supabase/migrations/20261017010000_webinar_reminders_attendance_ads.sql','utf8'));
+    await db.exec(`update leads set payload = payload || '{"gclid":"gclid-test","stage":"Registered"}' where payload->>'email'='test@example.com'`);
+    const attended=(await db.query("select mark_webinar_attended('job-switch-2026-10-24', array[' TEST@example.com','nobody@example.com']) as r")).rows[0].r;
+    assert.equal(attended.matched,1);assert.deepEqual(attended.unmatched,['nobody@example.com']);
+    let webinarLead=(await db.query("select payload from leads where payload->>'email'='test@example.com'")).rows[0].payload;
+    assert.equal(webinarLead.stage,'Attended');assert.equal(webinarLead.attended,'yes');
+    assert.equal((await db.query("select set_lead_stage('test@example.com','Sales Follow-up','Saurav') as n")).rows[0].n,1);
+    await assert.rejects(db.query("select set_lead_stage('test@example.com','Won')"),/Unknown stage/);
+    await db.query("select mark_webinar_attended('job-switch-2026-10-24', array['test@example.com'])");
+    assert.equal((await db.query("select payload->>'stage' as s from leads where payload->>'email'='test@example.com'")).rows[0].s,'Sales Follow-up','Attendance never moves a lead backwards');
+    const pay=(id,type,extra)=>db.query('select record_payment_event($1::jsonb) as r',[JSON.stringify({event_id:id,event_type:type,payment_id:'pay_1',raw:{},...extra})]).then(r=>r.rows[0].r);
+    await pay('evt_1','payment.succeeded',{customer_email:'Test@example.com',amount_minor:500000,currency:'INR'});
+    assert.equal((await pay('evt_1','payment.succeeded',{customer_email:'test@example.com'})).duplicate,true);
+    webinarLead=(await db.query("select payload from leads where payload->>'email'='test@example.com'")).rows[0].payload;
+    assert.equal(webinarLead.stage,'Paid');assert.equal(webinarLead.paymentStatus,'paid');
+    const ads=(await db.query('select * from google_ads_offline_conversions')).rows;
+    assert.equal(ads.length,1);assert.equal(ads[0]['Google Click ID'],'gclid-test');assert.equal(Number(ads[0]['Conversion Value']),5000);
+    assert.equal(ads[0]['Email'],require('node:crypto').createHash('sha256').update('test@example.com').digest('hex'));
+    assert.match(ads[0]['Conversion Time'],/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\+05:30$/);
+    const funnel=(await db.query('select sum(webinar_registrations)::int as reg, sum(webinar_attended)::int as att, sum(purchases)::int as buys, sum(net_revenue_inr)::numeric as net from funnel_daily')).rows[0];
+    assert.deepEqual([funnel.reg,funnel.att,funnel.buys,Number(funnel.net)],[1,1,1,5000]);
+    await pay('evt_2','refund.succeeded',{amount_minor:500000});
+    assert.equal((await db.query('select count(*)::int as n from google_ads_offline_conversions')).rows[0].n,0,'Refunded purchases are not uploaded');
+    assert.equal((await db.query("select payload->>'stage' as s from leads where payload->>'email'='test@example.com'")).rows[0].s,'Refunded');
+    await db.query("insert into webinar_reminders(registration_id,stage,channel) values($1,'reminder_24h','email')",[first.registrationId]);
+    await assert.rejects(db.query("insert into webinar_reminders(registration_id,stage,channel) values($1,'reminder_24h','email')",[first.registrationId]),/duplicate key/);
+    await db.exec('set role anon');
+    for (const sql of ["select * from webinar_reminders","select * from messaging_opt_outs","select * from google_ads_offline_conversions","select * from funnel_daily","select * from payments","select set_lead_stage('test@example.com','Paid')","select mark_webinar_attended('job-switch-2026-10-24','{}')"]) {
+      await assert.rejects(db.query(sql),/permission denied/,sql);
+    }
+    await db.exec('reset role');
+    console.log('PASS: PostgreSQL registration uniqueness, original record preservation, outbox uniqueness, anonymous RPC/read denial, rate limits, expiry, private bucket, owner/non-owner RLS, legacy broad-policy fence, payments, attendance, CRM stages, reminder send-once, Google Ads export and funnel view. Synthetic in-memory database only.');
   } finally { await db.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

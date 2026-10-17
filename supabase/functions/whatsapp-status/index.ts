@@ -22,13 +22,31 @@ Deno.serve(async request => {
   try {
     const payload = JSON.parse(raw);
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    for (const entry of payload.entry || []) for (const change of entry.changes || []) for (const status of change.value?.statuses || []) {
-      const next = status.status === 'sent' ? 'accepted' : status.status;
-      if (!['accepted', 'delivered', 'read', 'failed'].includes(next)) continue;
-      // Do not let late sent/delivered webhooks regress a read/delivered state.
-      const predecessors = next === 'accepted' ? ['sending', 'accepted'] : next === 'delivered' ? ['sending', 'accepted', 'delivered'] : next === 'read' ? ['sending', 'accepted', 'delivered', 'read'] : ['sending', 'accepted', 'failed'];
-      const result = await admin.from('webinar_notifications').update({ status: next, error_code: next === 'failed' ? 'delivery_failed' : null, updated_at: new Date().toISOString() }).eq('provider_message_id', status.id).in('status', predecessors);
-      if (result.error) throw new Error('log_failed');
+    for (const entry of payload.entry || []) for (const change of entry.changes || []) {
+      for (const status of change.value?.statuses || []) {
+        const next = status.status === 'sent' ? 'accepted' : status.status;
+        if (!['accepted', 'delivered', 'read', 'failed'].includes(next)) continue;
+        // Do not let late sent/delivered webhooks regress a read/delivered state.
+        const predecessors = next === 'accepted' ? ['sending', 'accepted'] : next === 'delivered' ? ['sending', 'accepted', 'delivered'] : next === 'read' ? ['sending', 'accepted', 'delivered', 'read'] : ['sending', 'accepted', 'failed'];
+        const update = { status: next, error_code: next === 'failed' ? 'delivery_failed' : null, updated_at: new Date().toISOString() };
+        const result = await admin.from('webinar_notifications').update(update).eq('provider_message_id', status.id).in('status', predecessors);
+        if (result.error) throw new Error('log_failed');
+        const reminder = await admin.from('webinar_reminders').update(update).eq('provider_message_id', status.id).in('status', predecessors);
+        if (reminder.error) throw new Error('log_failed');
+      }
+      // Replies: STOP opts the number out of all further WhatsApp messages, START opts back in.
+      for (const message of change.value?.messages || []) {
+        const word = String(message.text?.body ?? message.button?.text ?? '').trim().toUpperCase();
+        const phone = /^\d{7,15}$/.test(String(message.from)) ? `+${message.from}` : '';
+        if (!phone) continue;
+        if (['STOP', 'UNSUBSCRIBE', 'STOP ALL', 'CANCEL'].includes(word)) {
+          const saved = await admin.from('messaging_opt_outs').upsert({ phone, channel: 'whatsapp' }, { onConflict: 'phone', ignoreDuplicates: true });
+          if (saved.error) throw new Error('opt_out_failed');
+        } else if (word === 'START') {
+          const removed = await admin.from('messaging_opt_outs').delete().eq('phone', phone);
+          if (removed.error) throw new Error('opt_out_failed');
+        }
+      }
     }
     return new Response('OK');
   } catch {
