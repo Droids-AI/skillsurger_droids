@@ -55,7 +55,7 @@ export default function PrivacyPolicy() {
               <ul className="list-disc list-inside text-gray-700 space-y-2">
                 <li>When you arrive from an ad or campaign link, we store the campaign tags and ad click ID with any form you submit, so we know which campaigns bring registrations and enrolments.</li>
                 <li>If you buy a programme after clicking a Google ad, we may share the click ID and a one-way hashed (SHA-256) copy of your email address with Google Ads to measure that purchase. We do not share your name, phone number or resume for advertising.</li>
-                <li>We send webinar confirmations and reminders by email. We send WhatsApp messages only if you ticked the WhatsApp consent box; reply STOP at any time to stop them.</li>
+                <li>We send webinar confirmations and reminders by email. Reply to any of these emails to stop them.</li>
                 <li>To opt out of any of this, email support@skillsurger.com.</li>
               </ul>
             </section>

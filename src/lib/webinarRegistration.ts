@@ -12,7 +12,7 @@ export type RegistrationResult = {
 
 export type WebinarRegistrationInput = {
   name: string; email: string; phoneNumber: string;
-  currentRole: string; targetRole: string; experience: string; timeline: string; whatsappConsent: boolean;
+  currentRole: string; targetRole: string; experience: string; timeline: string;
 };
 
 export async function registerForWebinar(input: WebinarRegistrationInput): Promise<RegistrationResult> {

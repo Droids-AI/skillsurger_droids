@@ -32,7 +32,6 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
     const targetRole = String(form.get('targetRole') || '').trim();
     const experience = String(form.get('experience') || '');
     const timeline = String(form.get('timeline') || '');
-    const whatsappConsent = form.get('whatsappConsent') === 'on';
     if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\+[1-9]\d{6,14}$/.test(phone)) {
       setError('Please enter your name, a valid email, and a WhatsApp number including +country code.');
       return;
@@ -45,7 +44,7 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
     submitting.current = true;
     setError('');
     try {
-      const result = await registerForWebinar({ name, email, phoneNumber: phone, currentRole, targetRole, experience, timeline, whatsappConsent });
+      const result = await registerForWebinar({ name, email, phoneNumber: phone, currentRole, targetRole, experience, timeline });
       trackWebinarConversion(result);
       if (!result.alreadyRegistered) {
         trackEvent(EVENTS.LEAD_FORM_SUBMITTED, { form: 'webinar_registration' });
@@ -75,8 +74,7 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
         <div><label htmlFor="webinar-experience" className="block font-medium mb-1">Experience</label><select id="webinar-experience" name="experience" required defaultValue="" className={inputClass}><option value="" disabled>Select</option>{EXPERIENCE_OPTIONS.map(option => <option key={option}>{option}</option>)}</select></div>
         <div><label htmlFor="webinar-timeline" className="block font-medium mb-1">When do you want to switch?</label><select id="webinar-timeline" name="timeline" required defaultValue="" className={inputClass}><option value="" disabled>Select</option>{TIMELINE_OPTIONS.map(option => <option key={option}>{option}</option>)}</select></div>
       </div>
-      <label className={`flex items-start gap-3 text-sm ${muted}`}><input type="checkbox" name="whatsappConsent" className="mt-1 h-4 w-4 shrink-0" /><span>Send me the joining link and webinar reminders on WhatsApp. Optional. Reply STOP at any time to opt out.</span></label>
-      <p className={`text-xs ${finePrint}`}>By registering, you agree to receive your webinar confirmation by email. Read our <a href="/privacy" className="underline">Privacy Policy</a>.</p>
+      <p className={`text-xs ${finePrint}`}>By registering, you agree to receive your webinar confirmation and reminders by email. Read our <a href="/privacy" className="underline">Privacy Policy</a>.</p>
       {error && <p role="alert" className={dark ? 'text-red-300' : 'text-red-700'}>{error}</p>}
       <Button type="submit" className="w-full" disabled={busy || closed}>{closed ? 'Registration closed' : busy ? 'Reserving your seat…' : 'Reserve my free seat'}</Button>
     </fieldset>
