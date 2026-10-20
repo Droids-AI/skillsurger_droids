@@ -151,7 +151,7 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
             <a href={WEBINAR.whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-6 py-3 font-semibold text-white transition-colors">
               <MessageCircle className="w-5 h-5" /> Join WhatsApp group
             </a>
-            <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2024%20October%202026">Trouble joining? Message us</a>
+            <a className="block mt-3 text-sm text-green-800 underline" href={`${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Please help with my Skillsurger webinar joining link for ${WEBINAR.schedule}`)}`}>Trouble joining? Message us</a>
           </div>}
           {type === 'webinar' && <p className="mt-4 text-gray-600" role="status">{delivery === 'delivered' || delivery === 'read'
             ? 'The WhatsApp provider reports your confirmation message as delivered.'

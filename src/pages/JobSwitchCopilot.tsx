@@ -69,15 +69,15 @@ export default function JobSwitchCopilot() {
     organizer: { '@type': 'Organization', name: 'Skillsurger', url: 'https://skillsurger.com' },
     offers: { '@type': 'Offer', price: 0, priceCurrency: 'INR', url: `https://skillsurger.com${WEBINAR_PATH}#webinar`, availability: closed ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' },
   };
-  return <CopilotLandingLayout offer="webinar" sticky={<><p className="text-xs sm:text-sm text-slate-300 text-center sm:text-left">Free · 24 Oct · 3 PM IST · 60 min online</p>{cta('sticky')}</>}>
-    <SEO title="Free Job Search Copilot Webinar · 24 Oct, 3 PM IST | Skillsurger" description="Join Skillsurger’s free live webinar on 24 October 2026, 3 PM IST. Learn to improve your CV, find relevant jobs and practise interviews. Register free." canonicalUrl="/job-search-copilot-webinar" structuredData={structuredData} />
+  return <CopilotLandingLayout offer="webinar" sticky={<><p className="text-xs sm:text-sm text-slate-300 text-center sm:text-left">Free · 31 Oct · 3 PM IST · 60 min online</p>{cta('sticky')}</>}>
+    <SEO title="Free Job Search Copilot Webinar · 31 Oct, 3 PM IST | Skillsurger" description="Join Skillsurger’s free live webinar on 31 October 2026, 3 PM IST. Learn to improve your CV, find relevant jobs and practise interviews. Register free." canonicalUrl="/job-search-copilot-webinar" structuredData={structuredData} />
     <section className="bg-gradient-to-br from-blue-950/70 via-[#020420] to-indigo-950/50 px-4 py-8 sm:py-16">
       <div className="mx-auto grid max-w-6xl items-start gap-7 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
         <div className="lg:pt-5">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-cyan-200"><Video aria-hidden="true" className="h-4 w-4" />Free live webinar · ₹0</p>
           <h1 className="max-w-2xl text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">Make your next job search <span className="text-cyan-300">more focused.</span></h1>
           <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-slate-300">Learn how to improve your CV, shortlist relevant roles and practise interviews with Skillsurger’s Job Search Copilot.</p>
-          <p className="mt-5 flex items-start gap-2 font-semibold text-cyan-100"><CalendarDays aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" /><span>Saturday, 24 October 2026<br />3:00–4:00 PM IST · Online</span></p>
+          <p className="mt-5 flex items-start gap-2 font-semibold text-cyan-100"><CalendarDays aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" /><span>Saturday, 31 October 2026<br />3:00–4:00 PM IST · Online</span></p>
           <div className="mt-6 hidden lg:block">{cta('hero')}</div>
           <p className="mt-4 hidden lg:block max-w-lg text-sm leading-relaxed text-slate-400">Register here. Then join the WhatsApp group from your confirmation page for the meeting link and reminders.</p>
         </div>
@@ -112,7 +112,7 @@ export default function JobSwitchCopilot() {
       <ComparisonTable webinar />
     </LandingSection>
 
-    <ProofSection offer="webinar" />
+    <ProofSection />
     <LandingSection><SectionHeading eyebrow="Questions before you register" title="The details, clearly explained." /><LandingFaq items={WEBINAR_FAQS} /></LandingSection>
     <LandingSection alternate><SectionHeading eyebrow="Your host" title="Meet the person leading the session." /><HostBio /></LandingSection>
 

@@ -37,7 +37,7 @@ export const BOOTCAMP_PRICE_NOTE = BOOTCAMP_REVIEW.includesGst === true
   ? 'Includes GST'
   : BOOTCAMP_REVIEW.includesGst === false
     ? 'GST extra; confirm the total at checkout before paying'
-    : '[GST: confirm whether ₹5,000 is the total including GST]';
+    : 'Review the final total and tax details at checkout.';
 
 export const WEBINAR_AGENDA = [
   ['00–05', 'Choose your focus', 'Identify one role to target and the part of your search to improve first.'],
@@ -78,8 +78,8 @@ export const WEBINAR_FAQS = [
   ['Is it really free?', 'Yes. Registration and attendance cost ₹0. No card details or purchase are required.'],
   ['When is it, and how do I register?', `${WEBINAR.schedule}. The session lasts ${WEBINAR.durationMinutes} minutes. Enter your name, email and WhatsApp number in the form. Your registration is confirmed only after it is saved successfully.`],
   ['How will I get the joining link?', 'The confirmation page has a link to the webinar WhatsApp group. Join the group for the meeting link and reminders. The page also shows the email confirmation status, so you can save the details even if email is unavailable.'],
-  ['Who is hosting?', `${JOB_SWITCH_PROGRAM.mentor.name}, listed as ${JOB_SWITCH_PROGRAM.mentor.role}. [HOST BIO: full public name and approved background needed.]`],
-  ['Will I get a recording?', '[RECORDING: webinar replay availability and access duration need confirmation.] Please plan to attend live.'],
+  ['Who is hosting?', `${JOB_SWITCH_PROGRAM.mentor.name}, ${JOB_SWITCH_PROGRAM.mentor.role}.`],
+  ['Will I get a recording?', 'Please plan to attend live. For questions about replay access, contact support@skillsurger.com.'],
   ['Who is this for?', 'Indian professionals planning a job switch who want a practical introduction to CV feedback, job matching and interview practice. The examples focus on tech roles.'],
   ['What should I bring?', 'An internet-connected phone or laptop, a target role and your current CV for your own reference. You do not upload a CV to register.'],
   ['Do I need a Skillsurger subscription?', 'No subscription is required to attend the webinar. A live demo does not include ongoing access to paid product features.'],
@@ -92,19 +92,19 @@ export const WEBINAR_FAQS = [
 ];
 
 export const BOOTCAMP_FAQS = [
-  ['What is the price?', 'The advertised bootcamp price is ₹5,000. [GST: final inclusive or exclusive treatment needs confirmation.] Review the total on the existing Dodo checkout before paying.'],
+  ['What is the price?', 'The advertised bootcamp price is ₹5,000. Review the final total and tax details on Dodo checkout before paying.'],
   ['How do I pay?', `Use the Enrol button to open the existing Dodo Payments checkout. The current offer lists ${JOB_SWITCH_PROGRAM.paymentMethods}. Available methods are shown at checkout.`],
-  ['Will I receive a GST invoice?', '[GST INVOICE: confirm invoice availability and how to provide GSTIN/billing details.] Ask support before paying if you need a business invoice.'],
-  ['When does the next cohort start?', '[COHORT DATES: start/end dates and each session time in IST needed.] The current offer says dates are announced in the webinar and its WhatsApp group.'],
-  ['How much live time is included?', 'The existing outline has eight two-hour live online sessions: six group sessions and two personal sessions, totalling 16 hours across one month. [FORMAT: reconfirm this outline before publication.]'],
-  ['What are the prerequisites?', 'Bring your current CV, a target role, internet access and time to work on your applications between sessions. [PREREQUISITES: confirm any role or experience restrictions.]'],
-  ['Is this suitable for freshers?', 'The current outline focuses on working tech professionals. [ELIGIBILITY: confirm whether freshers or non-tech applicants can join before paying.]'],
-  ['What is the refund policy?', '[REFUND POLICY: awaiting owner confirmation.] For payment, cancellation or refund questions, email support@skillsurger.com before enrolling. No new refund guarantee is offered on this preview.'],
-  ['Are recordings included, and for how long?', `${JOB_SWITCH_PROGRAM.recordings} [RECORDINGS: reconfirm availability and the exact access end date.]`],
-  ['How long can I use the Skillsurger tools?', '[TOOL ACCESS: confirm which subscription, limits and access period are included.] The curriculum names existing tools; it does not promise unlimited access.'],
-  ['Will I get a certificate?', '[CERTIFICATE: availability and criteria need confirmation.] A certificate is not included as a promised benefit in this preview.'],
-  ['What support will I receive?', `${JOB_SWITCH_PROGRAM.support} [SUPPORT: confirm hours, channel and response expectations.]`],
-  ['How are the two personal sessions scheduled?', 'They are included within the eight-session outline. [1:1 SCHEDULING: booking process and available dates/times needed.]'],
+  ['Will I receive a GST invoice?', 'Contact support@skillsurger.com before paying if you need a business invoice or want to provide GSTIN and billing details.'],
+  ['When does the next cohort start?', JOB_SWITCH_PROGRAM.cohortDates],
+  ['How much live time is included?', 'Eight two-hour live online sessions: six group sessions and two personal sessions, totalling 16 hours across one month.'],
+  ['What are the prerequisites?', 'Bring your current CV, a target role, internet access and time to work on your applications between sessions.'],
+  ['Is this suitable for freshers?', 'The programme focuses on working tech professionals. Contact support@skillsurger.com before enrolling if you are a fresher or applying for non-tech roles.'],
+  ['What is the refund policy?', 'For payment, cancellation or refund questions, email support@skillsurger.com before enrolling. Include your payment reference if you have already paid.'],
+  ['Are recordings included, and for how long?', JOB_SWITCH_PROGRAM.recordings],
+  ['How long can I use the Skillsurger tools?', 'Feature access and usage limits depend on your subscription. Contact support@skillsurger.com about access included with the bootcamp before enrolling.'],
+  ['Will I get a certificate?', 'The programme focuses on practical job-search preparation. If you need a certificate, contact support@skillsurger.com about availability before enrolling.'],
+  ['What support will I receive?', JOB_SWITCH_PROGRAM.support],
+  ['How are the two personal sessions scheduled?', 'Both personal sessions are included within the eight sessions. Contact the Skillsurger team to discuss scheduling.'],
   ['Are jobs or salary hikes guaranteed?', 'No. We help you improve your CV, organise your search and practise interviews. No job, interview call, placement or salary outcome is guaranteed.'],
   ['Can I see the approach before enrolling?', 'Yes. Attend the free webinar first. The link at the end of this page takes you to free registration.'],
 ];

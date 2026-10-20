@@ -122,7 +122,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
         <nav ref={menuRef} className="hidden lg:flex items-center space-x-1 flex-1 justify-center">
           <Link
             to="/"
-            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${navLink(isActive('/'))}`}
+            className={`px-2 xl:px-4 py-2 text-sm font-semibold rounded-md transition-colors ${navLink(isActive('/'))}`}
           >
             Home
           </Link>
@@ -130,16 +130,24 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <Link
             to="/job-search-bootcamp"
             onClick={() => setOpenMenu(null)}
-            className={`px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${navLink(isActive('/job-search-bootcamp'))}`}
+            className={`px-2 xl:px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${navLink(isActive('/job-search-bootcamp'))}`}
           >
             Job Switch Copilot
+          </Link>
+
+          <Link
+            to="/courses/forward-deployed-ai-engineer"
+            onClick={() => setOpenMenu(null)}
+            className={`px-2 xl:px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${navLink(isActive('/courses/forward-deployed-ai-engineer'))}`}
+          >
+            FDE Course
           </Link>
 
           {/* Tools Dropdown */}
           <div className="relative">
             <button
               onClick={() => toggleMenu('tools')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'tools')}`}
+              className={`px-2 xl:px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'tools')}`}
             >
               Tools
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'tools' ? 'rotate-180' : ''}`} />
@@ -181,7 +189,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="relative">
             <button
               onClick={() => toggleMenu('platform')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'platform')}`}
+              className={`px-2 xl:px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'platform')}`}
             >
               Platform
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'platform' ? 'rotate-180' : ''}`} />
@@ -223,7 +231,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           <div className="relative">
             <button
               onClick={() => toggleMenu('company')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'company')}`}
+              className={`px-2 xl:px-4 py-2 text-sm font-semibold rounded-md transition-colors flex items-center gap-1 ${navLink(openMenu === 'company')}`}
             >
               Company
               <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'company' ? 'rotate-180' : ''}`} />
@@ -253,9 +261,9 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           </div>
         </nav>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 xl:space-x-4">
           {/* Desktop Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-2 xl:space-x-4">
             {user ? (
               <Link to="/dashboard">
                 <Button variant={isDarkPage ? 'primary' : 'outline'} className="flex items-center space-x-2">

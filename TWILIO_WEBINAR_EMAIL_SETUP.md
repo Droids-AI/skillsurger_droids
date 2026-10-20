@@ -6,7 +6,7 @@ is committed. The sender is **SkillSurger <support@em3116.skillsurger.com>**.
 The confirmation includes the session date/time, a Google Calendar link and
 the webinar WhatsApp group where the joining link and reminders are shared.
 
-The current session is **Saturday, 24 October 2026, 3–4 PM IST**. Session data
+The current session is **Saturday, 31 October 2026, 3–4 PM IST**. Session data
 comes from the existing registration handler; this change does not reschedule it.
 
 ## Deployed backend

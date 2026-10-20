@@ -1,6 +1,6 @@
 # Job Search Copilot page split — local review
 
-Implemented for review on 20 October 2026. The pages retain the approval placeholders listed below.
+Implemented for review on 20 October 2026. Owner-requested cleanup removed visible yellow review notes, date requests and editorial placeholders from both pages. Outstanding facts remain documented here; their removal does not confirm new terms or dates.
 
 ## Preview
 
@@ -9,15 +9,15 @@ Implemented for review on 20 October 2026. The pages retain the approval placeho
 - Existing `/job-switch-copilot`, `/training` and `/job-search-copilot` URLs redirect to free registration. Client redirects preserve query parameters; Netlify 301 rules are also prepared. Existing programme links inside the site now lead to the bootcamp.
 - Local screenshots: `artifacts/copilot-split-preview/` (ignored by Git).
 
-The webinar uses the existing schedule: **Saturday, 24 October 2026, 3:00–4:00 PM IST**, online. Register with name, email and WhatsApp number, then join the linked WhatsApp group for the meeting link. The current group URL and Saurav’s existing host listing are retained; reconfirm them before publication.
+The webinar uses the existing schedule: **Saturday, 31 October 2026, 3:00–4:00 PM IST**, online. Register with name, email and WhatsApp number, then join the linked WhatsApp group for the meeting link. The current group URL and Saurav’s existing host listing are retained; reconfirm them before publication.
 
 ## Facts and placeholders the owner must supply
 
-The paid outline below comes from the existing `jobSwitchProgram.ts`. It has **not** been treated as fresh approval of the commercial terms. Visible bracketed placeholders identify missing facts.
+The paid outline below comes from the existing `jobSwitchProgram.ts`. It has **not** been treated as fresh approval of the commercial terms. Missing facts are tracked in this document rather than shown as editorial requests on the public pages.
 
 | Item | Current draft / confirmation needed |
 | --- | --- |
-| Webinar schedule | Reconfirm 24 October 2026, 3–4 PM IST and the joining method/group link. |
+| Webinar schedule | Reconfirm 31 October 2026, 3–4 PM IST and the joining method/group link. |
 | Host / trainer | Existing listing: Saurav, Founder, Skillsurger · Lead mentor. Supply full public name, approved short bio, relevant experience and public profile link. No employer logos or credentials were invented. |
 | Bootcamp price / GST | Advertised ₹5,000. Existing config says inclusive of 18% GST, but this request explicitly asks for confirmation, so the new page says GST pending. Confirm inclusive/exclusive treatment and final checkout total. |
 | GST invoice | Confirm availability, invoice issuer and how participants provide GSTIN and billing details. |
@@ -37,7 +37,7 @@ The paid outline below comes from the existing `jobSwitchProgram.ts`. It has **n
 | Value figures | Supply a documented source for each proposed “worth ₹…” figure. None are used without evidence. |
 | Price multiplier | The verified alternatives below do not establish that comparable programmes all cost 10–20 times more. That claim and “almost free” wording were omitted rather than published without support. Supply genuinely comparable ₹50,000–₹1,00,000 offers and scope evidence if you want this ₹5,000 comparison substantiated. |
 
-Approval fields live in `src/lib/constants/jobSearchLanding.ts`. Final copy, FAQs and metadata must be updated with the approved facts; bracketed placeholders must be resolved before publishing.
+Approval fields live in `src/lib/constants/jobSearchLanding.ts`. Update copy, FAQs and metadata when additional facts are supplied. Unset session dates and unprovided host details are omitted, without adding invented dates, testimonials or purchase promises.
 
 ### Existing curriculum used for the draft
 
@@ -72,6 +72,7 @@ Checked the supplied [Forward Deployed Engineer course](https://www.udemy.com/co
 
 ## Registration and confirmation
 
+- Rescheduled to 31 October 2026, 3–4 PM IST. Before releasing the frontend, apply `supabase/migrations/20261020000000_reschedule_webinar_october_31.sql` and deploy the updated `register-webinar` and `webinar-reminders` functions together. The migration preserves existing registration IDs and notification history. It has been prepared locally, not applied to the hosted database; no reschedule messages have been sent.
 - The form now requires only name, email and WhatsApp number. The existing server already accepts absent qualification fields, so this needs no schema migration. Leads without qualification details are not falsely marked qualified by the browser.
 - Existing durable registration, duplicate handling, conversion deduplication and email pipeline remain in use. No backend deployment was made.
 - A thank-you redirect occurs only after the existing API returns a saved registration. The page shows the schedule, group link, calendar options, pre-work and returned notification statuses.

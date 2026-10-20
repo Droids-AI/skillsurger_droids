@@ -21,10 +21,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { greenApiConfigured, recentOptOutReplies, sendGreenApiMessage } from '../_shared/greenApi.ts';
 
-const sessionId = 'job-switch-2026-10-24';
-const startsAt = Date.parse('2026-10-24T15:00:00+05:30');
-const endsAt = Date.parse('2026-10-24T16:00:00+05:30');
-const schedule = 'Saturday, 24 October 2026 at 3:00 PM IST';
+const sessionId = 'job-switch-2026-10-31';
+const startsAt = Date.parse('2026-10-31T15:00:00+05:30');
+const endsAt = Date.parse('2026-10-31T16:00:00+05:30');
+const schedule = 'Saturday, 31 October 2026 at 3:00 PM IST';
 const groupUrl = 'https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE';
 const programmeUrl = 'https://skillsurger.com/job-switch-copilot#programme';
 const HOUR = 60 * 60 * 1000;

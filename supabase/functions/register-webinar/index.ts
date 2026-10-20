@@ -2,9 +2,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendWebinarConfirmation, webinarEmailStatus } from '../_shared/webinarEmail.ts';
 import { greenApiConfigured, sendGreenApiMessage } from '../_shared/greenApi.ts';
 
-const sessionId = 'job-switch-2026-10-24';
-const startsAt = '2026-10-24T15:00:00+05:30';
-const schedule = 'Saturday, 24 October 2026 at 3:00 PM IST';
+const sessionId = 'job-switch-2026-10-31';
+const startsAt = '2026-10-31T15:00:00+05:30';
+const schedule = 'Saturday, 31 October 2026 at 3:00 PM IST';
 const experienceOptions = ['Under 3 years', '3–5 years', '6–8 years', '9–12 years', 'More than 12 years'];
 const timelineOptions = ['Within 1 month', '1–3 months', '3–6 months', 'Just exploring'];
 const text = (value: unknown, max = 100) => String(value ?? '').trim().slice(0, max);

@@ -48,10 +48,6 @@ export function SectionHeading({ eyebrow, title, children }: { eyebrow: string; 
   </div>;
 }
 
-export function ReviewPlaceholder({ children }: { children: ReactNode }) {
-  return <p className="rounded-xl border border-dashed border-amber-300/40 bg-amber-300/5 px-4 py-3 text-sm leading-relaxed text-amber-200">{children}</p>;
-}
-
 export function Audience({ bootcamp = false }: { bootcamp?: boolean }) {
   const fits = bootcamp
     ? ['You have work experience and a target tech role in mind.', 'You want a structured routine and feedback on your CV and interview preparation.', 'You can attend live sessions and work on your search between them.']
@@ -72,7 +68,7 @@ export function ComparisonTable({ webinar = false }: { webinar?: boolean }) {
         <caption className="border-b border-white/10 px-4 py-4 text-left text-slate-300">Public prices checked 20 October 2026. Scroll across on small screens.</caption>
         <thead className="bg-white/5 text-slate-200"><tr><th scope="col" className="p-4">Option</th><th scope="col" className="p-4">Price / billing</th><th scope="col" className="p-4 min-w-[12rem]">Scope</th></tr></thead>
         <tbody className="divide-y divide-white/10">
-          <tr className="bg-blue-500/10"><th scope="row" className="p-4 min-w-[10rem] text-cyan-200">Skillsurger · {webinar ? 'Free webinar' : 'Job Search Bootcamp'}</th><td className="p-4 min-w-[9rem]"><strong>{webinar ? '₹0' : JOB_SWITCH_PROGRAM.priceLabel}</strong><p className="mt-1 text-xs text-slate-300">{webinar ? 'No payment required' : 'One-month outline; GST pending confirmation'}</p></td><td className="p-4 text-slate-300">{webinar ? 'One-hour live introduction, product walkthrough and Q&A.' : 'Draft: 16 live hours, including two personal sessions. Final schedule pending.'}</td></tr>
+          <tr className="bg-blue-500/10"><th scope="row" className="p-4 min-w-[10rem] text-cyan-200">Skillsurger · {webinar ? 'Free webinar' : 'Job Search Bootcamp'}</th><td className="p-4 min-w-[9rem]"><strong>{webinar ? '₹0' : JOB_SWITCH_PROGRAM.priceLabel}</strong><p className="mt-1 text-xs text-slate-300">{webinar ? 'No payment required' : 'One-month programme'}</p></td><td className="p-4 text-slate-300">{webinar ? 'One-hour live introduction, product walkthrough and Q&A.' : '16 live hours, including two personal sessions.'}</td></tr>
           {CAREER_PREP_COMPARISONS.map((option, index) => <tr key={option.name}><th scope="row" className="p-4 font-medium">{option.name}<sup className="ml-1 text-cyan-300"><a href={`#price-source-${index + 1}`} aria-label={`Price source ${index + 1}`}>[{index + 1}]</a></sup></th><td className="p-4"><strong>{option.price}</strong><p className="mt-1 text-xs text-slate-400">{option.billing}</p></td><td className="p-4 text-slate-300">{option.scope}</td></tr>)}
         </tbody>
       </table>
@@ -82,14 +78,9 @@ export function ComparisonTable({ webinar = false }: { webinar?: boolean }) {
   </>;
 }
 
-export function ProofSection({ offer }: { offer: 'webinar' | 'bootcamp' }) {
+export function ProofSection() {
   return <LandingSection alternate>
     <SectionHeading eyebrow="Product proof & feedback" title="See the workflow. Make your own judgement.">The webinar demonstrates existing CV scoring, job matching, mock interview and AI mentor workflows. A product demo shows how it works; it does not establish hiring outcomes.</SectionHeading>
-    <div className="grid gap-4 sm:grid-cols-2">
-      <ReviewPlaceholder>[TESTIMONIAL: need real {offer} quote + public name + role + permission to publish]</ReviewPlaceholder>
-      <ReviewPlaceholder>[PRODUCT PROOF: need approved, redacted screenshots or a recording from the live product; no participant result implied]</ReviewPlaceholder>
-    </div>
-    <p className="mt-4 text-sm text-slate-400">No customer rating or placement result is presented here. Reviews of a separate Udemy course will be labelled with that course if supplied.</p>
   </LandingSection>;
 }
 
@@ -97,7 +88,7 @@ export function HostBio() {
   return <div className="grid gap-6 sm:grid-cols-[auto_1fr] items-start rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-8">
     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300"><UserRound aria-hidden="true" className="h-8 w-8" /></div>
     <div><h3 className="text-2xl font-bold">{JOB_SWITCH_PROGRAM.mentor.name}</h3><p className="mt-1 text-cyan-200">{JOB_SWITCH_PROGRAM.mentor.role}</p>
-      <div className="mt-4">{BOOTCAMP_REVIEW.hostBio ? <p className="text-slate-300">{BOOTCAMP_REVIEW.hostBio}</p> : <ReviewPlaceholder>[HOST BIO: confirm full name, role, relevant experience and public profile URL. No employer logos or credentials added.]</ReviewPlaceholder>}</div>
+      {BOOTCAMP_REVIEW.hostBio && <p className="mt-4 text-slate-300">{BOOTCAMP_REVIEW.hostBio}</p>}
     </div>
   </div>;
 }
