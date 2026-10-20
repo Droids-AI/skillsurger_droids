@@ -166,7 +166,7 @@ export default function SEOLandingPage({ slug }: SEOLandingPageProps) {
               >
                 Mock Interview
               </Link>
-              <Link to="/job-switch-copilot" className="hover:text-white underline">Job Switch Copilot</Link>
+              <Link to="/job-search-bootcamp" className="hover:text-white underline">Job Switch Copilot</Link>
               <Link to="/pricing" className="hover:text-white underline">Pricing</Link>
             </div>
           </div>

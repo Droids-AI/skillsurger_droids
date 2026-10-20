@@ -25,7 +25,7 @@ export function ProgramOfferSection() {
             ))}
           </ul>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link to="/job-switch-copilot#programme" onClick={track('home_offer', 'programme')} className="block"><Button size="lg" className="w-full">View Program <ArrowRight className="ml-2 w-5 h-5" /></Button></Link>
+            <Link to="/job-search-bootcamp" onClick={track('home_offer', 'programme')} className="block"><Button size="lg" className="w-full">View Program <ArrowRight className="ml-2 w-5 h-5" /></Button></Link>
             <Link to="/free-resume-audit" onClick={track('home_offer', 'free_audit')} className="block"><Button size="lg" variant="outline" className="w-full border-2">Free Career Audit</Button></Link>
           </div>
         </div>
@@ -37,7 +37,7 @@ export function ProgramOfferSection() {
             <span className="inline-flex items-center gap-1 font-semibold text-blue-700">Get my free audit <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
           </Link>
           {webinarUpcoming && (
-            <Link to="/job-switch-copilot#webinar" onClick={track('home_offer_card', 'free_webinar')} className="group rounded-2xl bg-indigo-50 border border-indigo-100 p-6 hover:border-indigo-300 transition-colors">
+            <Link to="/job-search-copilot-webinar#webinar" onClick={track('home_offer_card', 'free_webinar')} className="group rounded-2xl bg-indigo-50 border border-indigo-100 p-6 hover:border-indigo-300 transition-colors">
               <Calendar className="w-7 h-7 text-indigo-600 mb-3" />
               <h3 className="text-lg font-bold text-gray-900 mb-1">Free webinar: {WEBINAR.schedule}</h3>
               <p className="text-gray-600 mb-3">60 minutes online. See the method and the programme before you decide.</p>
@@ -102,7 +102,7 @@ export function ProgramProofSection() {
             <li>{JOB_SWITCH_PROGRAM.recordings}</li>
             <li>{JOB_SWITCH_PROGRAM.refundPolicy}</li>
           </ul>
-          <Link to="/job-switch-copilot#programme" onClick={track('home_proof', 'programme')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 px-5 py-3 font-bold hover:bg-blue-50">See full programme <ArrowRight className="w-4 h-4" /></Link>
+          <Link to="/job-search-bootcamp" onClick={track('home_proof', 'programme')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white text-blue-700 px-5 py-3 font-bold hover:bg-blue-50">See full programme <ArrowRight className="w-4 h-4" /></Link>
         </aside>
       </div>
     </section>

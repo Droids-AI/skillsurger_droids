@@ -16,10 +16,10 @@ export interface ThankYouContent {
  */
 export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
   webinar: {
-    headline: 'Your free webinar registration is received.',
-    body: `You registered for the free one-hour webinar on switching jobs and targeting 1.5x to 5x salary growth. ${WEBINAR.schedule}. You have not enrolled in the paid programme.`,
-    primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot#programme',
+    headline: 'You’re registered for the free webinar.',
+    body: `Your registration is saved for ${WEBINAR.schedule}. 60 minutes online, covering CV feedback, job matching and interview preparation. Join the group below, add the session to your calendar and keep your CV handy.`,
+    primaryCtaLabel: 'Read about the optional bootcamp',
+    primaryCtaHref: '/job-search-bootcamp',
     secondaryCtaLabel: 'Back to home',
     secondaryCtaHref: '/',
   },
@@ -29,13 +29,13 @@ export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
     primaryCtaLabel: 'Contact us',
     primaryCtaHref: '/contact',
     secondaryCtaLabel: 'View programme details',
-    secondaryCtaHref: '/job-switch-copilot#programme',
+    secondaryCtaHref: '/job-search-bootcamp',
   },
   'resume-audit': {
     headline: 'Your resume audit request is received.',
     body: "We'll review your resume for ATS gaps, role-fit, structure, keywords, and job-search readiness. If the audit shows the programme is a good fit, you can book an optional consultation call. No sales sequence.",
     primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot',
+    primaryCtaHref: '/job-search-bootcamp',
     secondaryCtaLabel: 'Book an optional consultation',
     secondaryCtaHref: '/book-a-call',
   },
@@ -45,6 +45,6 @@ export const thankYouContent: Record<ThankYouType, ThankYouContent> = {
     primaryCtaLabel: 'Get a Free Resume Audit',
     primaryCtaHref: '/free-resume-audit',
     secondaryCtaLabel: 'Explore Job Switch Copilot',
-    secondaryCtaHref: '/job-switch-copilot',
+    secondaryCtaHref: '/job-search-bootcamp',
   },
 };

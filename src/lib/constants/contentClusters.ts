@@ -23,13 +23,13 @@ export const CONTENT_CLUSTERS: ContentCluster[] = [
   {
     id: 'interview',
     title: 'Interview preparation',
-    hub: { label: 'See the Job Switch Copilot programme', href: '/job-switch-copilot#programme' },
+    hub: { label: 'See the Job Switch Copilot programme', href: '/job-search-bootcamp' },
     slugs: ['software-engineer-mock-interview', 'system-design-interview-prep'],
   },
   {
     id: 'job-switch',
     title: 'Switching jobs',
-    hub: { label: 'See the Job Switch Copilot programme', href: '/job-switch-copilot#programme' },
+    hub: { label: 'See the Job Switch Copilot programme', href: '/job-search-bootcamp' },
     slugs: ['job-search-after-layoff', 'notice-period-job-search', 'linkedin-profile-optimization-india', 'career-coach-for-tech-professionals'],
   },
 ];

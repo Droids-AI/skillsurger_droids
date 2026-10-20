@@ -169,7 +169,7 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center mt-10">
-            <Link to="/job-switch-copilot">
+            <Link to="/job-search-bootcamp">
               <Button size="lg">
                 Explore Job Switch Copilot
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -205,7 +205,7 @@ export default function LandingPage() {
                 Resume Audit, Resume Tailoring, Role-Fit Matching, Application Tracker, Recruiter
                 Outreach, Mock Interview Prep, and Career Diagnosis — all part of one system.
               </p>
-              <Link to="/job-switch-copilot">
+              <Link to="/job-search-bootcamp">
                 <Button size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
                   Explore Job Switch Copilot
                   <ArrowRight className="ml-2 w-5 h-5" />
@@ -221,7 +221,7 @@ export default function LandingPage() {
         title="Stop applying randomly. Build a structured job-search system."
         subtitle={`${WEBINAR.schedule}: join a free one-hour webinar on planning your next job switch and targeting 1.5x to 5x salary growth.`}
         ctaLabel="Reserve my free webinar seat"
-        ctaHref="/job-switch-copilot#webinar"
+        ctaHref="/job-search-copilot-webinar#webinar"
         footnote="No guaranteed outcomes — just a structured system to improve your job search."
       />
 

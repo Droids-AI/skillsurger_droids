@@ -64,7 +64,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
     location.pathname === '/thank-you' && new URLSearchParams(location.search).has('type');
   const isDarkPage =
     location.pathname === '/training' ||
-    location.pathname === '/job-switch-copilot' ||
+    location.pathname === '/job-search-bootcamp' ||
     (location.pathname === '/thank-you' && !isParameterizedThankYou);
 
   // Theme-aware class helpers
@@ -128,9 +128,9 @@ export default function Header({ onMobileMenuToggle }: HeaderProps = {} as Heade
           </Link>
 
           <Link
-            to="/job-switch-copilot"
+            to="/job-search-bootcamp"
             onClick={() => setOpenMenu(null)}
-            className={`px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${navLink(isActive('/job-switch-copilot'))}`}
+            className={`px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${navLink(isActive('/job-search-bootcamp'))}`}
           >
             Job Switch Copilot
           </Link>

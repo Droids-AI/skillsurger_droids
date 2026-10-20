@@ -6,6 +6,8 @@ import { thankYouContent, ThankYouType } from '../lib/constants/thankYouContent'
 import { WEBINAR } from '../lib/constants/webinar';
 import { JOB_SWITCH_PROGRAM } from '../lib/constants/jobSwitchProgram';
 import { trackEvent, EVENTS } from '../lib/analytics';
+import { useCampaignLink } from '../lib/copilotFunnel';
+import { BOOTCAMP_PATH, WEBINAR_PATH } from '../lib/constants/jobSearchLanding';
 
 const SUPPORT_WHATSAPP = 'https://wa.me/917310768702';
 
@@ -120,6 +122,8 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
   const [params] = useSearchParams();
   const existing = type === 'webinar' && params.get('existing') === '1';
   const emailStatus = params.get('email');
+  const delivery = params.get('delivery');
+  const campaignLink = useCampaignLink();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-20">
@@ -143,14 +147,23 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
           {type === 'webinar' && <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-6 text-left">
             <div className="flex items-center gap-2 text-green-800 font-bold text-lg"><MessageCircle className="w-5 h-5" /> Next step: join the webinar WhatsApp group</div>
             <p className="mt-2 text-gray-700">The joining link and reminders for {WEBINAR.schedule} are shared in this group.</p>
+            <p className="mt-2 text-sm text-gray-600">Joining the group is optional. Your number may be visible to other members. You can contact support if you need another way to get the joining details.</p>
             <a href={WEBINAR.whatsappGroupUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-6 py-3 font-semibold text-white transition-colors">
               <MessageCircle className="w-5 h-5" /> Join WhatsApp group
             </a>
             <a className="block mt-3 text-sm text-green-800 underline" href="https://wa.me/917310768702?text=Please%20help%20with%20my%20Skillsurger%20webinar%20joining%20link%20for%2024%20October%202026">Trouble joining? Message us</a>
           </div>}
+          {type === 'webinar' && <p className="mt-4 text-gray-600" role="status">{delivery === 'delivered' || delivery === 'read'
+            ? 'The WhatsApp provider reports your confirmation message as delivered.'
+            : delivery === 'accepted'
+              ? 'The WhatsApp provider accepted your confirmation message. Delivery is not yet confirmed.'
+              : delivery === 'pending'
+                ? 'Your WhatsApp message is pending. Join the group above and save the session details now.'
+                : 'No direct WhatsApp message is confirmed. Join the group above for the meeting link, or contact support for help.'}</p>}
           {(type === 'webinar' || type === 'resume-audit') && emailStatus === 'accepted' && <p className="mt-4 text-gray-600" role="status">Your confirmation email has been queued for sending. Check your inbox and spam folder.</p>}
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'failed' || emailStatus === 'unconfigured') && <p className="mt-4 text-gray-600" role="status">Your request is saved, but email confirmation is unavailable. Save these details and <a className="underline text-blue-700" href="/contact">contact us if you need help</a>.</p>}
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'pending' || emailStatus === 'sending') && <p className="mt-4 text-gray-600" role="status">Your confirmation email is being prepared. Save these details while you wait.</p>}
+          {type === 'webinar' && !emailStatus && <p className="mt-4 text-gray-600" role="status">Email delivery status is unavailable. Save these details and join the group for the meeting link.</p>}
           {type === 'webinar' && <div className="mt-5"><AddToCalendarButton /></div>}
           {type === 'webinar' && <div className="mt-6 rounded-2xl border border-blue-200 bg-white p-6 text-left">
             <h2 className="font-bold text-lg text-gray-900 mb-3">Before the webinar: 10 minutes of pre-work</h2>
@@ -163,21 +176,21 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
           {type === 'purchase' && <PurchaseNextSteps />}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {type === 'webinar' ? <p className="text-sm text-gray-600">Want guided practice afterwards? <Link to={campaignLink(BOOTCAMP_PATH)} className="underline text-blue-700">Read about the optional paid bootcamp</Link>.</p> : <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            to={content.primaryCtaHref}
+            to={campaignLink(content.primaryCtaHref)}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors"
           >
             {content.primaryCtaLabel}
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            to={content.secondaryCtaHref}
+            to={campaignLink(content.secondaryCtaHref)}
             className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl transition-colors"
           >
             {content.secondaryCtaLabel}
           </Link>
-        </div>
+        </div>}
       </div>
     </div>
   );
@@ -186,6 +199,7 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
 export default function ThankYouPage() {
   const [searchParams] = useSearchParams();
   const type = searchParams.get('type');
+  const campaignLink = useCampaignLink();
 
   if (type === 'purchase') {
     return <PurchaseResult />;
@@ -195,5 +209,5 @@ export default function ThankYouPage() {
   }
 
   // The old March 2026 masterclass confirmation is retired; send stray visits to the current webinar.
-  return <Navigate to="/job-switch-copilot#webinar" replace />;
+  return <Navigate to={campaignLink(WEBINAR_PATH + '#webinar')} replace />;
 }

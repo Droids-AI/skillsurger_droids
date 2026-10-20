@@ -38,12 +38,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/job-switch-copilot#webinar" className="text-gray-400 hover:text-white transition-colors">
+                <Link to="/job-search-copilot-webinar#webinar" className="text-gray-400 hover:text-white transition-colors">
                   Free Job Switch Webinar
                 </Link>
               </li>
               <li>
-                <Link to="/job-switch-copilot" className="text-gray-400 hover:text-white transition-colors">
+                <Link to="/job-search-bootcamp" className="text-gray-400 hover:text-white transition-colors">
                   Job Switch Copilot
                 </Link>
               </li>

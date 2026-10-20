@@ -29,7 +29,7 @@ export default function HeroSection() {
         <div className="max-w-4xl mx-auto text-center">
           {webinarUpcoming && (
             <Link
-              to="/job-switch-copilot#webinar"
+              to="/job-search-copilot-webinar#webinar"
               onClick={() => trackEvent(EVENTS.JOB_SWITCH_COPILOT_CTA_CLICKED, { placement: 'home_hero_pill', destination: 'free_webinar' })}
               className="inline-flex max-w-full items-center gap-2 px-3 py-2 sm:px-4 bg-blue-600 text-white rounded-2xl sm:rounded-full text-xs sm:text-sm font-semibold text-left mb-5 sm:mb-6 hover:bg-blue-700 transition-colors"
             >
@@ -80,7 +80,7 @@ export default function HeroSection() {
               </Button>
             </Link>
             <Link
-              to="/job-switch-copilot#programme"
+              to="/job-search-bootcamp"
               onClick={() => trackEvent(EVENTS.JOB_SWITCH_COPILOT_CTA_CLICKED, { placement: 'home_hero', destination: 'programme' })}
               className="block w-full sm:w-auto"
             >

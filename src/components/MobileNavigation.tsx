@@ -50,7 +50,7 @@ export default function MobileNavigation({ isOpen, onClose }: MobileNavigationPr
       </div>
       <nav className="p-4" aria-label="Mobile navigation">
         <Link to="/" onClick={onClose} className="block px-3 py-3 font-semibold">Home</Link>
-        <Link to="/job-switch-copilot" onClick={onClose} className="block px-3 py-3 font-semibold rounded-lg hover:bg-blue-50 text-gray-800">Job Switch Copilot</Link>
+        <Link to="/job-search-bootcamp" onClick={onClose} className="block px-3 py-3 font-semibold rounded-lg hover:bg-blue-50 text-gray-800">Job Switch Copilot</Link>
         {[{ label: 'Platform', items: platformItems }, { label: 'Tools', items: toolsItems }, { label: 'Company', items: companyItems }].map(group => <div key={group.label} className="mb-5">
           <h3 className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-bold">{group.label}</h3>
           {group.items.map(item => <Link key={item.href} to={item.href} onClick={onClose} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-blue-50 text-gray-800"><item.icon className="w-5 h-5 text-blue-600" />{item.label}</Link>)}

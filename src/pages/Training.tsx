@@ -1,5 +1,6 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function Training() {
-  return <Navigate to="/job-switch-copilot" replace />;
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: '/job-search-copilot-webinar', search }} replace />;
 }

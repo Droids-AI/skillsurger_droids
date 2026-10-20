@@ -170,7 +170,7 @@ export const seoLandingPages: SEOLandingPageContent[] = [
       },
     ],
     primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot',
+    primaryCtaHref: '/job-search-bootcamp',
   },
   {
     slug: 'ats-resume-checker-india',
@@ -397,7 +397,7 @@ export const seoLandingPages: SEOLandingPageContent[] = [
     ],
     relatedRoleTrackId: 'software-engineer',
     primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot',
+    primaryCtaHref: '/job-search-bootcamp',
   },
   {
     slug: 'system-design-interview-prep',
@@ -434,7 +434,7 @@ export const seoLandingPages: SEOLandingPageContent[] = [
       },
     ],
     primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot',
+    primaryCtaHref: '/job-search-bootcamp',
   },
   {
     slug: 'notice-period-job-search',
@@ -471,7 +471,7 @@ export const seoLandingPages: SEOLandingPageContent[] = [
       },
     ],
     primaryCtaLabel: 'Explore Job Switch Copilot',
-    primaryCtaHref: '/job-switch-copilot',
+    primaryCtaHref: '/job-search-bootcamp',
   },
   {
     slug: 'resume-review-india',

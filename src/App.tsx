@@ -1,19 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { lazy, Suspense, useState } from 'react';
-import Header from './components/Header';
-import MobileNavigation from './components/MobileNavigation';
+import { lazy, Suspense } from 'react';
+import SiteLayout from './components/SiteLayout';
 import LandingPage from './pages/LandingPage';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import SubscriptionProtectedRoute from './components/SubscriptionProtectedRoute';
 import ProfileProtectedRoute from './components/ProfileProtectedRoute';
 import { UserProvider } from './context/UserContext';
-import WhatsAppChat from './components/WhatsAppChat';
-import Footer from './components/Footer';
 import AnalyticsTracking from './components/AnalyticsTracking';
 import PerformanceMonitor from './components/PerformanceMonitor';
-import OnboardingModal from './components/OnboardingModal';
 import ScrollToTop from './components/ScrollToTop';
 
 // Pages load on demand so the homepage only downloads its own code.
@@ -39,6 +35,7 @@ const OnboardingForm = lazy(() => import('./components/OnboardingForm'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
 const JobSwitchCopilot = lazy(() => import('./pages/JobSwitchCopilot'));
+const JobSearchBootcamp = lazy(() => import('./pages/JobSearchBootcamp'));
 const FreeResumeAudit = lazy(() => import('./pages/FreeResumeAudit'));
 const SuccessStories = lazy(() => import('./pages/SuccessStories'));
 const ResumeExamples = lazy(() => import('./pages/ResumeExamples'));
@@ -50,9 +47,13 @@ const PasswordRecovery = lazy(() => import('./pages/PasswordRecovery'));
 const FDECourse = lazy(() => import('./pages/FDECourse'));
 
 
-function App() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+// Old ad URLs retain every query parameter while resolving to free registration.
+function WebinarRedirect() {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: '/job-search-copilot-webinar', search, hash: hash === '#programme' ? '#webinar' : hash }} replace />;
+}
 
+function App() {
   return (
     <HelmetProvider>
       <Router>
@@ -63,14 +64,7 @@ function App() {
           {/* Performance Monitoring */}
           <PerformanceMonitor />
         
-        <div className="min-h-screen bg-gray-50">
-          <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <MobileNavigation 
-            isOpen={isMobileMenuOpen} 
-            onClose={() => setIsMobileMenuOpen(false)} 
-          />
-          <OnboardingModal />
-          <main>
+        <SiteLayout>
             <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -137,11 +131,14 @@ function App() {
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/user-type-selection" element={<UserTypeSelection />} />
               <Route path="/onboarding" element={<OnboardingForm />} />
-              <Route path="/training" element={<Navigate to="/job-switch-copilot" replace />} />
+              <Route path="/training" element={<WebinarRedirect />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
 
               {/* Job Switch Copilot — additive product line */}
-              <Route path="/job-switch-copilot" element={<JobSwitchCopilot />} />
+              <Route path="/job-switch-copilot" element={<WebinarRedirect />} />
+              <Route path="/job-search-copilot" element={<WebinarRedirect />} />
+              <Route path="/job-search-copilot-webinar" element={<JobSwitchCopilot />} />
+              <Route path="/job-search-bootcamp" element={<JobSearchBootcamp />} />
               <Route path="/free-resume-audit" element={<FreeResumeAudit />} />
               <Route path="/success-stories" element={<SuccessStories />} />
               <Route path="/resume-examples" element={<ResumeExamples />} />
@@ -170,17 +167,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
-          </main>
-          
-          {/* WhatsApp Chat - Fixed position on all pages */}
-          <WhatsAppChat 
-            phoneNumber="+917310768702"
-            message="Hi! I'm interested in Skillsurger's career services."
-          />
-          
-          {/* Footer */}
-          <Footer />
-        </div>
+        </SiteLayout>
       </UserProvider>
     </Router>
     </HelmetProvider>

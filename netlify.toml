@@ -16,7 +16,19 @@
 
 [[redirects]]
   from = "/training"
-  to = "/job-switch-copilot"
+  to = "/job-search-copilot-webinar"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/job-switch-copilot"
+  to = "/job-search-copilot-webinar"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/job-search-copilot"
+  to = "/job-search-copilot-webinar"
   status = 301
   force = true
 
