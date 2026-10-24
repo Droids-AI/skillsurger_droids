@@ -59,12 +59,12 @@ export default function WebinarRegistrationForm({ dark = false }: { dark?: boole
     <fieldset disabled={busy || closed} className="space-y-4">
       <div><label htmlFor="webinar-name" className="block font-medium mb-1">Full name</label><input id="webinar-name" name="name" required maxLength={120} autoComplete="name" className={inputClass} /></div>
       <div><label htmlFor="webinar-email" className="block font-medium mb-1">Email</label><input id="webinar-email" name="email" type="email" required maxLength={254} autoComplete="email" className={inputClass} /></div>
-      <div><label htmlFor="webinar-phone" className="block font-medium mb-1">WhatsApp number with country code</label><input id="webinar-phone" name="phoneNumber" type="tel" required maxLength={22} autoComplete="tel" placeholder="+91 98765 43210" className={inputClass} /></div>
+      <div><label htmlFor="webinar-phone" className="block font-medium mb-1">WhatsApp number with country code</label><input id="webinar-phone" name="phoneNumber" type="tel" required maxLength={22} autoComplete="tel" defaultValue="+91 " placeholder="+91 98765 43210" className={inputClass} /></div>
       <p className={`text-xs ${finePrint}`}>By registering, you agree to receive your webinar confirmation and reminders by email. Read our <a href="/privacy" className="underline">Privacy Policy</a>.</p>
       {error && <p role="alert" className={dark ? 'text-red-300' : 'text-red-700'}>{error}</p>}
       <Button type="submit" className="w-full min-h-12" disabled={busy || closed}>{closed ? 'Registration closed' : busy ? 'Reserving your seat…' : 'Reserve my free seat'}</Button>
     </fieldset>
     <p className={`text-sm ${muted}`}>{WEBINAR.schedule}. 60 minutes online.</p>
-    <p className={`text-xs ${finePrint}`}>Your confirmation page shows whether email sending was accepted. Joining the group is optional; group members may see your number.</p>
+    <p className={`text-xs ${finePrint}`}>We do not send a direct WhatsApp confirmation. Join the group from your confirmation page for the meeting link. Joining is optional; group members may see your number.</p>
   </form>;
 }

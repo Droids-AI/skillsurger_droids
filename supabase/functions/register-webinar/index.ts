@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { sendWebinarConfirmation, webinarEmailStatus } from '../_shared/webinarEmail.ts';
+import { sendWebinarConfirmation } from '../_shared/webinarEmail.ts';
 import { greenApiConfigured, sendGreenApiMessage } from '../_shared/greenApi.ts';
 
 const sessionId = 'job-switch-2026-10-31';
@@ -109,9 +109,7 @@ Deno.serve(async request => {
     }
     const calendarStamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const calendarDates = `${calendarStamp(new Date(startsAt))}/${calendarStamp(new Date(new Date(startsAt).getTime() + 60 * 60 * 1000))}`;
-    const emailStatus = alreadyRegistered
-      ? await webinarEmailStatus(admin, result.data.leadId)
-      : await sendWebinarConfirmation(admin, {
+    const emailStatus = await sendWebinarConfirmation(admin, {
       leadId: result.data.leadId, email, name,
       subject: 'Your Skillsurger webinar registration is confirmed',
       body: `Hi ${name},\n\nYou are registered for the free Skillsurger job switch webinar.\n${schedule} — 60 minutes online.\n\nJoin the WhatsApp group for the meeting link and reminders: https://chat.whatsapp.com/L3kJ4PBEKDH6PADvfqYXwE\n\nAdd the session to your calendar: https://calendar.google.com/calendar/render?action=TEMPLATE&text=Skillsurger%20webinar&dates=${calendarDates}\n\nBefore the webinar (10 minutes):\n1. Keep your current resume handy as a PDF.\n2. Write down 2–3 roles or companies you want next.\n3. Note where your search is stuck: callbacks, interviews or offers.\n\nTeam Skillsurger`,

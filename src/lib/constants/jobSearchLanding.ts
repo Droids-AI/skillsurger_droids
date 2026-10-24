@@ -77,7 +77,7 @@ export const CAREER_PREP_COMPARISONS = [
 export const WEBINAR_FAQS = [
   ['Is it really free?', 'Yes. Registration and attendance cost ₹0. No card details or purchase are required.'],
   ['When is it, and how do I register?', `${WEBINAR.schedule}. The session lasts ${WEBINAR.durationMinutes} minutes. Enter your name, email and WhatsApp number in the form. Your registration is confirmed only after it is saved successfully.`],
-  ['How will I get the joining link?', 'The confirmation page has a link to the webinar WhatsApp group. Join the group for the meeting link and reminders. The page also shows the email confirmation status, so you can save the details even if email is unavailable.'],
+  ['How will I get the joining link?', 'The confirmation page has a link to the webinar WhatsApp group. Join the group for the meeting link and reminders; we do not send a direct WhatsApp confirmation. The page also shows the email confirmation status, so you can save the details even if email is unavailable.'],
   ['Who is hosting?', `${JOB_SWITCH_PROGRAM.mentor.name}, ${JOB_SWITCH_PROGRAM.mentor.role}.`],
   ['Will I get a recording?', 'Please plan to attend live. For questions about replay access, contact support@skillsurger.com.'],
   ['Who is this for?', 'Indian professionals planning a job switch who want a practical introduction to CV feedback, job matching and interview practice. The examples focus on tech roles.'],

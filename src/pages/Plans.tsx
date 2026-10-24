@@ -4,6 +4,7 @@ import { Shield, Clock, Download, BarChart3, Check, RefreshCcw, CheckCircle, Arr
 import SEO from "../components/SEO";
 import { trackEvent, EVENTS } from "../lib/analytics";
 import { JOB_SWITCH_PROGRAM } from "../lib/constants/jobSwitchProgram";
+import { indianCheckoutUrl } from "../lib/checkout";
 
 // Subscription plans: public at /pricing (with the free trial) and for signed-in users at /upgrade.
 const plans = [
@@ -193,7 +194,7 @@ export default function Plans({ publicPage = false }: { publicPage?: boolean }) 
               </ul>
 
               <a
-                href={plan.url}
+                href={indianCheckoutUrl(plan.url)}
                 onClick={() => {
                   trackEvent(EVENTS.PLAN_SELECTED, { plan: plan.name });
                   trackEvent(EVENTS.PAYMENT_INITIATED, { plan: plan.name });

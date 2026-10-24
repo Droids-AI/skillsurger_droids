@@ -30,7 +30,7 @@ export async function recentOptOutReplies(minutes: number): Promise<{ phone: str
   return messages
     .filter(m => typeof m?.chatId === 'string' && m.chatId.endsWith('@c.us'))
     .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0))
-    .flatMap(m => {
+    .flatMap((m): { phone: string; optOut: boolean }[] => {
       const word = String(m.textMessage ?? m.extendedTextMessage?.text ?? '').trim().toUpperCase();
       const phone = `+${m.chatId.replace('@c.us', '')}`;
       if (['STOP', 'UNSUBSCRIBE', 'STOP ALL', 'CANCEL'].includes(word)) return [{ phone, optOut: true }];

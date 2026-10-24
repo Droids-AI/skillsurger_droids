@@ -62,7 +62,7 @@ const toUtcStamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g,
 function AddToCalendarButton() {
   const title = `Free webinar: ${WEBINAR.title} — Skillsurger`;
   const description = `${WEBINAR.schedule}. 60 minutes online. Joining link: ${WEBINAR.whatsappGroupUrl} (shared in the webinar WhatsApp group).`;
-  const location = 'Online (joining link sent via WhatsApp)';
+  const location = 'Online (meeting link in the webinar WhatsApp group)';
   const startDate = toUtcStamp(WEBINAR.startsAt);
   const endDate = toUtcStamp(WEBINAR.endsAt);
 
@@ -122,7 +122,6 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
   const [params] = useSearchParams();
   const existing = type === 'webinar' && params.get('existing') === '1';
   const emailStatus = params.get('email');
-  const delivery = params.get('delivery');
   const campaignLink = useCampaignLink();
 
   return (
@@ -153,13 +152,7 @@ function ParameterizedThankYou({ type }: { type: ThankYouType }) {
             </a>
             <a className="block mt-3 text-sm text-green-800 underline" href={`${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Please help with my Skillsurger webinar joining link for ${WEBINAR.schedule}`)}`}>Trouble joining? Message us</a>
           </div>}
-          {type === 'webinar' && <p className="mt-4 text-gray-600" role="status">{delivery === 'delivered' || delivery === 'read'
-            ? 'The WhatsApp provider reports your confirmation message as delivered.'
-            : delivery === 'accepted'
-              ? 'The WhatsApp provider accepted your confirmation message. Delivery is not yet confirmed.'
-              : delivery === 'pending'
-                ? 'Your WhatsApp message is pending. Join the group above and save the session details now.'
-                : 'No direct WhatsApp message is confirmed. Join the group above for the meeting link, or contact support for help.'}</p>}
+          {type === 'webinar' && <p className="mt-4 text-gray-600" role="status">We do not send a direct WhatsApp confirmation. Join the group above for the meeting link and reminders, or contact support for help.</p>}
           {(type === 'webinar' || type === 'resume-audit') && emailStatus === 'accepted' && <p className="mt-4 text-gray-600" role="status">Your confirmation email has been queued for sending. Check your inbox and spam folder.</p>}
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'failed' || emailStatus === 'unconfigured') && <p className="mt-4 text-gray-600" role="status">Your request is saved, but email confirmation is unavailable. Save these details and <a className="underline text-blue-700" href="/contact">contact us if you need help</a>.</p>}
           {(type === 'webinar' || type === 'resume-audit') && (emailStatus === 'pending' || emailStatus === 'sending') && <p className="mt-4 text-gray-600" role="status">Your confirmation email is being prepared. Save these details while you wait.</p>}
