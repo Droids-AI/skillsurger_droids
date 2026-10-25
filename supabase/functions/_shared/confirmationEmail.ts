@@ -39,7 +39,7 @@ export async function sendConfirmationEmail(admin: SupabaseClient, lead: LeadCon
         to: { address: lead.email },
         subject: lead.subject,
         text: lead.body,
-        html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;white-space:pre-wrap">${escapeHtml(lead.body)}</div>`,
+        html: lead.html ?? `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;white-space:pre-wrap">${escapeHtml(lead.body)}</div>`,
       }, enabledSwitch);
       status = 'accepted'; operationId = result.operationId; errorCode = null;
     } catch (error) {

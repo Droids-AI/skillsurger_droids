@@ -8,6 +8,8 @@ export interface LeadConfirmation {
   name: string;
   subject: string;
   body: string;
+  // Trusted, server-rendered email markup; never accept this from form input.
+  html?: string;
 }
 
 export function sendLeadConfirmation(admin: SupabaseClient, lead: LeadConfirmation) {
