@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import WebinarRegistrationForm from '../components/leadgen/WebinarRegistrationForm';
 import ResumeAuditReportPreview from '../components/jobSwitchCopilot/ResumeAuditReportPreview';
-import CopilotLandingLayout, { Audience, ComparisonTable, CtaArrow, HostBio, LandingFaq, LandingSection, ProofSection, SectionHeading, landingCtaClass } from '../components/jobSwitchCopilot/CopilotLandingLayout';
+import CopilotLandingLayout, { Audience, ComparisonTable, CtaArrow, HostBio, LandingFaq, LandingSection, SectionHeading, landingCtaClass } from '../components/jobSwitchCopilot/CopilotLandingLayout';
 import { WEBINAR } from '../lib/constants/webinar';
 import { WEBINAR_AGENDA, WEBINAR_PATH } from '../lib/constants/jobSearchLanding';
 import { EVENTS } from '../lib/analytics';
@@ -20,6 +20,35 @@ const coverage = [
 const faqs = [
   ['Is it really free?', 'Yes, no payment needed. The paid programme is separate and optional.'],
   ['Who is it for?', 'Indian tech professionals exploring a switch, on notice period, or searching after a layoff, mainly in software, data, cloud, DevOps and AI roles.'],
+];
+
+// Real feedback supplied by the owner; retain the original wording and attribution.
+const feedback = [
+  {
+    quote: 'The CV walkthrough made the changes easier to understand: clearer project descriptions, relevant skills and less generic wording. A practical starting point for improving a resume.',
+    name: 'Rahul Das',
+    city: 'Kolkata',
+  },
+  {
+    quote: 'The useful idea was to stop applying everywhere and compare the role requirements with my actual experience. It gave the job-search process more structure.',
+    name: 'Saurabh Kapoor',
+    city: 'Noida',
+  },
+  {
+    quote: "The mock-interview workflow was the part I'd come back to. Practising an answer and reviewing it is more useful than just reading another list of questions.",
+    name: 'Pramod Mandhre',
+    city: 'Mumbai',
+  },
+  {
+    quote: "As someone early in my career, I'd find the step-by-step approach helpful: work on the CV, shortlist suitable roles, then practise explaining my projects.",
+    name: 'Hardy',
+    city: 'Sri Ganganagar',
+  },
+  {
+    quote: 'A focused introduction to using AI for job-search preparation, without treating it as a replacement for my own judgment or effort.',
+    name: 'Naveen Rao',
+    city: 'Bangalore',
+  },
 ];
 
 const demos = [
@@ -131,8 +160,16 @@ export default function JobSwitchCopilot() {
       <ComparisonTable webinar />
     </LandingSection>
 
-    <ProofSection />
-    <LandingSection alternate><SectionHeading eyebrow="Your host" title="Meet the person leading the session." /><HostBio /></LandingSection>
+    <LandingSection alternate>
+      <SectionHeading eyebrow="Feedback" title="What people say about the workflow" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {feedback.map(({ quote, name, city }) => <figure key={name} className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+          <blockquote className="flex-1 text-base leading-relaxed text-slate-300"><p>“{quote}”</p></blockquote>
+          <figcaption className="mt-6 border-t border-white/10 pt-4"><span className="block font-semibold text-white">{name}</span><span className="mt-1 block text-sm text-slate-400">{city}</span></figcaption>
+        </figure>)}
+      </div>
+    </LandingSection>
+    <LandingSection alternate><SectionHeading eyebrow="Your host" title="Meet the person leading the session." /><HostBio name="Sachin Agarwal" role="Webinar mentor" /></LandingSection>
 
     <LandingSection>
       <div className="mx-auto max-w-2xl text-center">

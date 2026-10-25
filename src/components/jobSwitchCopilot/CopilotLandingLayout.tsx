@@ -84,10 +84,10 @@ export function ProofSection() {
   </LandingSection>;
 }
 
-export function HostBio() {
+export function HostBio({ name = JOB_SWITCH_PROGRAM.mentor.name, role = JOB_SWITCH_PROGRAM.mentor.role }: { name?: string; role?: string } = {}) {
   return <div className="grid gap-6 sm:grid-cols-[auto_1fr] items-start rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-8">
     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300"><UserRound aria-hidden="true" className="h-8 w-8" /></div>
-    <div><h3 className="text-2xl font-bold">{JOB_SWITCH_PROGRAM.mentor.name}</h3><p className="mt-1 text-cyan-200">{JOB_SWITCH_PROGRAM.mentor.role}</p>
+    <div><h3 className="text-2xl font-bold">{name}</h3><p className="mt-1 text-cyan-200">{role}</p>
       {BOOTCAMP_REVIEW.hostBio && <p className="mt-4 text-slate-300">{BOOTCAMP_REVIEW.hostBio}</p>}
     </div>
   </div>;

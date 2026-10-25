@@ -6,9 +6,9 @@
   "scripts": {
     "generate:blogs": "node scripts/generate-blogs.js",
     "add-internal-links": "node scripts/add-internal-links.js",
-    "dev": "vite",
-    "build": "vite build",
-    "build:ssr": "vite build --config vite.config.ssr.ts",
+    "dev": "node init && vite",
+    "build": "node init && vite build",
+    "build:ssr": "node init && vite build --config vite.config.ssr.ts",
     "serve:ssr": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview",
