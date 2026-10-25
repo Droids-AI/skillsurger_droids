@@ -60,6 +60,20 @@ in the sheet.
 
 ## Notes
 
+- Webinar registrations are committed to Supabase first. The registration
+  handler mirrors only a new registration, never a duplicate response.
+- The webinar tab includes all five UTM fields, `gclid`, `landingPage`,
+  `sessionId`, `referrer` and `firstSeenAt`. The last three columns are
+  appended after `lastContact`, preserving the positions of historical data.
+  `referrer` and `firstSeenAt` come from the existing request attribution and
+  are mirror-only additions; the Supabase registration payload is unchanged.
+- A successful mirror requires both an HTTP success and `{ "success": true }`.
+  Failures appear as `sheets_sync_failed` in `register-webinar` Edge logs, with
+  the request ID, registration ID, session ID, HTTP status (when available)
+  and failure reason. `sheets-sync` logs `sheet_write_failed` with matching
+  request/session IDs and the provider error. A mirror failure does not undo
+  a saved registration. There is no automatic retry or historical backfill;
+  reconcile a failed row against Supabase before replaying it.
 - This replaces the Google Apps Script webhook approach
   (`scripts/google-apps-script/book-a-call-webhook.gs`) — that path is no
   longer used and can be deleted.

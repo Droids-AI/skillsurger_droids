@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Brain, Check, ChevronDown, UserRound, X } from 'lucide-react';
-import { BOOTCAMP_PATH, BOOTCAMP_REVIEW, CAREER_PREP_COMPARISONS, WEBINAR_PATH } from '../../lib/constants/jobSearchLanding';
+import { BOOTCAMP_REVIEW, CAREER_PREP_COMPARISONS, WEBINAR_PATH } from '../../lib/constants/jobSearchLanding';
 import { JOB_SWITCH_PROGRAM } from '../../lib/constants/jobSwitchProgram';
 import { useCampaignLink } from '../../lib/copilotFunnel';
 
@@ -27,7 +27,7 @@ export default function CopilotLandingLayout({ children, offer, sticky }: { chil
             <a href="mailto:support@skillsurger.com" className="hover:text-white underline underline-offset-4">Support</a>
           </nav>
         </div>
-        {offer === 'webinar' && <p className="mt-6">Looking for guided practice? <Link to={campaignLink(BOOTCAMP_PATH)} className="underline underline-offset-4 hover:text-white">Read about the optional paid bootcamp</Link>.</p>}
+        {offer === 'webinar' && <p className="mt-6">Looking for guided practice? <Link to={campaignLink('/pricing')} className="underline underline-offset-4 hover:text-white">Job Switch Copilot details, plans and refund terms</Link>.</p>}
       </div>
     </footer>
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-blue-400/25 bg-[#080d2b]/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">

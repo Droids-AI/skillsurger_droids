@@ -117,11 +117,22 @@ Deno.serve(async request => {
     if (!alreadyRegistered) {
       // Same Google Sheet sync the other lead forms use ("Webinar Registrations" tab).
       // Best-effort: a Sheets hiccup must not fail a saved registration.
+      let syncHttpStatus: number | undefined;
       const sync = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/sheets-sync`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({ ...lead, formType: 'webinar_registration' }),
-      }).then(response => { if (!response.ok) throw new Error(String(response.status)); })
-        .catch(() => console.error(JSON.stringify({ area: 'webinar-sheets', code: 'sheets_sync_failed', requestId })));
+        // Mirror-only additions: do not change the authoritative Supabase payload.
+        body: JSON.stringify({ ...lead, sessionId, referrer: text(attribution.referrer), firstSeenAt: text(attribution.firstSeenAt), formType: 'webinar_registration' }),
+      }).then(async response => {
+        syncHttpStatus = response.status;
+        if (!response.ok) throw new Error('sync_http_error');
+        const result = await response.json();
+        if (result?.success !== true) throw new Error('sync_not_confirmed');
+      }).catch(error => console.error(JSON.stringify({
+        area: 'webinar-sheets', code: 'sheets_sync_failed', requestId, registrationId, sessionId,
+        httpStatus: syncHttpStatus,
+        reason: error instanceof Error && ['sync_http_error', 'sync_not_confirmed'].includes(error.message)
+          ? error.message : syncHttpStatus ? 'invalid_sync_response' : 'sync_request_failed',
+      })));
       // deno-lint-ignore no-explicit-any
       const runtime = (globalThis as any).EdgeRuntime;
       if (runtime?.waitUntil) runtime.waitUntil(sync); else await sync;

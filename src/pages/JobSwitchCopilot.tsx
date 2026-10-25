@@ -1,13 +1,26 @@
 import { useEffect, useState, type MouseEvent } from 'react';
-import { Bot, CalendarDays, CheckCircle2, FileSearch, Search, Video } from 'lucide-react';
+import { Bot, CheckCircle2, FileSearch, Search, Video } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import WebinarRegistrationForm from '../components/leadgen/WebinarRegistrationForm';
 import ResumeAuditReportPreview from '../components/jobSwitchCopilot/ResumeAuditReportPreview';
-import CopilotLandingLayout, { Audience, ComparisonTable, CtaArrow, HostBio, LandingFaq, LandingSection, ProofSection, SectionHeading, WebinarCountdown, landingCtaClass } from '../components/jobSwitchCopilot/CopilotLandingLayout';
+import CopilotLandingLayout, { Audience, ComparisonTable, CtaArrow, HostBio, LandingFaq, LandingSection, ProofSection, SectionHeading, landingCtaClass } from '../components/jobSwitchCopilot/CopilotLandingLayout';
 import { WEBINAR } from '../lib/constants/webinar';
-import { WEBINAR_AGENDA, WEBINAR_FAQS, WEBINAR_PATH } from '../lib/constants/jobSearchLanding';
+import { WEBINAR_AGENDA, WEBINAR_PATH } from '../lib/constants/jobSearchLanding';
 import { EVENTS } from '../lib/analytics';
-import { trackLandingEvent } from '../lib/copilotFunnel';
+import { trackLandingEvent, useCampaignLink } from '../lib/copilotFunnel';
+
+const coverage = [
+  'How CV scoring works and how to prioritise improvements.',
+  'How to choose a target role and focus your search.',
+  'Watch a mock interview and see how feedback guides your next practice round.',
+  'Learn a weekly routine with the AI mentor for your job search.',
+];
+
+const faqs = [
+  ['Is it really free?', 'Yes, no payment needed. The paid programme is separate and optional.'],
+  ['Who is it for?', 'Indian tech professionals exploring a switch, on notice period, or searching after a layoff, mainly in software, data, cloud, DevOps and AI roles.'],
+];
 
 const demos = [
   { title: 'CV scoring', Icon: FileSearch, detail: 'See how the CV scorer reviews your resume and identifies areas to improve.', steps: ['Start with a CV and a target role.', 'Read the scoring feedback and suggested improvements.', 'Choose a specific edit to make first.'], location: 'Dashboard → CV Scoring' },
@@ -40,6 +53,7 @@ function ProductWalkthrough() {
 }
 
 export default function JobSwitchCopilot() {
+  const campaignLink = useCampaignLink();
   const [closed, setClosed] = useState(() => Date.now() >= new Date(WEBINAR.startsAt).getTime());
   useEffect(() => {
     trackLandingEvent('landing_page_view', { offer: 'free_webinar' });
@@ -75,15 +89,20 @@ export default function JobSwitchCopilot() {
       <div className="mx-auto grid max-w-6xl items-start gap-7 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
         <div className="lg:pt-5">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-cyan-200"><Video aria-hidden="true" className="h-4 w-4" />Free live webinar · ₹0</p>
-          <h1 className="max-w-2xl text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">Make your next job search <span className="text-cyan-300">more focused.</span></h1>
-          <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-slate-300">Learn how to improve your CV, shortlist relevant roles and practise interviews with Skillsurger’s Job Search Copilot.</p>
-          <p className="mt-5 flex items-start gap-2 font-semibold text-cyan-100"><CalendarDays aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" /><span>Saturday, 31 October 2026<br />3:00–4:00 PM IST · Online</span></p>
-          <div className="mt-6 hidden lg:block">{cta('hero')}</div>
+          <h1 className="max-w-2xl text-3xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">Fix your CV. Target better roles. <span className="text-cyan-300">Practise interviews.</span></h1>
+          <p className="mt-4 max-w-xl text-base sm:text-lg leading-relaxed text-slate-300">A free live webinar for Indian software, data, cloud, DevOps and AI professionals. See CV scoring, job shortlisting and mock-interview feedback, step by step. Saturday 31 October 2026, 3:00-4:00 PM IST, online.</p>
+          <div className="mt-6">{cta('hero')}</div>
+          <p className="mt-3 text-sm text-slate-300">Free. 60 minutes. No payment needed.</p>
           <p className="mt-4 hidden lg:block max-w-lg text-sm leading-relaxed text-slate-400">Register here. Then join the WhatsApp group from your confirmation page for the meeting link and reminders.</p>
         </div>
         <div id="webinar" className="scroll-mt-5 rounded-2xl border border-blue-300/25 bg-[#0a1238] p-5 sm:p-7 shadow-xl shadow-blue-950/20"><WebinarRegistrationForm dark /></div>
       </div>
     </section>
+
+    <LandingSection alternate>
+      <SectionHeading eyebrow="The session" title="What we will cover" />
+      <ul className="grid gap-4 sm:grid-cols-2">{coverage.map(item => <li key={item} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-slate-300"><CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" /><span>{item}</span></li>)}</ul>
+    </LandingSection>
 
     <LandingSection>
       <SectionHeading eyebrow="Who should attend" title="Bring your experience. Find a clearer next step.">A practical introduction for Indian job seekers, with examples focused on software, data, cloud, DevOps and AI roles.</SectionHeading>
@@ -113,7 +132,6 @@ export default function JobSwitchCopilot() {
     </LandingSection>
 
     <ProofSection />
-    <LandingSection><SectionHeading eyebrow="Questions before you register" title="The details, clearly explained." /><LandingFaq items={WEBINAR_FAQS} /></LandingSection>
     <LandingSection alternate><SectionHeading eyebrow="Your host" title="Meet the person leading the session." /><HostBio /></LandingSection>
 
     <LandingSection>
@@ -121,10 +139,15 @@ export default function JobSwitchCopilot() {
         <p className="mb-3 text-sm font-bold uppercase tracking-wider text-cyan-300">Your next step starts with one hour</p>
         <h2 className="text-3xl sm:text-4xl font-bold">Build a clearer plan for your next move.</h2>
         <p className="mt-5 text-slate-300">{WEBINAR.schedule}. Register with your name, email and WhatsApp number. Your confirmation page has the group link and calendar reminder.</p>
-        <WebinarCountdown startsAt={WEBINAR.startsAt} />
-        {cta('final')}
+        <div className="mt-7">{cta('final')}</div>
         <p className="mt-4 text-sm text-slate-400">Free registration · No card needed · No job or salary guarantee</p>
       </div>
     </LandingSection>
+
+    <LandingSection alternate>
+      <SectionHeading eyebrow="Optional guided help" title="What happens after the webinar" />
+      <p className="max-w-3xl text-base sm:text-lg leading-relaxed text-slate-300">The webinar is free. If you want guided help afterwards, Skillsurger offers the Job Switch Copilot: a 30-day programme for tech professionals with 3-12 years of experience targeting Rs 20-50 LPA roles. 8 live sessions (6 group + 2 one-to-one), Rs 5,000 including GST. Full details, plans and refund terms: <Link to={campaignLink('/pricing')} className="text-cyan-200 underline underline-offset-4">skillsurger.com/pricing</Link>.</p>
+    </LandingSection>
+    <LandingSection><SectionHeading eyebrow="Questions before you register" title="Frequently asked questions" /><LandingFaq items={faqs} /></LandingSection>
   </CopilotLandingLayout>;
 }

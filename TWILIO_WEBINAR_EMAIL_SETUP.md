@@ -19,11 +19,70 @@ Project: `jpnunlbnthcfvstyymdl`.
 Never expose credentials with a `VITE_` prefix. The previous resume-audit
 confirmation webhook is no longer used.
 
-**As of 24 October, live delivery remains unresolved:** credentials authenticate,
+**Historical finding on 24 October:** credentials authenticate,
 but the Twilio email sender listing is empty. The configured address is
 `support@em3116.skillsurger.com`; this must be checked against the account's
 approved sender domain. Existing webinar receipts include a provider rejection.
 Do not treat domain DNS or an enabled feature switch as delivery verification.
+
+### Owner-confirmed domain and provider — 25 October
+
+The owner requested `em3116.skillsurger.com` for sending. A fresh read-only
+comparison of the Supabase secret digest confirms that `TWILIO_EMAIL_FROM`
+already equals `support@em3116.skillsurger.com`. Both email feature switches
+are enabled and the Twilio credential secrets are present. No configuration
+change or production deployment was needed for this domain request.
+
+Public DNS resolves `em3116.skillsurger.com` to
+`u67817132.wl133.sendgrid.net`; the root-domain `s1` and `s2` DKIM CNAMEs also
+point to SendGrid. This is evidence of SendGrid DNS setup, not account-level
+sender approval for the current Twilio Email API. The owner subsequently
+confirmed **Twilio Email** and asked to reuse TransformBuddy's implementation.
+No provider switch is needed. The earlier empty Twilio sender listing was checked on
+24 October; it was not rechecked by this read-only configuration comparison.
+
+This read-only configuration check did not send email. Local evidence:
+`artifacts/webinar-copy-review/sender-domain-evidence.json`.
+
+### TransformBuddy adapter reuse — verified one-off delivery
+
+`supabase/functions/_shared/twilio-email.ts` is adapted from the existing
+TransformBuddy file of the same name. TransformBuddy's setup notes record a
+prior successful Twilio delivery from its verified `em3090.transformbuddy.ai`
+subdomain. That record is not proof of Skillsurger delivery.
+
+Skillsurger's webinar and resume-audit confirmation sender now calls this
+adapter with explicit plain-text content and locally HTML-escaped content,
+rather than recipient template variables. As in TransformBuddy, HTTP 202 plus
+a non-empty operation ID means accepted; no assumed operation-ID prefix is
+required. Skillsurger retains its separate enable switches, 10-second timeout,
+existing sender secrets, confirmation text, receipt ledger and atomic claim.
+Only known non-sends may be retried; ambiguous requests remain protected from
+automatic resend. Provider errors retain only safe HTTP/numeric codes.
+
+TransformBuddy files, credentials and paused delivery settings were not changed.
+No Auth hooks, reminder schedules or messaging consent behavior were changed.
+No migration is required. Deno checks for both Skillsurger registration handlers
+passed. The application's updated registration handlers have not been deployed.
+
+At the owner's explicit request, one QA email was sent through this exact
+adapter and the existing Skillsurger server credentials on 25 October 2026.
+Twilio returned HTTP 202 at 13:01:06 UTC and subsequently reported operation
+`comms_operation_01m5sjd18yfb2r9acgy0pjgfjb` as `COMPLETED`, with `total=1`,
+`delivered=1`, `failed=0`, `undelivered=0`. Sender:
+`support@em3116.skillsurger.com`. Subject:
+**Skillsurger email delivery check (QA)**. The destination was the
+owner-supplied Gmail verification inbox; no registration or genuine lead was
+created. The temporary service-role-protected, fixed-recipient checker was
+removed after verification. No provider credentials were copied or changed.
+
+This verifies the adapter's send and provider-reported delivery for one email.
+It does not prove inbox placement or the complete registration/receipt/Sheet
+flow. Those staging checks remain pending. Local evidence:
+`artifacts/email-send-check/send-result.json` and `status-result.json`.
+
+See [SendGrid domain authentication](https://www.twilio.com/docs/sendgrid/ui/account-and-settings/how-to-set-up-domain-authentication)
+and [Twilio Email prerequisites](https://www.twilio.com/docs/email/api/getting-started).
 
 ## Deployment
 

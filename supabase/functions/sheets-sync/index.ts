@@ -34,6 +34,7 @@ const SHEET_CONFIG: Record<string, SheetConfig> = {
       "currentRole", "targetRole", "experience", "timeline", "whatsappConsent",
       "utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm", "gclid", "landingPage",
       "offer", "registrationDate", "stage", "qualified", "expectedValue", "paymentStatus", "owner", "lastContact",
+      "sessionId", "referrer", "firstSeenAt",
     ],
   },
   payment: {
@@ -143,6 +144,7 @@ Deno.serve(async (req: Request) => {
     return new Response("Method not allowed", { status: 405, headers: CORS_HEADERS });
   }
 
+  const context: Record<string, string> = {};
   try {
     // Called directly from the browser (src/lib/googleSheets.ts submitLead),
     // same flat shape it already POSTs: { ...formFields, formType, timestamp }.
@@ -152,6 +154,9 @@ Deno.serve(async (req: Request) => {
       ? { ...record.payload, formType: record.form_type }
       : incoming;
     const formType = String(payload.formType ?? "");
+    context.formType = formType;
+    context.requestId = String(payload.requestId ?? "").slice(0, 100);
+    context.sessionId = String(payload.sessionId ?? "").slice(0, 100);
 
     const config = SHEET_CONFIG[formType] ?? genericConfig(payload);
     const accessToken = await getAccessToken();
@@ -175,7 +180,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("sheets-sync failed:", err);
+    console.error(JSON.stringify({ area: "sheets-sync", code: "sheet_write_failed", ...context }), err);
     return new Response(JSON.stringify({ success: false, error: String(err) }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
