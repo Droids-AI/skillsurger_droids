@@ -739,7 +739,11 @@ export async function findJobOpportunities(
   jobSearchContext: any
 ): Promise<JobOpportunity[]> {
   // Prepare params
-  const title = jobSearchContext.jobTitle || '';
+  // Demo labels describe the profile, not the vacancy being searched for.
+  const title = (jobSearchContext.jobTitle || '')
+    .replace(/^demo\s*:\s*/i, '')
+    .replace(/\s*\(synthetic profile\)\s*$/i, '')
+    .trim();
   let location = '';
   if (typeof jobSearchContext.location === 'string') {
     location = jobSearchContext.location.trim();

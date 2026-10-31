@@ -163,7 +163,7 @@ export default function CVScoring() {
       const onProgress = (message: string, step?: number) => {
       };
       
-      const result = await backendApi.scoreCVText(cvText, onProgress);
+      const result = await backendApi.scoreCVText(cvText, onProgress, targetRole || undefined);
       setScore(result);
       setActiveTab('score');
     } catch (err: any) {
@@ -207,7 +207,7 @@ export default function CVScoring() {
       setEnhancedCV(result);
       
       // Automatically score the enhanced CV
-      const newScore = await backendApi.scoreCVText(result.enhancedCV);
+      const newScore = await backendApi.scoreCVText(result.enhancedCV, undefined, targetRole || undefined);
       setScore(newScore);
       setCvText(result.enhancedCV);
       

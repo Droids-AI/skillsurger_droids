@@ -108,7 +108,7 @@ export default function MentorshipHub() {
             const response = await generateInterviewResponse(
               activeInterview.job_role,
               finalTranscript,
-              updatedMessages.map(msg => ({
+              interviewMessages.map(msg => ({
                 role: msg.role,
                 content: msg.content
               }))
@@ -529,7 +529,7 @@ export default function MentorshipHub() {
       const response = await generateInterviewResponse(
         activeInterview.job_role,
         currentMessage,
-        updatedMessages.map(msg => ({
+        interviewMessages.map(msg => ({
           role: msg.role, // already 'user' or 'interviewer'
           content: msg.content
         }))
@@ -561,8 +561,7 @@ export default function MentorshipHub() {
       const { error: updateError } = await supabase
         .from('mock_interviews')
         .update({
-          conversation: interviewMessages,
-          status: 'completed'
+          conversation: interviewMessages
         })
         .eq('id', activeInterview.id);
 

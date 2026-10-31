@@ -224,12 +224,12 @@ class BackendApiService {
     );
   }
 
-  async scoreCVText(cvText: string, onProgress?: (message: string, step?: number) => void): Promise<CVScore> {
+  async scoreCVText(cvText: string, onProgress?: (message: string, step?: number) => void, targetRole?: string): Promise<CVScore> {
     // Use streaming if progress callback is provided
     if (onProgress) {
       return this.makeStreamingRequest<CVScore>(
         '/openai/skillsurger',
-        { text: cvText },
+        { text: cvText, targetRole },
         'scoreCVText',
         onProgress
       );
@@ -237,7 +237,7 @@ class BackendApiService {
     
     return this.makeRequest<CVScore>(
       '/openai/skillsurger',
-      { text: cvText },
+      { text: cvText, targetRole },
       'scoreCVText'
     );
   }
@@ -262,112 +262,71 @@ class BackendApiService {
     type: string,
     onProgress: (message: string, step?: number) => void
   ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      try {
-        const url = `${BACKEND_BASE_URL}${endpoint}?stream=true&type=${type}`;
-        
-        // Use fetch with ReadableStream for SSE streaming
-        fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Use-Streaming': 'true', // Custom header to indicate streaming
-          },
-          body: JSON.stringify({
-            ...data,
-            type
-          }),
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const reader = response.body?.getReader();
-          const decoder = new TextDecoder();
-          let buffer = '';
-
-          if (!reader) {
-            throw new Error('Response body is not readable');
-          }
-
-          const readChunk = (): Promise<void> => {
-            return reader.read().then(({ done, value }) => {
-              if (done) {
-                return Promise.resolve();
-              }
-
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n\n');
-              
-              // Keep the last incomplete line in buffer
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                if (line.trim()) {
-                  this.processSSEMessage(line, onProgress, resolve, reject);
-                }
-              }
-
-              return readChunk();
-            });
-          };
-
-          return readChunk().catch(error => {
-            reject(new Error(`Streaming error: ${error.message}`));
-          });
-        })
-        .catch(error => {
-          reject(new Error(`Request failed: ${error.message}`));
-        });
-      } catch (error) {
-        reject(new Error(`Failed to start streaming request: ${error.message}`));
-      }
-    });
-  }
-
-  private processSSEMessage(
-    message: string,
-    onProgress: (message: string, step?: number) => void,
-    resolve: (value: any) => void,
-    reject: (error: Error) => void
-  ) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
-      // Parse SSE message format: "event: type\ndata: {...}"
-      let eventType = 'message';
-      let data = '';
-
-      for (const line of message.split('\n')) {
-        if (line.startsWith('event:')) {
-          eventType = line.substring(6).trim();
-        } else if (line.startsWith('data:')) {
-          data = line.substring(5).trim();
-        } else if (line.startsWith(':')) {
-          // Comment/keep-alive line
-          continue;
-        }
+      const response = await fetch(`${BACKEND_BASE_URL}${endpoint}?stream=true&type=${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Use-Streaming': 'true' },
+        body: JSON.stringify({ ...data, type }),
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`Request failed (HTTP ${response.status}). Please try again.`);
+      // Some proxies return the regular JSON response even when streaming is requested.
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || result.error || 'Request failed');
+        return result.data;
       }
-
-      if (!data) return;
-
-      if (eventType === 'progress') {
-        const progressData = JSON.parse(data);
-        onProgress(progressData.message || 'Processing...', progressData.step);
-      } else if (eventType === 'complete') {
-        const result = JSON.parse(data);
-        if (result.success) {
-          resolve(result.data);
-        } else {
-          reject(new Error(result.error || 'Request failed'));
+      reader = response.body?.getReader();
+      if (!reader) throw new Error('Response body is not readable');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+        let boundary: RegExpExecArray | null;
+        while ((boundary = /\r?\n\r?\n/.exec(buffer))) {
+          const block = buffer.slice(0, boundary.index);
+          buffer = buffer.slice(boundary.index + boundary[0].length);
+          const result = this.processSSEMessage<T>(block, onProgress);
+          if (result) return result.data;
         }
-      } else if (eventType === 'error') {
-        const errorData = JSON.parse(data);
-        reject(new Error(errorData.error || 'An error occurred'));
+        if (done) {
+          const result = this.processSSEMessage<T>(buffer, onProgress);
+          if (result) return result.data;
+          throw new Error('The AI response ended before a result arrived. Please try again.');
+        }
       }
     } catch (error) {
-      reportError('backendApi', 'operation_failed');
-      // Don't reject on parse errors, just log them
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('CV scoring timed out. Please try again.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+      await reader?.cancel().catch(() => {});
     }
+  }
+
+  private processSSEMessage<T>(
+    message: string,
+    onProgress: (message: string, step?: number) => void
+  ): { data: T } | undefined {
+    let eventType = 'message';
+    const dataLines: string[] = [];
+    for (const line of message.split(/\r?\n/)) {
+      if (line.startsWith('event:')) eventType = line.slice(6).trim();
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
+    }
+    if (!dataLines.length) return;
+    const result = JSON.parse(dataLines.join('\n'));
+    if (eventType === 'error' || (eventType === 'complete' && !result.success)) {
+      throw new Error(result.error || result.message || 'CV scoring failed. Please try again.');
+    }
+    if (eventType === 'progress') onProgress(result.message || 'Processing...', result.step);
+    if (eventType === 'complete') return { data: result.data };
   }
 
   async analyzeCVText(cvText: string): Promise<any> {
