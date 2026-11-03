@@ -1,10 +1,10 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from '../lib/skillsurgerApi';
 import { normalizeCourseMetadata, verifyCourseCandidates } from '../lib/courseValidation';
 import { useState, useEffect } from 'react';
 import { BookOpen, CheckCircle, ExternalLink, RefreshCw, Trash2, Archive, ChevronDown, ChevronUp, Star, Clock, Award, Shield, MessageSquare, Send } from 'lucide-react';
 import Button from './Button';
 import { supabase } from '../lib/supabase';
 import { generateLearningPlan } from '../lib/openai';
-import axios from 'axios';
 
 interface LearningPath {
   company?: string;
@@ -733,11 +733,11 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         return;
       }
 
-      const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+      const apiBase = SKILLSURGER_API_BASE;
 
       // Step 1: Initiate the update (returns immediately with task ID)
       setUpdateProgress('Submitting your feedback...');
-      const initiateResponse = await axios.post(`${apiBase}/openai/skillsurger`, {
+      const initiateResponse = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
         type: 'initiateLearningPathUpdate',
         currentPath: {
           jobTitle: path.job_title,
@@ -769,7 +769,7 @@ export default function LearningPaths({ job }: LearningPathsProps) {
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between polls
 
         try {
-          const statusResponse = await axios.post(`${apiBase}/openai/skillsurger`, {
+          const statusResponse = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
             type: 'getLearningPathUpdateStatus',
             taskId
           }, {

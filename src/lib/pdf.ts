@@ -1,7 +1,7 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from './skillsurgerApi';
 import { reportError } from './safeLogging';
 import { supabase } from './supabase';
 import { openai, isOpenAIConfigured } from './openaiConfig';
-import axios from 'axios';
 
 import { extractResumeText } from './resumeText';
 import { getCVSignedUrl } from './cvStorage';
@@ -498,10 +498,10 @@ function extractCertifications(text: string): Array<{
 // Helper: Call Backend API to analyze extracted CV text with AI
 async function analyzeCVTextWithOpenAI(text: string): Promise<ParsedCV> {
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+    const apiBase = SKILLSURGER_API_BASE;
     const apiUrl = `${apiBase}/openai/skillsurger`;
 
-    const response = await axios.post(
+    const response = await skillsurgerHttp.post(
       apiUrl,
       {
         type: "analyzeCVText",

@@ -1,9 +1,9 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from './skillsurgerApi';
 import { reportError } from './safeLogging';
 import { normalizeCourseMetadata, verifyCourseCandidates } from './courseValidation';
 // Enhanced learning resource generation with verified links
 import { verifyLink, generateFallbackUrl, getPlatformInfo } from './linkVerification';
 import { completeLearningResources } from './curatedLearningResources';
-import axios from 'axios';
 
 export interface VerifiedResource {
   type: string;
@@ -385,9 +385,9 @@ export async function generateVerifiedLearningResources(
 ): Promise<VerifiedResource[]> {
   const targetSkills = [...requirements, jobTitle].filter(Boolean);
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+    const apiBase = SKILLSURGER_API_BASE;
     const apiUrl = `${apiBase}/openai/skillsurger`;
-    const response = await axios.post(apiUrl, {
+    const response = await skillsurgerHttp.post(apiUrl, {
       type: "generateVerifiedLearningResources",
       jobTitle,
       jobDescription,

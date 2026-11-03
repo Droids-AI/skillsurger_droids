@@ -1054,7 +1054,7 @@ export default function MentorshipHub() {
                                 <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
                                   <h4 className="font-medium mb-4 text-purple-900 flex items-center">
                                     <Video className="w-5 h-5 mr-2" />
-                                    Video Analysis Results (Powered by Gemini AI)
+                                    Video Analysis Results (AI Feedback)
                                   </h4>
                                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                                     <div className="text-center">

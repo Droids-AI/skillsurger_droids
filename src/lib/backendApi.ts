@@ -1,10 +1,10 @@
+import { SKILLSURGER_API_BASE, skillsurgerApiHeaders } from './skillsurgerApi';
 import { reportError } from './safeLogging';
 import { assertFactPreservingCV } from './cvFactuality';
 import { formatFactualCV } from './factualCVFormatter';
 // Backend API service for AI Mentor functionality
-// Note: VITE_BACKEND_API should include /api/v1 path
-// Example: https://api.wisedroids.ai/api/v1 or http://localhost:5002/api/v1
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+// Supabase serves normal Skillsurger APIs; payment APIs keep their original host.
+const BACKEND_BASE_URL = SKILLSURGER_API_BASE;
 
 export interface BackendResponse<T> {
   success: boolean;
@@ -117,9 +117,7 @@ class BackendApiService {
     try {
       const response = await fetch(`${BACKEND_BASE_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: await skillsurgerApiHeaders(),
         body: JSON.stringify({
           ...data,
           type
@@ -268,7 +266,7 @@ class BackendApiService {
     try {
       const response = await fetch(`${BACKEND_BASE_URL}${endpoint}?stream=true&type=${type}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Use-Streaming': 'true' },
+        headers: { ...await skillsurgerApiHeaders(), 'X-Use-Streaming': 'true' },
         body: JSON.stringify({ ...data, type }),
         signal: controller.signal,
       });

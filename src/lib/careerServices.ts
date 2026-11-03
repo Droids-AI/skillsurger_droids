@@ -1,3 +1,4 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from './skillsurgerApi';
 import { normalizeJobLocation, matchesJobLocation, jobCountryCode, jobSalary } from './jobLocation';
 import { extractJsonFromMarkdown } from './utils';
 import { searchGoogleJobs, isGoogleJobsConfigured, type GoogleJobsSearchParams, type GoogleJobResult } from './googleJobsApi';
@@ -649,9 +650,9 @@ export async function generateCareerOptions(
       languages: profileData?.languages || [],
       summary: profileData?.summary || ''
     };
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+    const apiBase = SKILLSURGER_API_BASE;
     const apiUrl = `${apiBase}/openai/skillsurger`;
-    const response = await axios.post(apiUrl, {
+    const response = await skillsurgerHttp.post(apiUrl, {
       contextData: contextData,
       type: "generateCareerOptions"
     }, {
@@ -771,14 +772,14 @@ export async function findJobOpportunities(
   const ninetyDaysAgo = now.subtract(90, 'day').format('YYYY-MM-DD HH:mm:ss');
 
   // Determine API endpoint
-  const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+  const apiBase = SKILLSURGER_API_BASE;
   const apiUrl = `${apiBase}/candidate/jobs`;
 
   try {
     // Try the new API structure first, fallback to old structure
     let response;
     try {
-      response = await axios.post(
+      response = await skillsurgerHttp.post(
         apiUrl,
         {
           query: title,
@@ -797,7 +798,7 @@ export async function findJobOpportunities(
       if (!axios.isAxiosError(newApiError) || ![400, 404, 422].includes(newApiError.response?.status || 0)) throw newApiError;
       console.log('New API failed, trying old API structure:', newApiError);
       // Fallback to old API structure
-      response = await axios.post(
+      response = await skillsurgerHttp.post(
         apiUrl,
         {
           title: title,
@@ -993,8 +994,8 @@ export async function generateFresherLearningPlan(
   skills: string[]
 ): Promise<string> {
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generateFresherLearningPlan",
       fieldOfStudy,
       careerInterests,
@@ -1015,8 +1016,8 @@ export async function generateFresherLearningPlan(
 
 export async function generatePersonalizedLearningResources(profile: any): Promise<any> {
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generatePersonalizedLearningResources",
       profile
     });
@@ -1059,8 +1060,8 @@ export async function generateFresherCV(
   };
 
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generateFresherCV",
       educationData,
       careerInterests,
@@ -1094,8 +1095,8 @@ export async function generateFresherCVFromProfile(
   };
 
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generateFresherCV",
       profileData,
       additionalInterests
@@ -1150,8 +1151,8 @@ export async function generateCVSuggestions(
   };
 
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generateCVSuggestions",
       targetJob: targetJob,
       cvData: cvData,

@@ -1,6 +1,6 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from './skillsurgerApi';
 import { reportError } from './safeLogging';
 import { verifyCourseCandidates } from './courseValidation';
-import axios from 'axios';
 import { openai, isOpenAIConfigured } from './openaiConfig';
 import { generateCareerOptions, findJobOpportunities, generateCVSuggestions } from './careerServices';
 import { extractJsonFromMarkdown } from './utils';
@@ -8,9 +8,6 @@ import { generateVerifiedLearningResources, type VerifiedResource } from './enha
 
 export async function generateCareerSuggestions(skills: string[], interests: string[]) {
   try {
-    if (!isOpenAIConfigured()) {
-      return 'AI-powered career suggestions are currently disabled. Please configure your OpenAI API key to enable this feature.';
-    }
 
     const careerOptions = await generateCareerOptions(skills, interests, 0);
     const formattedSuggestions = careerOptions.map(option => `
@@ -97,13 +94,10 @@ export async function generateVerifiedCareerPathLearningResources(
   difficulty?: string;
   duration?: string;
 }>> {
-  if (!isOpenAIConfigured()) {
-    return verifyCourseCandidates(getFallbackCareerPathResources(careerPath));
-  }
 
   try {
-    const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-    const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+    const apiBase = SKILLSURGER_API_BASE;
+    const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
       type: "generateVerifiedCareerPathLearningResources",
       careerPath: careerPath
     });

@@ -1,3 +1,4 @@
+import { SKILLSURGER_API_BASE, skillsurgerApiHeaders } from './skillsurgerApi';
 /**
  * Google Sheets Integration
  * 
@@ -46,7 +47,7 @@ interface MasterclassSubmission {
 
 export async function submitToGoogleSheets(data: MasterclassSubmission): Promise<void> {
   const webhookUrl = import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL;
-  const backendApi = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+  const backendApi = SKILLSURGER_API_BASE;
 
   // Option 1: Use Google Apps Script Webhook if available
   if (webhookUrl) {
@@ -79,9 +80,7 @@ export async function submitToGoogleSheets(data: MasterclassSubmission): Promise
   try {
     const response = await fetch(`${backendApi}/masterclass/submit`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: await skillsurgerApiHeaders(true),
       body: JSON.stringify(data),
     });
 

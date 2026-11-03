@@ -18,3 +18,7 @@ verify_jwt = false
 
 [functions.webinar-reminders]
 verify_jwt = false
+
+[functions.skillsurger-api]
+# JWT validation happens in the router, which also serves the public masterclass form.
+verify_jwt = false

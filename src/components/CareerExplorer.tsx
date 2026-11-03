@@ -1,3 +1,4 @@
+import { SKILLSURGER_API_BASE, skillsurgerHttp } from '../lib/skillsurgerApi';
 import { profileJobLocation, normalizeJobLocation, matchesJobLocation, jobCountryCode } from '../lib/jobLocation';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +20,6 @@ import {
 } from '../lib/careerServices';
 import { cleanTruncatedDescription } from '../lib/utils';
 import { useUser } from '../context/UserContext';
-import axios from 'axios';
 
 interface AcceptedSuggestions {
   summary?: string;
@@ -1103,10 +1103,10 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
       console.log('Finding contact for referral:', jobData);
 
       // Call backend API
-      const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
+      const apiBase = SKILLSURGER_API_BASE;
       const apiUrl = `${apiBase}/openai/skillsurger`;
 
-      const response = await axios.post(apiUrl, {
+      const response = await skillsurgerHttp.post(apiUrl, {
         type: 'findHiringManager',
         jobData: jobData
       });
@@ -1157,8 +1157,8 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
     try {
       setRevealEmailLoading(jobKey);
       setError('');
-      const apiBase = import.meta.env.VITE_BACKEND_API || 'http://localhost:5002/api/v1';
-      const response = await axios.post(`${apiBase}/openai/skillsurger`, {
+      const apiBase = SKILLSURGER_API_BASE;
+      const response = await skillsurgerHttp.post(`${apiBase}/openai/skillsurger`, {
         type: 'revealHiringManagerEmail',
         linkedInProfileUrl: result.linkedInProfileUrl
       });
