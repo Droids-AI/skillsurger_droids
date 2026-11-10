@@ -18,6 +18,7 @@ import CareerExplorer from '../components/CareerExplorer';
 import ProgressTracker from '../components/ProgressTracker';
 import ProfileSection from '../components/ProfileSection';
 import DataManagement from '../components/DataManagement';
+import ApplicationTracker from '../components/ApplicationTracker';
 import LearningPaths from '../components/LearningPaths';
 import CVScoring from '../components/CVScoring';
 import Subscription from './Subscription';
@@ -224,6 +225,7 @@ export default function DashboardPage() {
               {activeSection === 'career' && (
                 <>
                   <h1 className="text-2xl font-bold">Career Explorer</h1>
+                  <ApplicationTracker />
                   {!hasAI ? (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
                       <h3 className="text-lg font-semibold text-yellow-800 mb-2">AI Features Require Active Subscription</h3>

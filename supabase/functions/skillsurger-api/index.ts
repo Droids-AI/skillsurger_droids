@@ -36,6 +36,11 @@ function validate(body: Body) {
   if (type === 'findHiringManager') { object('jobData'); if (typeof body.jobData.jobDescription !== 'string' || !body.jobData.profileData) throw new Error('Provide a job description and candidate profile'); }
   if (type === 'revealHiringManagerEmail' && body.linkedInProfileUrl && !/^https:\/\/(?:[\w-]+\.)?linkedin\.com\/in\/[^/?#]+\/?(?:[?#].*)?$/i.test(body.linkedInProfileUrl)) throw new Error('Provide a LinkedIn profile URL');
 }
+// Read from the database by the verified user id, never from the request body.
+async function mentorProfile(admin: SupabaseClient, userId: string) {
+  const { data } = await admin.from('profiles').select('current_role,desired_role,years_of_experience,city,country,skills,summary').eq('id', userId).maybeSingle();
+  return data || null;
+}
 async function dispatch(body: Body, admin: SupabaseClient, userId: string, progress?: (message: string, data?: unknown) => void): Promise<unknown> {
   switch (body.type) {
     case 'generateCareerOptions': return await AI.generateCareerOptions(body.contextData);
@@ -51,8 +56,8 @@ async function dispatch(body: Body, admin: SupabaseClient, userId: string, progr
     case 'getLearningPathUpdateStatus': return await learningTaskStatus(admin, userId, body.taskId);
     case 'generateFresherLearningPlan': return await fresherLearningPlan(body);
     case 'generateFresherCV': return buildFresherCV(body.profileData || { ...body.educationData, skills: body.skills || [], education: [{ degree: body.educationData.degree, institution: body.educationData.institution, year: body.educationData.graduationYear }] }, body.additionalInterests || (body.careerInterests || []).join(', '));
-    case 'startAIMentorshipSession': return await AI.startAIMentorshipSession(body.topic, userId);
-    case 'sendMessageToAIMentor': return await AI.sendMessageToAIMentor(body.topic, body.message, body.conversationHistory || []);
+    case 'startAIMentorshipSession': return await AI.startAIMentorshipSession(body.topic, userId, await mentorProfile(admin, userId));
+    case 'sendMessageToAIMentor': return await AI.sendMessageToAIMentor(body.topic, body.message, body.conversationHistory || [], await mentorProfile(admin, userId));
     case 'generateInterviewResponse': return await AI.generateInterviewResponse(body.jobRole, body.userMessage, body.conversationHistory || []);
     case 'endInterview': return await AI.endInterview(body.jobRole, body.conversationHistory, body.videoFrames);
     case 'findJobsBasedOnProfile': return await AI.findJobsBasedOnProfile(body.profileData);
