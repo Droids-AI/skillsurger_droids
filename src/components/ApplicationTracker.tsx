@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Video } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ApplicationPipeline from './ApplicationPipeline';
 
 // Status of each saved job, set by the user. Nothing here is applied or sent automatically.
 const STATUSES = [
@@ -32,6 +33,7 @@ export default function ApplicationTracker() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -103,7 +105,8 @@ export default function ApplicationTracker() {
           </ul>
           <ul className="divide-y divide-gray-100">
             {jobs.map(job => (
-              <li key={job.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <li key={job.id} className="py-3">
+               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">{job.title}</p>
                   <p className="text-sm text-gray-600 truncate">
@@ -130,6 +133,16 @@ export default function ApplicationTracker() {
                 >
                   {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
+                <button
+                  type="button"
+                  aria-expanded={openId === job.id}
+                  onClick={() => setOpenId(openId === job.id ? null : job.id)}
+                  className="text-sm text-blue-700 hover:text-blue-800 font-medium whitespace-nowrap"
+                >
+                  {openId === job.id ? 'Close' : 'Prepare application'}
+                </button>
+               </div>
+               {openId === job.id && <ApplicationPipeline job={job} />}
               </li>
             ))}
           </ul>

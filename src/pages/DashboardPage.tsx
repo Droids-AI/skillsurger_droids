@@ -19,6 +19,7 @@ import ProgressTracker from '../components/ProgressTracker';
 import ProfileSection from '../components/ProfileSection';
 import DataManagement from '../components/DataManagement';
 import ApplicationTracker from '../components/ApplicationTracker';
+import { WeeklyReport } from '../components/ApplicationPipeline';
 import JobBoardConnections from '../components/JobBoardConnections';
 import LearningPaths from '../components/LearningPaths';
 import CVScoring from '../components/CVScoring';
@@ -226,6 +227,7 @@ export default function DashboardPage() {
               {activeSection === 'career' && (
                 <>
                   <h1 className="text-2xl font-bold">Career Explorer</h1>
+                  <WeeklyReport />
                   <ApplicationTracker />
                   <JobBoardConnections />
                   {!hasAI ? (

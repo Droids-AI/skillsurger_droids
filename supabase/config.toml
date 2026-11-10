@@ -28,3 +28,6 @@ verify_jwt = false
 
 [functions.anchor-connect]
 verify_jwt = false
+
+[functions.skillsurger-agent]
+verify_jwt = false
