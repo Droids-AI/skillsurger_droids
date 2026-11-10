@@ -57,6 +57,23 @@ if (import.meta.main) Deno.serve(async request => {
     console.error(JSON.stringify({ area: 'anchor-webhook', code: 'store_failed', eventId: event.id, type: event.type }));
     return new Response('Could not store event', { status: 500 }); // Anchor retries
   }
+  // Identity events update the user's connection record. They never make a connection
+  // `active` (the ownership gate in plan section 6 decides that, not Anchor's login result).
+  const data = (event.data || {}) as { identity_id?: unknown };
+  if (event.type.startsWith('identity.') && typeof data.identity_id === 'string') {
+    const update = event.type === 'identity.authentication_failed'
+      ? { status: 'failed' }
+      : event.type === 'identity.authenticated' ? { last_validated_at: new Date().toISOString() } : null;
+    if (update) {
+      const applied = await admin.from('agent_external_identity').update(update)
+        .eq('anchor_identity_id', data.identity_id).neq('status', 'deleted');
+      if (applied.error) {
+        console.error(JSON.stringify({ area: 'anchor-webhook', code: 'identity_update_failed', eventId: event.id }));
+        return new Response('Could not apply event', { status: 500 }); // retried; the insert above is idempotent
+      }
+    }
+    await admin.from('anchor_webhook_events').update({ processed_at: new Date().toISOString() }).eq('id', event.id);
+  }
   console.log(JSON.stringify({ area: 'anchor-webhook', code: 'received', eventId: event.id, type: event.type }));
   return new Response('ok', { status: 200 });
 });

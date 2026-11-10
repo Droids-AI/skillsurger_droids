@@ -25,3 +25,6 @@ verify_jwt = false
 
 [functions.anchor-webhook]
 verify_jwt = false
+
+[functions.anchor-connect]
+verify_jwt = false
