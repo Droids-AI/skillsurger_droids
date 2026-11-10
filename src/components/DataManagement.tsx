@@ -374,10 +374,10 @@ export default function DataManagement() {
         <div>
           <h2 className="text-2xl font-bold flex items-center">
             <Database className="w-6 h-6 mr-2 text-red-600" />
-            Data Management
+            Delete my data
           </h2>
           <p className="text-gray-600 mt-1">
-            Manage and delete your profile data and generated assets
+            Delete whole categories of your data at once, or everything
           </p>
         </div>
         <Button

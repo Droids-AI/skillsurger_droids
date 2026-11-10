@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageSquare, Send, Bot, Video, Users, Book, Trash2, Archive, AlertTriangle, X, Loader2, Mic, MicOff, Briefcase, ChevronDown, Calendar } from 'lucide-react';
 import Button from './Button';
 import {
@@ -43,6 +43,8 @@ export default function MentorshipHub() {
   const [aiSessions, setAiSessions] = useState<AIMentorshipSession[]>([]);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [selectedJob, setSelectedJob] = useState<string>('');
+  const [searchParams] = useSearchParams();
+  const requestedJob = searchParams.get('job');
   const [interviewDate, setInterviewDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -169,6 +171,8 @@ export default function MentorshipHub() {
 
       if (jobsError) throw jobsError;
       setSavedJobs(jobs || []);
+      // Arriving from "Practise this interview" in the application tracker.
+      if (requestedJob && (jobs || []).some(job => job.id === requestedJob)) setSelectedJob(current => current || requestedJob);
     } catch (error) {
       console.error('Error loading saved jobs:', error);
     }

@@ -113,7 +113,7 @@ export default function ApplicationTracker() {
                 {job.status === 'interviewing' && (
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard?section=mentorship')}
+                    onClick={() => navigate(`/dashboard?section=mentorship&job=${encodeURIComponent(job.id)}`)}
                     className="inline-flex items-center text-sm text-blue-700 hover:text-blue-800 font-medium"
                   >
                     <Video className="w-4 h-4 mr-1" aria-hidden="true" />

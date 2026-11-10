@@ -12,7 +12,7 @@ export const faqs: FAQ[] = [
   {
     question: "Is my resume data safe and private?",
     answer:
-      "Your data is encrypted in transit and at rest, and we never sell it or share your resume for advertising. To run the AI features, the text you submit (resume, mentor chats, interview answers and, if you turn on your camera, interview frames) is sent to our AI provider, OpenAI, for processing. To delete your account and data, email support@skillsurger.com. See our Privacy Policy for the full list of service providers.",
+      "Your data is encrypted in transit and at rest, and we never sell it or share your resume for advertising. To run the AI features, the text you submit (resume, mentor chats, interview answers and, if you turn on your camera, interview frames) is sent to our AI provider, OpenAI, for processing. You can delete your data anytime from Profile in your dashboard, or email support@skillsurger.com to close your account. See our Privacy Policy for the full list of service providers.",
   },
   {
     question: "How much time do I need to invest?",

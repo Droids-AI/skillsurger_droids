@@ -10,8 +10,9 @@ export async function startLearningTask(admin: SupabaseClient, userId: string, b
       const resources = await learningResources(body);
       const result = await admin.from('skillsurger_learning_tasks').update({ status: 'completed', progress: 'Learning path updated successfully!', resources, end_time: Date.now() }).eq('id', taskId).eq('user_id', userId);
       if (result.error) throw new Error('Task result could not be saved');
-    } catch {
-      console.error(JSON.stringify({ area: 'skillsurger-learning-task', code: 'task_failed', taskId }));
+    } catch (error) {
+      // Reason only (provider/validation message), never the user's input.
+      console.error(JSON.stringify({ area: 'skillsurger-learning-task', code: 'task_failed', taskId, reason: String((error as Error)?.message || error).slice(0, 160) }));
       const result = await admin.from('skillsurger_learning_tasks').update({ status: 'failed', progress: 'Learning-path update failed', error: 'Could not update the learning path. Please try again.', end_time: Date.now() }).eq('id', taskId).eq('user_id', userId);
       if (result.error) console.error(JSON.stringify({ area: 'skillsurger-learning-task', code: 'failure_receipt_failed', taskId }));
     }
