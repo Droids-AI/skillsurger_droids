@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
           
           <div className="prose max-w-none">
             <p className="text-gray-600 mb-6">
-              Last updated: 17 October 2026
+              Last updated: 10 November 2026
             </p>
 
             <section className="mb-8">
@@ -61,14 +61,34 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">5. Data Protection</h2>
+              <h2 className="text-2xl font-semibold mb-4">5. Service Providers That Process Your Data</h2>
+              <p className="text-gray-700 mb-4">
+                We do not sell your personal information. We share it only with the service providers that run Skillsurger for us, and only for that purpose:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 space-y-2">
+                <li>Supabase: hosting, database, login and file storage.</li>
+                <li>OpenAI: the AI features. The resume text, mentor messages, interview answers and, if you turn on your camera, interview frames that you submit are sent to OpenAI to generate scores, feedback and answers.</li>
+                <li>SerpAPI and JSearch: job search. We send the role and location you search for, not your resume.</li>
+                <li>SerpAPI, Hunter and Lusha: finding a hiring manager for a job you choose. We send that job's role, company and location, not your resume.</li>
+                <li>Twilio: confirmation and reminder emails.</li>
+                <li>Google Workspace: our team's lead and registration records.</li>
+                <li>Dodo Payments: checkout and payment processing.</li>
+                <li>Google Ads, Microsoft Clarity and Hotjar: advertising measurement and site analytics, as described above.</li>
+              </ul>
+              <p className="text-gray-700 mt-4">
+                If we add a new kind of processing, such as automating actions on job sites for you, we will update this policy and ask for your consent before it applies to you.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4">6. Data Protection</h2>
               <p className="text-gray-700 mb-4">
                 We implement a variety of security measures to maintain the safety of your personal information when you enter, submit, or access your personal information.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">6. Your Rights</h2>
+              <h2 className="text-2xl font-semibold mb-4">7. Your Rights</h2>
               <p className="text-gray-700 mb-4">
                 You have the right to:
               </p>
@@ -83,7 +103,7 @@ export default function PrivacyPolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4">8. Contact Us</h2>
               <p className="text-gray-700">
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
