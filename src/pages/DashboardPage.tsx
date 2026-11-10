@@ -17,6 +17,7 @@ import MentorshipHub from '../components/MentorshipHub';
 import CareerExplorer from '../components/CareerExplorer';
 import ProgressTracker from '../components/ProgressTracker';
 import ProfileSection from '../components/ProfileSection';
+import DataManagement from '../components/DataManagement';
 import LearningPaths from '../components/LearningPaths';
 import CVScoring from '../components/CVScoring';
 import Subscription from './Subscription';
@@ -216,6 +217,7 @@ export default function DashboardPage() {
                 <>
                   <h1 className="text-2xl font-bold">Profile Management</h1>
                   <ProfileSection />
+                  <DataManagement />
                 </>
               )}
 

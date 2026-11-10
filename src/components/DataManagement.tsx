@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trash2, AlertTriangle, RefreshCw, Database, FileText, Briefcase, BookOpen, Brain, Users, Target } from 'lucide-react';
 import Button from './Button';
 import { supabase } from '../lib/supabase';
@@ -27,7 +27,24 @@ interface DeleteOperation {
   confirmText: string;
   tables: string[];
   storageCleanup?: boolean;
+  clearProfile?: boolean;
 }
+
+// The profiles row has no delete policy and anchors every other table (ON DELETE
+// CASCADE), so "deleting" profile data clears its personal fields instead.
+const CLEARED_PROFILE = {
+  full_name: null, linkedin_url: null, cv_url: null, years_of_experience: null, summary: null,
+  experience: null, projects: null, skills: null, education: null, cv_parsed_data: null,
+  city: null, state: null, country: null, current_role: null, desired_role: null,
+  preferred_work_type: null, min_salary_expectation: null, max_salary_expectation: null,
+  willing_to_relocate: false, preferred_locations: [], remote_preference: 'no_preference',
+  phone: null, languages: [], certifications: [], custom_sections: [], onboarding_completed: false,
+  summary_default: null, experience_default: null, projects_default: null, education_default: null,
+  certifications_default: null, cv_parsed_data_default: null, languages_default: null,
+  full_name_default: null, email_default: null, phone_default: null, city_default: null,
+  state_default: null, country_default: null, current_role_default: null,
+  years_of_experience_default: null, skills_default: null, custom_sections_default: null,
+};
 
 export default function DataManagement() {
   const [loading, setLoading] = useState(false);
@@ -40,11 +57,12 @@ export default function DataManagement() {
     {
       type: 'profile_data',
       label: 'Profile Data',
-      description: 'Personal information, contact details, work preferences, and salary expectations',
+      description: 'Personal information, CV details, contact details, work preferences, salary expectations and uploaded CV files. Your login email stays so you can sign in again.',
       icon: FileText,
       color: 'blue',
       confirmText: 'DELETE PROFILE DATA',
-      tables: ['profiles'],
+      tables: [],
+      clearProfile: true,
       storageCleanup: true
     },
     {
@@ -68,7 +86,7 @@ export default function DataManagement() {
     {
       type: 'job_data',
       label: 'Saved Jobs',
-      description: 'All saved job opportunities and applications',
+      description: 'All saved jobs and their application status',
       icon: Database,
       color: 'orange',
       confirmText: 'DELETE JOB DATA',
@@ -90,7 +108,8 @@ export default function DataManagement() {
       icon: Users,
       color: 'red',
       confirmText: 'DELETE INTERVIEW DATA',
-      tables: ['mock_interviews', 'interview_feedback_metrics']
+      // Feedback metrics are removed with their interview (ON DELETE CASCADE).
+      tables: ['mock_interviews']
     },
     {
       type: 'ai_sessions',
@@ -114,15 +133,16 @@ export default function DataManagement() {
     {
       type: 'all_data',
       label: 'ALL DATA',
-      description: 'Complete account data deletion (IRREVERSIBLE)',
+      description: 'Everything above, permanently. Your login stays; to close the account itself, email support@skillsurger.com.',
       icon: AlertTriangle,
       color: 'red',
       confirmText: 'DELETE EVERYTHING',
       tables: [
         'user_skills', 'user_interests', 'generated_careers', 'career_suggestions',
         'saved_jobs', 'learning_paths', 'learning_plans', 'learning_recommendations',
-        'mock_interviews', 'interview_feedback_metrics', 'ai_mentorship_sessions'
+        'mock_interviews', 'ai_mentorship_sessions'
       ],
+      clearProfile: true,
       storageCleanup: true
     }
   ];
@@ -149,7 +169,7 @@ export default function DataManagement() {
         { count: aiSessionsCount },
         { count: learningRecommendationsCount }
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('id', user.id),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('id', user.id).or('full_name.not.is.null,summary.not.is.null,cv_parsed_data.not.is.null,phone.not.is.null,cv_url.not.is.null'),
         supabase.from('user_skills').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('user_interests').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('generated_careers').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -190,6 +210,8 @@ export default function DataManagement() {
     }
   };
 
+  useEffect(() => { void loadDataStats(); }, []);
+
   const handleDelete = async (operation: DeleteOperation) => {
     if (confirmDelete !== operation.type) {
       setConfirmDelete(operation.type);
@@ -212,19 +234,6 @@ export default function DataManagement() {
           query = query.eq('id', user.id);
         } else if (table === 'mentorship_sessions') {
           query = query.eq('mentee_id', user.id);
-        } else if (table === 'interview_feedback_metrics') {
-          // For this table, we need to delete based on interview ownership
-          const { data: userInterviews } = await supabase
-            .from('mock_interviews')
-            .select('id')
-            .eq('user_id', user.id);
-          
-          if (userInterviews && userInterviews.length > 0) {
-            const interviewIds = userInterviews.map(interview => interview.id);
-            query = query.in('interview_id', interviewIds);
-          } else {
-            continue; // Skip if no interviews
-          }
         } else {
           query = query.eq('user_id', user.id);
         }
@@ -234,6 +243,11 @@ export default function DataManagement() {
           console.error(`Error deleting from ${table}:`, deleteError);
           throw new Error(`Failed to delete ${table} data: ${deleteError.message}`);
         }
+      }
+
+      if (operation.clearProfile) {
+        const { error: clearError } = await supabase.from('profiles').update(CLEARED_PROFILE).eq('id', user.id);
+        if (clearError) throw new Error('Failed to clear profile data');
       }
 
       // Clean up storage if needed
@@ -267,6 +281,12 @@ export default function DataManagement() {
         } catch (localStorageError) {
           console.error('Local storage cleanup error:', localStorageError);
         }
+      }
+
+      // A delete blocked by row-level security returns no error, so confirm nothing is left.
+      for (const table of operation.tables) {
+        const { count, error: countError } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+        if (countError || (count || 0) > 0) throw new Error(`Some ${operation.label.toLowerCase()} could not be deleted. Please email support@skillsurger.com and we will remove it.`);
       }
 
       // Show success message
@@ -387,9 +407,8 @@ export default function DataManagement() {
             <h3 className="text-lg font-semibold text-yellow-800 mb-2">⚠️ Important Warning</h3>
             <div className="text-yellow-700 space-y-2">
               <p>• <strong>Data deletion is permanent and cannot be undone</strong></p>
-              <p>• Make sure to download any important data before deletion</p>
-              <p>• Some operations may affect related data in other sections</p>
-              <p>• Consider backing up your CV and important profile information</p>
+              <p>• Keep your own copy of your CV before deleting it</p>
+              <p>• Deleting profile data takes you back through onboarding next time you sign in</p>
             </div>
           </div>
         </div>

@@ -21,6 +21,9 @@ export default function LandingStep({ onStart }: Props) {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Get a recruiter's perspective on your profile in 5 minutes. Discover what's holding you back and get actionable tips to boost visibility and interview requests.
           </p>
+          <p className="text-sm text-gray-500 mb-8 max-w-2xl mx-auto">
+            This is a quick rule-based check of the text you paste (length, keywords and structure of each section). It runs in your browser and is not an AI review.
+          </p>
 
           <div className="grid md:grid-cols-4 gap-6 mb-12 max-w-3xl mx-auto">
             <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
@@ -116,8 +119,8 @@ export default function LandingStep({ onStart }: Props) {
               <ul className="space-y-1 text-sm text-gray-700">
                 <li>• We analyze only the content you paste—never access your LinkedIn account</li>
                 <li>• We don't store your LinkedIn password or login credentials</li>
-                <li>• Your profile data is analyzed securely and deleted after 24 hours</li>
-                <li>• No spam, no data sharing—your information stays private</li>
+                <li>• The check runs in your browser: the text you paste is not sent to or stored on our servers</li>
+                <li>• No sign-up needed and no emails from this tool</li>
               </ul>
             </div>
           </div>

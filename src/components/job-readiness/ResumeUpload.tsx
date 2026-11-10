@@ -72,37 +72,29 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
     setProgress(0);
 
     try {
-      // Simulate file reading and analysis
       const text = await extractResumeText(file);
 
-      // Simulate progressive analysis
       setProgress(20);
-      await delay(500);
 
       // Extract skills (simple keyword matching - in production, use AI/NLP)
       const skills = detectResumeSkills(text);
       setProgress(40);
-      await delay(500);
 
       // Extract experience
       const experience = extractExperience(text);
       setProgress(60);
-      await delay(500);
 
       // Extract job title
       const jobTitle = extractJobTitle(text);
       setProgress(80);
-      await delay(500);
 
       // Calculate resume quality
       const resumeQuality = calculateResumeQuality(text);
       setProgress(90);
-      await delay(300);
 
       // Calculate ATS compatibility
       const atsCompatibility = calculateATSCompatibility(text, file.type);
       setProgress(100);
-      await delay(300);
 
       const analysis: ResumeAnalysis = {
         skills,
@@ -121,8 +113,6 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
       setIsAnalyzing(false);
     }
   };
-
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const extractExperience = (text: string): string[] => {
     // Simple extraction - look for year patterns and job-related keywords
@@ -232,7 +222,7 @@ export default function ResumeUpload({ onAnalysisComplete, onBack }: Props) {
               Upload Your Resume
             </h2>
             <p className="text-gray-600">
-              We'll analyze your resume for ATS compatibility, skills, and experience
+              A rule-based check of your resume's keywords, structure and ATS readability
             </p>
           </div>
 

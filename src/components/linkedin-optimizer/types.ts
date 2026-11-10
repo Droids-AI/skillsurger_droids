@@ -1,4 +1,4 @@
-export type Step = 'landing' | 'input' | 'analyzing' | 'results';
+export type Step = 'landing' | 'input' | 'results';
 
 export interface ParsedProfile {
   headline: string;

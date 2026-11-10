@@ -864,16 +864,21 @@ export default function MentorshipHub() {
                 {savedJobs.length === 0 ? (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
                     <AlertTriangle className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No Saved Jobs Found</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Save a job first</h4>
                     <p className="text-gray-600 mb-4">
-                      To schedule a mock interview, you need to save jobs first from Career Explorer.
+                      Each mock interview is built around a specific job, so its questions match that role and company.
                     </p>
+                    <ol className="text-left text-sm text-gray-700 max-w-sm mx-auto mb-5 space-y-1 list-decimal list-inside">
+                      <li>Open Career Explorer and click <strong>Find Jobs Based on Profile</strong>.</li>
+                      <li>Click <strong>Save Job</strong> on a role you want.</li>
+                      <li>Come back here and pick that job to start your interview.</li>
+                    </ol>
                     <Button
                       onClick={() => navigate('/dashboard?section=career')}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <Briefcase className="w-4 h-4 mr-2" />
-                      Explore Careers & Save Jobs
+                      Find and save a job
                     </Button>
                   </div>
                 ) : (

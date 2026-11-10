@@ -31,7 +31,7 @@ export type JobReadinessScore = {
   badges: string[];
 };
 
-type Step = 'landing' | 'upload' | 'processing' | 'quiz' | 'calculating' | 'results';
+type Step = 'landing' | 'upload' | 'processing' | 'quiz' | 'results';
 
 export default function JobReadinessIndex() {
   const navigate = useNavigate();
@@ -47,14 +47,8 @@ export default function JobReadinessIndex() {
 
   const handleQuizComplete = (result: QuizResult) => {
     setQuizResult(result);
-    setCurrentStep('calculating');
-
-    // Calculate final score
-    setTimeout(() => {
-      const score = calculateReadinessScore(resumeAnalysis!, result);
-      setReadinessScore(score);
-      setCurrentStep('results');
-    }, 3000);
+    setReadinessScore(calculateReadinessScore(resumeAnalysis!, result));
+    setCurrentStep('results');
   };
 
   const calculateReadinessScore = (analysis: ResumeAnalysis, quiz: QuizResult): JobReadinessScore => {
@@ -131,8 +125,6 @@ export default function JobReadinessIndex() {
             onQuizComplete={handleQuizComplete}
           />
         );
-      case 'calculating':
-        return <CalculatingScreen />;
       case 'results':
         return (
           <ScoreReveal
@@ -218,6 +210,9 @@ function LandingSection({ onStart }: { onStart: () => void }) {
           <p className="text-sm text-gray-500 mt-4">
             Review your resume, test your skills, and find areas to improve
           </p>
+          <p className="text-xs text-gray-500 mt-2 max-w-xl mx-auto">
+            A quick rule-based check that runs in your browser: it looks at keywords, length and structure, plus your quiz answers. It is not an AI review. For AI feedback against a target role, use CV Scoring in your dashboard.
+          </p>
         </div>
 
         {/* Trust indicators */}
@@ -257,54 +252,3 @@ function LandingSection({ onStart }: { onStart: () => void }) {
   );
 }
 
-// Calculating Screen Component
-function CalculatingScreen() {
-  const steps = [
-    'Resume quality analysis complete',
-    'ATS compatibility check done',
-    'Skill verification results ready',
-    'Role alignment calculated',
-    'Computing your Job Readiness Index...',
-  ];
-
-  return (
-    <div className="container mx-auto px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-12">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6 animate-pulse">
-            <TrendingUp className="w-10 h-10 text-blue-600" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Calculating Your Job Readiness Index...
-          </h2>
-          <p className="text-gray-600">
-            Analyzing your resume and quiz results
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {steps.map((step, index) => (
-            <div key={index} className="flex items-center">
-              {index < 4 ? (
-                <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-              ) : (
-                <div className="w-5 h-5 mr-3 flex-shrink-0">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
-              <span className={`${index < 4 ? 'text-gray-700' : 'text-blue-600 font-semibold'}`}>
-                {step}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 bg-blue-50 rounded-lg p-4 text-center">
-          <p className="text-sm text-blue-800">
-            💡 <strong>Did you know?</strong> Resume structure and relevant keywords can affect how an ATS reads your application.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import SEO from '../components/SEO';
 import LandingStep from '../components/linkedin-optimizer/LandingStep';
 import ProfileInputStep from '../components/linkedin-optimizer/ProfileInputStep';
-import AnalyzingStep from '../components/linkedin-optimizer/AnalyzingStep';
 import ResultsStep from '../components/linkedin-optimizer/ResultsStep';
 import { Step, ProfileAnalysis } from '../components/linkedin-optimizer/types';
 import { analyzeLinkedInProfile } from '../lib/linkedinScoring';
@@ -12,14 +11,9 @@ export default function LinkedInProfileOptimizer() {
   const [analysis, setAnalysis] = useState<ProfileAnalysis | null>(null);
 
   const handleAnalyze = (profileText: string) => {
-    setCurrentStep('analyzing');
-
-    // Simulate analysis delay (3-5 seconds)
-    setTimeout(() => {
-      const result = analyzeLinkedInProfile(profileText);
-      setAnalysis(result);
-      setCurrentStep('results');
-    }, 3500);
+    // Rule-based scoring runs instantly in the browser; no artificial wait.
+    setAnalysis(analyzeLinkedInProfile(profileText));
+    setCurrentStep('results');
   };
 
   const renderStep = () => {
@@ -35,8 +29,6 @@ export default function LinkedInProfileOptimizer() {
           />
         );
 
-      case 'analyzing':
-        return <AnalyzingStep />;
 
       case 'results':
         return analysis ? <ResultsStep analysis={analysis} /> : null;
