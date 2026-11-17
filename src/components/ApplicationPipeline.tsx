@@ -268,7 +268,12 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
 export function WeeklyReport() {
   interface Report { applications: { applied: number; awaiting_approval: number; approved_not_applied: number; failed: number }; messages_sent: number; pipeline: Record<string, number> }
   const [data, setData] = useState<Report | null>(null);
-  useEffect(() => { void call<Report>('/report').then(setData).catch(() => setData(null)); }, []);
+  useEffect(() => {
+    const load = () => { void call<Report>('/report').then(setData).catch(() => setData(null)); };
+    load();
+    window.addEventListener('saved-jobs-changed', load);
+    return () => window.removeEventListener('saved-jobs-changed', load);
+  }, []);
   if (!data) return null;
   const a = data.applications;
   return (
