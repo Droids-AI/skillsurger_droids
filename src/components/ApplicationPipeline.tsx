@@ -137,7 +137,7 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
                   {section.items.map((item, i) => (
                     <li key={i} className="rounded-md bg-white p-3 ring-1 ring-gray-100">
                       <p className="text-gray-900">{item.text}</p>
-                      <p className="mt-1 text-xs text-gray-500">From your profile: {factText(latest, item.evidence)}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-gray-500" title={factText(latest, item.evidence)}>From your profile: {factText(latest, item.evidence)}</p>
                     </li>
                   ))}
                 </ul>

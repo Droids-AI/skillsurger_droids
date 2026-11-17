@@ -90,8 +90,34 @@ export async function handle(request:Request) {
     }
     const auth = request.headers.get('authorization') || '';
     const operator = auth === `Bearer ${serviceKey}`;
-    if (['/tick','/verify-connection','/record-cost','/resolve','/provision-code-task'].includes(route)) {
+    if (['/tick','/verify-connection','/record-cost','/resolve','/provision-code-task','/inspect-run','/probe-runtime','/dry-run-board'].includes(route)) {
       if (!operator) return json({error:'not_authorized'},403);
+      if (route==='/dry-run-board') {
+        // Runs a board's task against its page with synthetic ids. The submit permission check always refuses
+        // (no such run), so nothing is submitted; it proves the browser, page and form filling work.
+        const b:any = check(await admin.from('skillsurger_automation_boards').select('site,task_id').eq('site',String(body.site||'')).maybeSingle());
+        if (!b) throw new RequestError(404,'board_not_found');
+        const id = crypto.randomUUID();
+        // Optionally reuse a real application's CV/answers/cover note (sizes and characters), still with synthetic ids.
+        const src:any = UUID.test(String(body.actionId||'')) ? check(await admin.from('agent_action_ledger').select('payload').eq('id',body.actionId).maybeSingle()) : null;
+        return json(await anchor.runCodeTaskSync(b.task_id,{contract_version:'application_v1',action_id:id,idempotency_key:id,payload_hash:'0'.repeat(64),
+          application_url:`https://${b.site}/qa/test-job`,cv_version_id:crypto.randomUUID(),
+          cv_json:JSON.stringify(src?.payload?.cv_content ?? {headline:'Dry run',sections:[]}),
+          answers_json:JSON.stringify(src?.payload?.answers ?? {full_name:'Dry Run',email:'dry-run@skillsurger.com',phone:'0000000000'}),
+          cover_note:src?.payload?.cover_note ?? 'Dry run',local_run_id:crypto.randomUUID(),submit_authorization_token:'dry-run'}));
+      }
+      if (route==='/probe-runtime') {
+        // Fixed probe: lists module exports and ANCHOR* env var NAMES (never values). Never touches a job site.
+        const probe = `export default async function run(){const out:any={node:process.version,env:Object.keys(process.env).filter(k=>/ANCHOR|PLAYWRIGHT|CDP/i.test(k))};for(const m of ['anchorbrowser','playwright','playwright-core','playwright-chromium']){try{const x:any=await import(m);out[m]={keys:Object.keys(x).slice(0,60),def:x.default?Object.keys(x.default).slice(0,60):null,defType:typeof x.default};}catch(e:any){out[m]='ERR '+String(e?.message).slice(0,200);}}return out;}`;
+        const taskId = await anchor.provisionCodeTask('skillsurger-runtime-probe', btoa(probe), 'Runtime probe (no browsing).', ['example.com']);
+        return json(await anchor.runCodeTaskSync(taskId));
+      }
+      if (route==='/inspect-run') {
+        if (!UUID.test(body.runId)) throw new RequestError(400,'run_required');
+        const r:any = check(await admin.from('skillsurger_application_runs').select('anchor_run_id').eq('id',body.runId).maybeSingle());
+        if (!r?.anchor_run_id) throw new RequestError(404,'run_not_found');
+        return json(await anchor.inspectCodeRun(r.anchor_run_id));
+      }
       if (route==='/provision-code-task') {
         // Uploads a reviewed deterministic task and returns its pinned id for skillsurger_automation_boards.task_id.
         if (typeof body.name!=='string' || !/^[a-zA-Z0-9_-]{3,100}$/.test(body.name) || typeof body.codeBase64!=='string' ||

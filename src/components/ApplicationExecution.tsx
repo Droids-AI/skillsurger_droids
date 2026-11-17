@@ -52,7 +52,7 @@ export default function ApplicationExecution({ actionId, actionState, onUpdate }
   }, [actionId]);
   const change = async (fn: () => Promise<unknown>) => {
     setBusy(true); setError('');
-    try { await fn(); await load(); await onUpdate(); }
+    try { await fn(); await load(); await onUpdate(); window.dispatchEvent(new Event('saved-jobs-changed')); }
     catch (e) { setError(e instanceof Error ? e.message : 'Could not update this application.'); }
     finally { setBusy(false); }
   };
@@ -64,6 +64,22 @@ export default function ApplicationExecution({ actionId, actionState, onUpdate }
     });
   };
   const run = context?.run;
+  // While a run is in flight, check every 10 seconds (up to ~5 minutes). When it finishes, refresh the job list too.
+  const runState = run?.state;
+  useEffect(() => {
+    if (!runState || !['queued', 'launching', 'running'].includes(runState)) return;
+    let ticks = 0;
+    const timer = setInterval(() => {
+      if (++ticks > 30) { clearInterval(timer); return; }
+      void call('/refresh', { actionId }).then((data) => {
+        setContext((previous) => previous ? { ...previous, run: data.run } : previous);
+        if (data.run && !['queued', 'launching', 'running'].includes(data.run.state)) {
+          void onUpdate(); window.dispatchEvent(new Event('saved-jobs-changed'));
+        }
+      }).catch(() => {});
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [runState, actionId, onUpdate]);
   const status = run?.state === 'done' ? run.result?.method === 'operator_reconciliation' ? 'Application outcome verified by support' : 'Application confirmed by the job board'
     : run?.state === 'reconciling' ? 'Checking whether the application was submitted'
     : run?.state === 'needs_you' ? 'Your attention is needed'
@@ -75,7 +91,6 @@ export default function ApplicationExecution({ actionId, actionState, onUpdate }
     {error && <p role="alert" className="text-red-700">{error}</p>}
     {run?.reason && <p className="text-gray-700">{REASONS[run.reason] || 'Check this application before taking another action.'}</p>}
     {run?.result?.confirmation_reference && <p className="break-words text-gray-700">Confirmation: {run.result.confirmation_reference}</p>}
-    {run?.state === 'done' && <p className="text-gray-600">{run.cost_credits === null ? 'Browser usage is awaiting reconciliation.' : `Recorded browser usage: ${run.cost_credits} credits.`}</p>}
     {context && !run && <>
       {!context.enabled && <p>Browser applications are paused. Your approval will not start a run.</p>}
       {!context.connection_verified && <p>Connect this job board under “Job board accounts”. Ownership must be verified before a run can start.</p>}

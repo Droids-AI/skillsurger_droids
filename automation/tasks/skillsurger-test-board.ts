@@ -3,6 +3,8 @@
 // permission, clicks submit once and returns a receipt bound to the approved action.
 // Uploaded with: POST /v1/task + /v1/task/{id}/deploy (see skillsurger-automation /provision-code-task).
 
+import { chromium } from 'playwright';
+
 const SITE = 'skillsurger.com';
 const PATH = '/qa/test-job';
 const SUBMIT_URL = 'https://jpnunlbnthcfvstyymdl.supabase.co/functions/v1/skillsurger-test-board';
@@ -10,6 +12,8 @@ const AUTH_URL = 'https://jpnunlbnthcfvstyymdl.supabase.co/functions/v1/skillsur
 const ASSET_HOSTS = ['skillsurger.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 type Inputs = Record<string, string>;
+let currentStep = 'start';
+let currentPage: any = null;
 type Outcome = 'submitted' | 'already_submitted' | 'needs_login' | 'needs_input' | 'not_submitted' | 'unknown';
 
 /** Minimal multi-page text PDF (Helvetica, Latin-1). The CV only contains approved text. */
@@ -55,6 +59,14 @@ export function cvParagraphs(cv: any, answers: Record<string, string>): string[]
     .filter((v) => typeof v === 'string' && v.trim()).map((v) => v.slice(0, 5000));
 }
 
+/** Fill a field; if the normal fill can't act in time, set the value directly (the form's fields are uncontrolled). */
+async function setField(page: any, selector: string, value: string) {
+  const el = page.locator(selector);
+  try { await el.fill(value, { timeout: 8000 }); }
+  catch { await el.evaluate((node: any, v: string) => { node.value = v; node.dispatchEvent(new Event('input', { bubbles: true })); }, value, { timeout: 8000 }); }
+  if (await el.inputValue({ timeout: 5000 }) !== value) throw new Error('field_value_mismatch ' + selector);
+}
+
 /** Core flow, testable with any Playwright page. `authorize` asks the backend for the one-time submit permission. */
 export async function runApplication(page: any, inputs: Inputs, authorize: () => Promise<boolean>) {
   const bound = { action_id: inputs.action_id, payload_hash: inputs.payload_hash, cv_version_id: inputs.cv_version_id, application_url: inputs.application_url };
@@ -78,24 +90,35 @@ export async function runApplication(page: any, inputs: Inputs, authorize: () =>
     if (!ASSET_HOSTS.includes(u.hostname)) return route.abort();
     return route.fallback();
   });
-  await page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  currentPage = page; currentStep = 'goto';
+  for (let attempt = 1; ; attempt++) {
+    try { await page.goto(target.href, { waitUntil: 'load', timeout: 30000 }); break; }
+    catch (e) { if (attempt >= 3) throw e; await page.waitForTimeout(2000); } // loading a page never submits anything
+  }
   if (new URL(page.url()).hostname !== SITE) return result('unknown');
+  currentStep = 'wait_form';
   try { await page.locator('#application').waitFor({ state: 'visible', timeout: 20000 }); } catch { return result('not_submitted'); }
   for (const [key, selector] of [['full_name', '#full-name'], ['email', '#email'], ['phone', '#phone']]) {
     const value = answers[key];
     if (typeof value !== 'string' || !value.trim()) return result('needs_input');
-    await page.locator(selector).fill(value);
+    currentStep = 'fill ' + selector;
+    await setField(page, selector, value);
   }
-  await page.locator('#cover-note').fill(inputs.cover_note || '');
+  currentStep = 'fill #cover-note';
+  await setField(page, '#cover-note', inputs.cover_note || '');
+  currentStep = 'set idempotency';
   await page.locator('#idempotency-key').evaluate((el: any, v: string) => { el.value = v; }, inputs.idempotency_key);
+  currentStep = 'upload cv';
   await page.locator('#resume').setInputFiles({ name: 'approved-cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from(textPdf(cvParagraphs(cv, answers))) });
   // Never guess: any other required field means the form changed since review.
   const unknown = await page.locator('#application').evaluate((form: any) =>
     [...form.querySelectorAll('input[required],select[required],textarea[required]')]
       .filter((el: any) => !['full-name', 'email', 'phone', 'resume'].includes(el.id)).length);
   if (unknown) return result('needs_input');
+  currentStep = 'authorize';
   if (!await authorize()) return result('not_submitted');
   submitAllowed = true;
+  currentStep = 'click submit';
   await page.locator('#submit-application').click({ timeout: 10000 }); // exactly one click
   try { await page.locator('#receipt').waitFor({ state: 'visible', timeout: 20000 }); } catch { return result('unknown'); }
   const reference = await page.locator('#receipt').getAttribute('data-receipt');
@@ -112,19 +135,23 @@ function readInputs(env: Record<string, string | undefined>): Inputs {
 
 export default async function run() {
   const inputs = readInputs(process.env as Record<string, string | undefined>);
-  const { client, createBrowser } = await import('anchorbrowser');
-  client.setConfig({ auth: () => process.env.ANCHOR_API_KEY });
-  const { browser } = await createBrowser();
+  // Anchor starts this task's own browser session (with the task's domain allowlist) and passes its CDP URL.
+  const browser = await chromium.connectOverCDP(process.env.ANCHOR_CDP_URL as string);
   try {
-    const page = browser.contexts()[0].pages()[0];
+    const context = browser.contexts()[0];
+    const page = context.pages()[0] || await context.newPage();
     return await runApplication(page, inputs, async () => {
       const r = await fetch(AUTH_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run_id: inputs.local_run_id, token: inputs.submit_authorization_token }) });
       return r.ok && (await r.json()).authorized === true;
     });
-  } catch {
+  } catch (error: any) {
     // An error after the click is ambiguous: report unknown so Skillsurger reconciles instead of retrying.
-    return { action_id: inputs.action_id, payload_hash: inputs.payload_hash, cv_version_id: inputs.cv_version_id, application_url: inputs.application_url, outcome: 'unknown' };
+    // Only the error type and a short message are returned (no inputs).
+    return { action_id: inputs.action_id, payload_hash: inputs.payload_hash, cv_version_id: inputs.cv_version_id, application_url: inputs.application_url, outcome: 'unknown',
+      error: `${error?.name || 'Error'}: ${String(error?.message || '').split('\n')[0].slice(0, 300)}`, step: currentStep,
+      page_url: currentPage ? String(currentPage.url()).slice(0, 200) : null,
+      page_text: currentPage ? String(await currentPage.locator('body').innerText({ timeout: 3000 }).catch(() => '')).replace(/\s+/g, ' ').slice(0, 400) : null, input_sizes: Object.fromEntries(Object.entries(inputs).map(([k, v]) => [k, v.length])) };
   } finally {
     await browser.close().catch(() => {});
   }

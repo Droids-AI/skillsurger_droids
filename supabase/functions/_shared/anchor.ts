@@ -96,9 +96,34 @@ export async function taskStatus(runId: string): Promise<TaskStatus> {
   return validTaskStatus(await call(`/v2/tasks/runs/${encodeURIComponent(runId)}/status`));
 }
 
+/** Operator-only: start a pinned code task, then poll (up to ~110s) and return its final output. Probes/dry runs only. */
+export async function runCodeTaskSync(taskId: string, inputs: Record<string, string> = {}): Promise<Record<string, unknown>> {
+  const code = parseCodeTask(taskId);
+  if (!code) throw new AnchorError(400, 'not_a_code_task');
+  const started = await call('/v1/task/run', { method: 'POST', body: JSON.stringify({ taskId: code.id, version: code.version, async: true, cleanupSessions: true,
+    inputs: Object.fromEntries(Object.entries(inputs).map(([k, v]) => ['ANCHOR_' + k.toUpperCase(), v])) }) });
+  const runId = `code_${code.id}_${started?.executionResultId}`;
+  for (let i = 0; i < 22; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    const e = await inspectCodeRun(runId);
+    if (!['queued', 'running'].includes(String(e.status))) return e;
+  }
+  return { status: 'still_running', runId };
+}
+
+/** Operator-only diagnostics for a code-task run: provider status, output and error text (truncated). */
+export async function inspectCodeRun(runId: string): Promise<Record<string, unknown>> {
+  const code = CODE_RUN.exec(runId);
+  if (!code) throw new AnchorError(400, 'not_a_code_run');
+  const e = await call(`/v1/task/${code[1]}/executions/${code[2]}`);
+  return { status: e?.status ?? null, version: e?.version ?? null, executionTime: e?.executionTime ?? null,
+    output: typeof e?.output === 'string' ? e.output.slice(0, 2000) : e?.output ?? null,
+    errorMessage: typeof e?.errorMessage === 'string' ? e.errorMessage.slice(0, 4000) : null };
+}
+
 /** Operator-only: create (or reuse by name) a code task and deploy a new pinned version. Returns "code:<id>:<version>". */
 export async function provisionCodeTask(name: string, codeBase64: string, description: string, domainAllowlist: string[]): Promise<string> {
-  const browserConfiguration = { recording: { active: false }, timeout: { max_duration: 5, idle_timeout: 2 }, domain_allowlist: domainAllowlist };
+  const browserConfiguration = { recording: { active: false }, proxy: { active: false }, timeout: { max_duration: 5, idle_timeout: 2 }, domain_allowlist: domainAllowlist };
   const list = await call('/v1/task?limit=100').catch(() => null);
   const tasks: any[] = Array.isArray(list) ? list : Array.isArray(list?.tasks) ? list.tasks : [];
   let task = tasks.find((t) => t?.name === name && !t?.deleted);
