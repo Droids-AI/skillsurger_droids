@@ -161,7 +161,7 @@ export default function DashboardPage() {
 
           {/* Sidebar - Always visible on desktop, toggleable on mobile */}
           <div
-            className={`fixed lg:static inset-y-0 left-0 transform ${
+            className={`fixed lg:sticky lg:top-0 lg:self-start inset-y-0 left-0 transform ${
               isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
             } lg:translate-x-0 transition-transform duration-200 ease-in-out z-30 w-64 shrink-0 bg-white border-r shadow-lg lg:shadow-none pt-24 h-screen overflow-y-auto overflow-x-hidden`}
           >

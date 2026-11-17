@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { Check, ChevronDown, Copy, FileText, Send, Users } from 'lucide-react';
 import ApplicationExecution from './ApplicationExecution';
 
 // Per-job pipeline (agent-platform plan 4.3, manual handoff until browser automation exists):
@@ -31,6 +32,21 @@ interface Message { id: string; sequence_id: string; step: string; body: string;
 
 const STEP_LABEL: Record<string, string> = { connection_note: 'Connection note', referral_ask: 'Referral ask', follow_up_1: 'Follow-up 1', follow_up_2: 'Follow-up 2' };
 const STATE_LABEL: Record<string, string> = { needs_approval: 'Waiting for your approval', queued: 'Approved', running: 'In progress', needs_you: 'Needs your attention', reconciling: 'Checking submission outcome', done: 'Applied', failed: 'Closed' };
+
+function Step({ n, title, icon, badge, done, children }: { n: number; title: string; icon: JSX.Element; badge?: string; done?: boolean; children: React.ReactNode }) {
+  return (
+  <section aria-label={title} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className="flex flex-wrap items-center gap-3">
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${done ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+        {done ? <Check className="h-4 w-4" aria-hidden="true" /> : n}
+      </span>
+      <h3 className="flex items-center gap-2 font-semibold text-gray-900">{icon}{title}</h3>
+      {badge && <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${done ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{badge}</span>}
+    </div>
+    <div className="mt-3 text-sm text-gray-700">{children}</div>
+  </section>
+);
+}
 
 export default function ApplicationPipeline({ job }: { job: { id: string; title: string; company: string } }) {
   const [cvs, setCvs] = useState<CV[]>([]);
@@ -73,145 +89,178 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
     const { error: rpcError } = await supabase.rpc('agent_decide_approval', { p_action_id: action!.id, p_decision: 'approved', p_payload_hash: action!.payload_hash });
     if (rpcError) throw new Error(rpcError.message.includes('mismatch') ? 'The application changed since you opened it. Reload and review again.' : 'Could not approve.');
   });
-  const btn = 'min-h-11 rounded-lg px-3 py-2 text-sm disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
+  const btn = 'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
+  const primary = `${btn} bg-blue-600 text-white hover:bg-blue-700`;
+  const success = `${btn} bg-green-600 text-white hover:bg-green-700`;
+  const secondary = `${btn} border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`;
+  const field = 'min-h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
+
+  const cvDone = !!approved;
+  const appDone = action?.state === 'done';
+  const appState = !action || action.state === 'failed' ? (approved ? 'Ready to prepare' : 'Locked') : STATE_LABEL[action.state] || action.state;
+  const steps = [
+    { n: 1, label: 'Tailored CV', done: cvDone, current: !cvDone },
+    { n: 2, label: 'Application', done: appDone, current: cvDone && !appDone },
+    { n: 3, label: 'Outreach', done: sequences.some((q) => q.status !== 'active'), current: false },
+  ];
 
   return (
-    <div className="mt-3 space-y-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-      {error && <p role="alert" className="text-red-600">{error}</p>}
+    <div className="mt-4 space-y-4 text-sm">
+      <ol className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Progress">
+        {steps.map((st, i) => (
+          <li key={st.n} className="flex min-w-0 items-center gap-2">
+            <span className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${st.done ? 'bg-green-100 text-green-800' : st.current ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              {st.done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <span>{st.n}</span>}{st.label}
+            </span>
+            {i < steps.length - 1 && <span className="h-px w-6 shrink-0 bg-gray-300" aria-hidden="true" />}
+          </li>
+        ))}
+      </ol>
 
-      {/* Step 1: tailored CV */}
-      <section aria-label="Tailored CV">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold text-gray-900">1. CV tailored to this job</h3>
-          <button type="button" disabled={!!busy} onClick={() => void run('tailor', () => call('/tailor', { savedJobId: job.id }))} className={`${btn} bg-blue-600 text-white`}>
+      {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">{error}</p>}
+
+      <Step n={1} title="CV tailored to this job" icon={<FileText className="h-4 w-4 text-gray-400" aria-hidden="true" />} done={cvDone}
+        badge={latest ? `Version ${latest.version} · ${latest.status}` : undefined}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p className="text-gray-600">Uses only facts from your profile. Every line shows the fact it came from; anything your profile can't back up is removed.</p>
+          <button type="button" disabled={!!busy} onClick={() => void run('tailor', () => call('/tailor', { savedJobId: job.id }))} className={`${latest ? secondary : primary} shrink-0`}>
             {busy === 'tailor' ? 'Tailoring…' : latest ? 'Tailor again' : 'Tailor my CV'}
           </button>
         </div>
-        <p className="mt-1 text-gray-600">Uses only facts from your profile. Every line shows the profile fact it came from; anything that could not be backed by your profile is removed.</p>
         {latest && (
-          <div className="mt-3 rounded-lg bg-white p-3">
-            <p className="text-xs text-gray-500">Version {latest.version} · {latest.status}</p>
-            {latest.content.headline && <p className="mt-1 font-medium">{latest.content.headline}</p>}
+          <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+            {latest.content.headline && <p className="text-base font-semibold text-gray-900">{latest.content.headline}</p>}
             {[...(latest.content.summary ? [{ heading: 'Summary', items: [latest.content.summary] }] : []), ...latest.content.sections].map((section) => (
-              <div key={section.heading} className="mt-3">
-                <p className="font-medium">{section.heading}</p>
-                <ul className="mt-1 space-y-2">
+              <div key={section.heading} className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{section.heading}</p>
+                <ul className="mt-2 space-y-2">
                   {section.items.map((item, i) => (
-                    <li key={i} className="grid gap-1 sm:grid-cols-2">
-                      <span>{item.text}</span>
-                      <span className="text-xs text-gray-500">From your profile: {factText(latest, item.evidence)}</span>
+                    <li key={i} className="rounded-md bg-white p-3 ring-1 ring-gray-100">
+                      <p className="text-gray-900">{item.text}</p>
+                      <p className="mt-1 text-xs text-gray-500">From your profile: {factText(latest, item.evidence)}</p>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
             {latest.questions.length > 0 && (
-              <div className="mt-3 rounded bg-amber-50 p-2 text-amber-900">
-                <p className="font-medium">The job asks for things your profile does not show. Add them to your profile if true, then tailor again:</p>
-                <ul className="list-disc pl-5">{latest.questions.map((q) => <li key={q}>{q}</li>)}</ul>
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                <p className="font-medium">The job asks for things your profile doesn't show. Add them to your profile if true, then tailor again:</p>
+                <ul className="mt-1 list-disc pl-5">{latest.questions.map((q) => <li key={q}>{q}</li>)}</ul>
               </div>
             )}
             {latest.dropped.length > 0 && (
-              <details className="mt-2 text-xs text-gray-600"><summary>{latest.dropped.length} line(s) removed because your profile did not support them</summary>
-                <ul className="list-disc pl-5">{latest.dropped.map((d, i) => <li key={i}>{d.text} ({d.reason})</li>)}</ul>
+              <details className="group mt-3 text-xs text-gray-600">
+                <summary className="flex cursor-pointer list-none items-center gap-1 font-medium"><ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" aria-hidden="true" />{latest.dropped.length} line(s) removed because your profile didn't support them</summary>
+                <ul className="mt-1 list-disc pl-5">{latest.dropped.map((d, i) => <li key={i}>{d.text} ({d.reason})</li>)}</ul>
               </details>
             )}
             {latest.status === 'draft' && (
-              <div className="mt-3 flex gap-2">
-                <button type="button" disabled={!!busy} onClick={() => void run('cv', () => call('/cv-decision', { cvId: latest.id, decision: 'approved' }))} className={`${btn} bg-green-600 text-white`}>Approve this CV</button>
-                <button type="button" disabled={!!busy} onClick={() => void run('cv', () => call('/cv-decision', { cvId: latest.id, decision: 'rejected' }))} className={`${btn} border border-gray-300`}>Reject</button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" disabled={!!busy} onClick={() => void run('cv', () => call('/cv-decision', { cvId: latest.id, decision: 'approved' }))} className={success}><Check className="h-4 w-4" aria-hidden="true" />Approve this CV</button>
+                <button type="button" disabled={!!busy} onClick={() => void run('cv', () => call('/cv-decision', { cvId: latest.id, decision: 'rejected' }))} className={secondary}>Reject</button>
               </div>
             )}
           </div>
         )}
-      </section>
+      </Step>
 
-      {/* Step 2: application */}
-      <section aria-label="Application">
-        <h3 className="font-semibold text-gray-900">2. Application</h3>
+      <Step n={2} title="Application" icon={<Send className="h-4 w-4 text-gray-400" aria-hidden="true" />} done={appDone} badge={appState}>
         {!approved ? (
-          <p className="mt-1 text-gray-600">Approve a tailored CV first.</p>
+          <p className="text-gray-500">Approve a tailored CV first.</p>
         ) : !action || action.state === 'failed' ? (
-          <div className="mt-2 space-y-2">
-          {action?.state === 'failed' && <p role="status" className="text-gray-700">Your previous draft is closed. A new draft will need a new approval.</p>}
-          <label className="block font-medium" htmlFor={`application-url-${job.id}`}>Exact application link (optional for manual applications)</label>
-          <input id={`application-url-${job.id}`} type="url" inputMode="url" value={applicationUrl} onChange={event => setApplicationUrl(event.target.value)}
-            placeholder="https://…" className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2" />
-          <p className="text-gray-600">Use the link for this specific job. Browser applications are available only on supported, verified boards.</p>
-          <button type="button" disabled={!!busy} onClick={() => void run('app', () => call('/application', { savedJobId: job.id, applicationUrl: applicationUrl.trim() }))} className={`${btn} mt-2 bg-blue-600 text-white`}>
-            {busy === 'app' ? 'Preparing…' : 'Prepare application'}
-          </button>
+          <div className="space-y-3">
+            {action?.state === 'failed' && <p role="status" className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">Your previous draft is closed. A new draft needs a new approval.</p>}
+            <div>
+              <label className="mb-1 block font-medium text-gray-900" htmlFor={`application-url-${job.id}`}>Application link <span className="font-normal text-gray-500">(optional for manual applications)</span></label>
+              <input id={`application-url-${job.id}`} type="url" inputMode="url" value={applicationUrl} onChange={event => setApplicationUrl(event.target.value)}
+                placeholder="https://…" className={field} />
+              <p className="mt-1 text-xs text-gray-500">Use the link for this specific job. Browser applications work only on supported, verified boards.</p>
+            </div>
+            <button type="button" disabled={!!busy} onClick={() => void run('app', () => call('/application', { savedJobId: job.id, applicationUrl: applicationUrl.trim() }))} className={primary}>
+              {busy === 'app' ? 'Preparing…' : 'Prepare application'}
+            </button>
           </div>
         ) : (
-          <div className="mt-2 rounded-lg bg-white p-3">
-            <p className="text-xs text-gray-500">{STATE_LABEL[action.state] || action.state}</p>
-            <p className="mt-1 break-words"><span className="font-medium">Where:</span> {action.payload.destination}</p>
-            <p className="mt-1 text-gray-600">{action.payload.execution_mode === 'anchor' ? 'Skillsurger can run this application through Anchor after your approval and the account checks below.' : 'Manual application: you complete and submit the form on the job board.'}</p>
-            {action.payload.cover_note && <p className="mt-2 whitespace-pre-wrap"><span className="font-medium">Cover note:</span> {action.payload.cover_note}</p>}
-            <dl className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
-              {Object.entries(action.payload.answers || {}).map(([k, v]) => <div key={k}><dt className="inline font-medium capitalize">{k.replace(/_/g, ' ')}: </dt><dd className="inline">{String(v)}</dd></div>)}
-            </dl>
-            {(action.payload.questions_for_user?.length ?? 0) > 0 && (
-              <ul className="mt-2 list-disc pl-5 text-amber-900">{(action.payload.questions_for_user || []).map((q: string) => <li key={q}>{q}</li>)}</ul>
-            )}
-            {action.state === 'needs_approval' && (
-              <button type="button" disabled={!!busy} onClick={() => void approveApplication()} className={`${btn} mt-3 bg-green-600 text-white`}>Approve this application</button>
-            )}
+          <div className="space-y-3">
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+              <p className="break-words"><span className="font-medium text-gray-900">Where:</span> {action.payload.destination}</p>
+              <p className="mt-1 text-gray-600">{action.payload.execution_mode === 'anchor' ? 'Skillsurger will fill and submit this form in a secure browser after your approval.' : 'Manual application: you complete and submit the form on the job board.'}</p>
+              {action.payload.cover_note && <p className="mt-3 whitespace-pre-wrap"><span className="font-medium text-gray-900">Cover note:</span> {action.payload.cover_note}</p>}
+              {Object.keys(action.payload.answers || {}).length > 0 && (
+                <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
+                  {Object.entries(action.payload.answers || {}).map(([k, v]) => <div key={k} className="min-w-0 truncate"><dt className="inline font-medium capitalize text-gray-900">{k.replace(/_/g, ' ')}: </dt><dd className="inline" title={String(v)}>{String(v)}</dd></div>)}
+                </dl>
+              )}
+              {(action.payload.questions_for_user?.length ?? 0) > 0 && (
+                <ul className="mt-3 list-disc rounded-lg border border-amber-200 bg-amber-50 py-2 pl-8 pr-3 text-amber-900">{(action.payload.questions_for_user || []).map((q: string) => <li key={q}>{q}</li>)}</ul>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {action.state === 'needs_approval' && (
+                <button type="button" disabled={!!busy} onClick={() => void approveApplication()} className={success}><Check className="h-4 w-4" aria-hidden="true" />Approve this application</button>
+              )}
+              {['needs_approval','queued'].includes(action.state) && <button type="button" disabled={!!busy}
+                onClick={() => void run('close',() => call('/application-close',{actionId:action.id}))} className={secondary}>Discard draft</button>}
+            </div>
             {action.payload.execution_mode === 'anchor' && <ApplicationExecution actionId={action.id} actionState={action.state} onUpdate={load} />}
-            {['needs_approval','queued'].includes(action.state) && <button type="button" disabled={!!busy}
-              onClick={() => void run('close',() => call('/application-close',{actionId:action.id}))} className={`${btn} mt-3 border border-gray-300`}>Discard unstarted draft</button>}
             {action.state === 'queued' && action.payload.execution_mode !== 'anchor' && (
-              <div className="mt-3 space-y-2">
-                <p>Apply on {job.company}'s site using your approved CV and the details above. Skillsurger does not submit anything for you.</p>
-                {typeof action.payload.application_url === 'string' && /^https:\/\//.test(action.payload.application_url) &&
-                  <a href={action.payload.application_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center underline">Open application form</a>}
-                <button type="button" disabled={!!busy} onClick={() => void run('applied', () => call('/applied', { actionId: action.id }))} className={`${btn} bg-green-600 text-white`}>I've applied</button>
+              <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                <p>Apply on {job.company}'s site using your approved CV and the details above. Skillsurger doesn't submit anything for you.</p>
+                <div className="flex flex-wrap gap-2">
+                  {typeof action.payload.application_url === 'string' && /^https:\/\//.test(action.payload.application_url) &&
+                    <a href={action.payload.application_url} target="_blank" rel="noreferrer" className={secondary}>Open application form</a>}
+                  <button type="button" disabled={!!busy} onClick={() => void run('applied', () => call('/applied', { actionId: action.id }))} className={success}>I've applied</button>
+                </div>
               </div>
             )}
           </div>
         )}
-      </section>
+      </Step>
 
-      {/* Step 3: outreach */}
-      <section aria-label="Outreach">
-        <h3 className="font-semibold text-gray-900">3. Outreach drafts (you send them)</h3>
-        <p className="mt-1 text-gray-600">Drafts for one contact at {job.company}. Copy and send each one yourself; nothing is sent automatically. A reply, or an interview, offer or rejection on this job, stops the sequence.</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-4">
-          <input aria-label="Contact name" placeholder="Contact name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} className="rounded border px-2 py-1.5" />
-          <input aria-label="Contact role" placeholder="Their role (optional)" value={contact.role} onChange={(e) => setContact({ ...contact, role: e.target.value })} className="rounded border px-2 py-1.5" />
-          <select aria-label="Channel" value={contact.channel} onChange={(e) => setContact({ ...contact, channel: e.target.value })} className="rounded border px-2 py-1.5"><option value="linkedin">LinkedIn</option><option value="email">Email</option></select>
-          <button type="button" disabled={!!busy || !contact.name.trim()} onClick={() => void run('outreach', async () => { await call('/outreach', { savedJobId: job.id, contactName: contact.name, contactRole: contact.role, channel: contact.channel }); setContact({ name: '', role: '', channel: 'linkedin' }); })} className={`${btn} bg-blue-600 text-white`}>
+      <Step n={3} title="Outreach drafts" icon={<Users className="h-4 w-4 text-gray-400" aria-hidden="true" />} badge="You send them">
+        <p className="text-gray-600">Drafts for one contact at {job.company}. Copy and send each one yourself; nothing is sent automatically. A reply, or an interview, offer or rejection on this job, stops the sequence.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_9rem_auto]">
+          <input aria-label="Contact name" placeholder="Contact name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} className={field} />
+          <input aria-label="Contact role" placeholder="Their role (optional)" value={contact.role} onChange={(e) => setContact({ ...contact, role: e.target.value })} className={field} />
+          <div className="relative">
+            <select aria-label="Channel" value={contact.channel} onChange={(e) => setContact({ ...contact, channel: e.target.value })} className={`${field} cursor-pointer appearance-none pr-9`}>
+              <option value="linkedin">LinkedIn</option><option value="email">Email</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" aria-hidden="true" />
+          </div>
+          <button type="button" disabled={!!busy || !contact.name.trim()} onClick={() => void run('outreach', async () => { await call('/outreach', { savedJobId: job.id, contactName: contact.name, contactRole: contact.role, channel: contact.channel }); setContact({ name: '', role: '', channel: 'linkedin' }); })} className={primary}>
             {busy === 'outreach' ? 'Drafting…' : 'Draft messages'}
           </button>
         </div>
         {sequences.map((seq) => (
-          <div key={seq.id} className="mt-3 rounded-lg bg-white p-3">
+          <div key={seq.id} className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-medium">{seq.contact_name}{seq.contact_role ? `, ${seq.contact_role}` : ''} · {seq.channel}</p>
-              <span className="text-xs text-gray-500">{seq.status}{seq.stop_reason ? ` (${seq.stop_reason.replace(/_/g, ' ')})` : ''}</span>
+              <p className="font-medium text-gray-900">{seq.contact_name}{seq.contact_role ? `, ${seq.contact_role}` : ''} <span className="font-normal text-gray-500">· {seq.channel === 'email' ? 'Email' : 'LinkedIn'}</span></p>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${seq.status === 'active' ? 'bg-blue-50 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{seq.status}{seq.stop_reason ? ` (${seq.stop_reason.replace(/_/g, ' ')})` : ''}</span>
             </div>
             {messages.filter((m) => m.sequence_id === seq.id).map((m) => (
-              <div key={m.id} className="mt-2 border-t pt-2">
+              <div key={m.id} className="mt-3 rounded-md bg-white p-3 ring-1 ring-gray-100">
                 <p className="text-xs font-medium text-gray-500">{STEP_LABEL[m.step]} · {m.status}</p>
-                <p className="whitespace-pre-wrap">{m.body}</p>
+                <p className="mt-1 whitespace-pre-wrap text-gray-900">{m.body}</p>
                 {seq.status === 'active' && m.status === 'draft' && (
-                  <div className="mt-1 flex gap-2">
-                    <button type="button" onClick={() => void navigator.clipboard?.writeText(m.body)} className={`${btn} border border-gray-300`}>Copy</button>
-                    <button type="button" disabled={!!busy} onClick={() => void run('sent', () => call('/outreach-event', { sequenceId: seq.id, event: 'sent', messageId: m.id }))} className={`${btn} border border-gray-300`}>I sent this</button>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => void navigator.clipboard?.writeText(m.body)} className={secondary}><Copy className="h-4 w-4" aria-hidden="true" />Copy</button>
+                    <button type="button" disabled={!!busy} onClick={() => void run('sent', () => call('/outreach-event', { sequenceId: seq.id, event: 'sent', messageId: m.id }))} className={secondary}>I sent this</button>
                   </div>
                 )}
               </div>
             ))}
             {seq.status === 'active' && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'replied' }))} className={`${btn} border border-gray-300`}>They replied</button>
-                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'accepted' }))} className={`${btn} border border-gray-300`}>They accepted</button>
-                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'stop' }))} className={`${btn} border border-gray-300`}>Stop</button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'replied' }))} className={secondary}>They replied</button>
+                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'accepted' }))} className={secondary}>They accepted</button>
+                <button type="button" disabled={!!busy} onClick={() => void run('stop', () => call('/outreach-event', { sequenceId: seq.id, event: 'stop' }))} className={secondary}>Stop</button>
               </div>
             )}
           </div>
         ))}
-      </section>
+      </Step>
     </div>
   );
 }

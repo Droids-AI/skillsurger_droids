@@ -69,8 +69,8 @@ export default function ApplicationExecution({ actionId, actionState, onUpdate }
     : run?.state === 'needs_you' ? 'Your attention is needed'
     : run?.state === 'failed' ? 'Browser run closed'
     : run ? 'Browser application in progress' : actionState === 'needs_approval' ? 'Review the details above before approving' : 'Ready to start after the checks below';
-  const btn = 'min-h-11 rounded-lg px-3 py-2 text-sm disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
-  return <div className="mt-3 space-y-3 border-t border-gray-200 pt-3">
+  const btn = 'inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
+  return <div className="space-y-3 rounded-lg border border-blue-100 bg-blue-50/60 p-4">
     <p role="status" aria-atomic="true" className="font-medium text-gray-900">{busy ? 'Checking your application…' : status}</p>
     {error && <p role="alert" className="text-red-700">{error}</p>}
     {run?.reason && <p className="text-gray-700">{REASONS[run.reason] || 'Check this application before taking another action.'}</p>}
@@ -86,12 +86,12 @@ export default function ApplicationExecution({ actionId, actionState, onUpdate }
         <span>I allow Skillsurger to send my approved CV and application details to Anchor Browser and this job board to carry out applications I approve. <a href="/privacy" target="_blank" rel="noreferrer" className="underline">Privacy details</a>.</span>
       </label>
       {actionState === 'queued' && <button type="button" disabled={busy || !context.enabled || !context.consent || !context.connection_verified || !context.budget_enabled}
-        onClick={() => void change(() => call('/run', { actionId }))} className={`${btn} bg-blue-600 text-white`}>Start approved application</button>}
+        onClick={() => void change(() => call('/run', { actionId }))} className={`${btn} bg-blue-600 text-white hover:bg-blue-700`}>Start approved application</button>}
     </>}
     <div className="flex flex-wrap gap-2">
-      <button type="button" disabled={busy} onClick={() => void change(() => call('/refresh', { actionId }))} className={`${btn} border border-gray-300 bg-white`}>Check status</button>
+      <button type="button" disabled={busy} onClick={() => void change(() => call('/refresh', { actionId }))} className={`${btn} border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`}>Check status</button>
       {context?.consent && <button type="button" disabled={busy} onClick={() => void change(() => call('/consent', { enabled: false, policyVersion: '2026-11-17' }))}
-        className={`${btn} border border-gray-300 bg-white`}>Withdraw browser permission</button>}
+        className={`${btn} border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`}>Withdraw browser permission</button>}
     </div>
     {run && context?.consent && <p className="text-xs text-gray-600">Withdrawing permission blocks new runs. A task already sent to the browser may finish; check its status here.</p>}
   </div>;

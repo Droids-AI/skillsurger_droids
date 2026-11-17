@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Video } from 'lucide-react';
+import { ChevronDown, ClipboardList, Video } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ApplicationPipeline from './ApplicationPipeline';
 
@@ -24,6 +24,15 @@ interface TrackedJob {
   status_updated_at: string | null;
   created_at: string;
 }
+
+const STATUS_STYLE: Record<Status, string> = {
+  saved: 'border-gray-300 bg-white text-gray-800',
+  applied: 'border-blue-300 bg-blue-50 text-blue-800',
+  interviewing: 'border-violet-300 bg-violet-50 text-violet-800',
+  offer: 'border-green-300 bg-green-50 text-green-800',
+  rejected: 'border-red-200 bg-red-50 text-red-700',
+  withdrawn: 'border-gray-200 bg-gray-50 text-gray-500',
+};
 
 const formatDate = (value: string) => new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
@@ -103,48 +112,58 @@ export default function ApplicationTracker() {
               </li>
             ))}
           </ul>
-          <ul className="divide-y divide-gray-100">
-            {jobs.map(job => (
-              <li key={job.id} className="py-3">
-               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{job.title}</p>
-                  <p className="text-sm text-gray-600 truncate">
+          <ul className="space-y-3">
+            {jobs.map(job => {
+              const open = openId === job.id;
+              return (
+              <li key={job.id} className={`rounded-xl border transition-colors ${open ? 'border-blue-200 bg-blue-50/30 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+               <div className="flex flex-col gap-3 p-4 md:flex-row md:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-900" title={job.title}>{job.title}</p>
+                  <p className="truncate text-sm text-gray-600" title={job.company}>
                     {job.company}{job.location ? ` · ${job.location}` : ''} · {job.status_updated_at ? `updated ${formatDate(job.status_updated_at)}` : `saved ${formatDate(job.created_at)}`}
                   </p>
                 </div>
-                {job.status === 'interviewing' && (
+                <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0">
+                  {job.status === 'interviewing' && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard?section=mentorship&job=${encodeURIComponent(job.id)}`)}
+                      className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                    >
+                      <Video className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Practise this interview
+                    </button>
+                  )}
+                  <label className="sr-only" htmlFor={`status-${job.id}`}>Status for {job.title} at {job.company}</label>
+                  <div className="relative w-36 shrink-0">
+                    <select
+                      id={`status-${job.id}`}
+                      value={job.status}
+                      disabled={savingId === job.id}
+                      onChange={event => void updateStatus(job, event.target.value as Status)}
+                      className={`min-h-10 w-full cursor-pointer appearance-none rounded-lg border py-2 pl-3 pr-9 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-wait disabled:opacity-60 ${STATUS_STYLE[job.status]}`}
+                    >
+                      {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60" aria-hidden="true" />
+                  </div>
                   <button
                     type="button"
-                    onClick={() => navigate(`/dashboard?section=mentorship&job=${encodeURIComponent(job.id)}`)}
-                    className="inline-flex items-center text-sm text-blue-700 hover:text-blue-800 font-medium"
+                    aria-expanded={open}
+                    aria-controls={`pipeline-${job.id}`}
+                    onClick={() => setOpenId(open ? null : job.id)}
+                    className={`inline-flex min-h-10 w-44 shrink-0 items-center justify-center gap-1 rounded-lg border px-3 text-sm font-medium transition-colors ${open ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'}`}
                   >
-                    <Video className="w-4 h-4 mr-1" aria-hidden="true" />
-                    Practise this interview
+                    {open ? 'Hide' : 'Prepare application'}
+                    <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
                   </button>
-                )}
-                <label className="sr-only" htmlFor={`status-${job.id}`}>Status for {job.title} at {job.company}</label>
-                <select
-                  id={`status-${job.id}`}
-                  value={job.status}
-                  disabled={savingId === job.id}
-                  onChange={event => void updateStatus(job, event.target.value as Status)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-                <button
-                  type="button"
-                  aria-expanded={openId === job.id}
-                  onClick={() => setOpenId(openId === job.id ? null : job.id)}
-                  className="text-sm text-blue-700 hover:text-blue-800 font-medium whitespace-nowrap"
-                >
-                  {openId === job.id ? 'Close' : 'Prepare application'}
-                </button>
+                </div>
                </div>
-               {openId === job.id && <ApplicationPipeline job={job} />}
+               {open && <div id={`pipeline-${job.id}`} className="border-t border-blue-100 px-4 pb-4"><ApplicationPipeline job={job} /></div>}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       )}
