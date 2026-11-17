@@ -19,6 +19,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const JobSearchPage = lazy(() => import('./pages/JobSearchPage'));
 const GoogleAuthCallback = lazy(() => import('./pages/GoogleAuthCallback'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TestJobPage = lazy(() => import('./pages/TestJobPage'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
@@ -92,6 +93,7 @@ function App() {
               />
               <Route path="/auth/callback" element={<GoogleAuthCallback />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/qa/test-job" element={<TestJobPage />} />
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/about" element={<AboutUs />} />

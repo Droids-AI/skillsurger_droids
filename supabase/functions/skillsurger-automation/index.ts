@@ -49,7 +49,8 @@ function workerDeps():WorkerDeps {
       if (!publicApplicationUrl(a.payload.application_url) || new URL(a.payload.application_url).hostname !== run.site) throw new Error('invalid_destination');
       const identity:any = check(await admin.from('agent_external_identity').select('anchor_identity_id')
         .eq('user_id',run.user_id).eq('product','skillsurger').eq('site',run.site).eq('status','active').maybeSingle());
-      if (run.state==='queued' && !identity) throw new Error('verified_connection_required');
+      const board:any = check(await admin.from('skillsurger_automation_boards').select('requires_login').eq('site',run.site).maybeSingle());
+      if (run.state==='queued' && board?.requires_login!==false && !identity) throw new Error('verified_connection_required');
       return {payload:a.payload,payload_hash:a.payload_hash,identity_id:identity?.anchor_identity_id || ''};
     },
     async update(run,worker,state,anchorRunId,reason,result) {
@@ -89,8 +90,16 @@ export async function handle(request:Request) {
     }
     const auth = request.headers.get('authorization') || '';
     const operator = auth === `Bearer ${serviceKey}`;
-    if (['/tick','/verify-connection','/record-cost','/resolve'].includes(route)) {
+    if (['/tick','/verify-connection','/record-cost','/resolve','/provision-code-task'].includes(route)) {
       if (!operator) return json({error:'not_authorized'},403);
+      if (route==='/provision-code-task') {
+        // Uploads a reviewed deterministic task and returns its pinned id for skillsurger_automation_boards.task_id.
+        if (typeof body.name!=='string' || !/^[a-zA-Z0-9_-]{3,100}$/.test(body.name) || typeof body.codeBase64!=='string' ||
+          !/^[A-Za-z0-9+/]+={0,2}$/.test(body.codeBase64) || body.codeBase64.length>400000 || !Array.isArray(body.domainAllowlist) ||
+          !body.domainAllowlist.every((d:unknown)=>typeof d==='string' && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)))
+          throw new RequestError(400,'invalid_task');
+        return json({task_id:await anchor.provisionCodeTask(body.name,body.codeBase64,String(body.description||'').slice(0,1000),body.domainAllowlist)});
+      }
       if (route==='/tick') {
         const rows:any[] = check(await admin.from('skillsurger_application_runs').select('id')
           .in('state',['queued','launching','running','reconciling']).lte('next_check_at',new Date().toISOString())
@@ -151,7 +160,8 @@ export async function handle(request:Request) {
       const identity:any=check(await admin.from('agent_external_identity').select('status,ownership_verified_at').eq('user_id',uid)
         .eq('product','skillsurger').eq('site',a.payload.automation?.site || '').maybeSingle());
       return json({run:await view(uid,a.id),enabled:enabled(),consent:!!consent && !consent.revoked_at && consent.policy_version==='2026-11-17',
-        connection_verified:identity?.status==='active' && !!identity?.ownership_verified_at,
+        connection_verified:(identity?.status==='active' && !!identity?.ownership_verified_at) ||
+          (check(await admin.from('skillsurger_automation_boards').select('requires_login').eq('site',a.payload.automation?.site || '').maybeSingle()) as any)?.requires_login===false,
         budget_enabled:!!policy?.enabled && Number(policy.max_run_credits)>=Number(a.payload.automation?.max_run_credits || 0),
         weekly_budget_credits:policy?.weekly_credits ?? 0});
     }

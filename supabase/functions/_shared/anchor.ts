@@ -60,14 +60,52 @@ function validTaskStatus(value: any): TaskStatus {
     !['queued','running','success','failure','timeout','cancelled'].includes(value.status)) throw new AnchorError(502,'anchor_invalid_task_response');
   return { run_id: value.run_id, status: value.status, result: value.result && typeof value.result === 'object' ? value.result : undefined };
 }
-/** v2 Tasks: no retries on this POST; the caller owns the dispatch tombstone. */
+// Pinned code tasks: board task_id "code:<task uuid>:<version number>". Run ids are "code_<task uuid>_<execution uuid>".
+const CODE_TASK = /^code:([0-9a-f-]{36}):(\d{1,6})$/i;
+const CODE_RUN = /^code_([0-9a-f-]{36})_([0-9a-f-]{36})$/i;
+export function parseCodeTask(taskId: string) {
+  const m = CODE_TASK.exec(taskId); return m ? { id: m[1], version: m[2] } : null;
+}
+function codeStatus(taskId: string, execution: any): TaskStatus {
+  const status = String(execution?.status || '');
+  let result: Record<string, unknown> | undefined;
+  if (typeof execution?.output === 'string' && execution.output) {
+    try { const parsed = JSON.parse(execution.output); if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) result = parsed; } catch { /* not a receipt */ }
+  }
+  return validTaskStatus({ run_id: `code_${taskId}_${execution?.id}`, status, result });
+}
+
+/** Tasks: no retries on this POST; the caller owns the dispatch tombstone. */
 export async function runTask(taskId: string, identityId: string, inputs: Record<string,string>): Promise<TaskStatus> {
+  const code = parseCodeTask(taskId);
+  if (code) {
+    const prefixed = Object.fromEntries(Object.entries(inputs).map(([k, v]) => ['ANCHOR_' + k.toUpperCase(), v]));
+    const started = await call('/v1/task/run', { method: 'POST', body: JSON.stringify({
+      taskId: code.id, version: code.version, async: true, cleanupSessions: true, inputs: prefixed,
+    }) });
+    if (typeof started?.executionResultId !== 'string') throw new AnchorError(502, 'anchor_invalid_task_response');
+    return validTaskStatus({ run_id: `code_${code.id}_${started.executionResultId}`, status: 'queued' });
+  }
   return validTaskStatus(await call(`/v2/tasks/${encodeURIComponent(taskId)}/run`, {
     method:'POST', body:JSON.stringify({ input_params:inputs,identity_id:identityId,identity_skip_validation:false,cleanup_sessions:true,sync:false }),
   }));
 }
 export async function taskStatus(runId: string): Promise<TaskStatus> {
+  const code = CODE_RUN.exec(runId);
+  if (code) return codeStatus(code[1], await call(`/v1/task/${code[1]}/executions/${code[2]}`));
   return validTaskStatus(await call(`/v2/tasks/runs/${encodeURIComponent(runId)}/status`));
+}
+
+/** Operator-only: create (or reuse by name) a code task and deploy a new pinned version. Returns "code:<id>:<version>". */
+export async function provisionCodeTask(name: string, codeBase64: string, description: string, domainAllowlist: string[]): Promise<string> {
+  const browserConfiguration = { recording: { active: false }, timeout: { max_duration: 5, idle_timeout: 2 }, domain_allowlist: domainAllowlist };
+  const list = await call('/v1/task?limit=100').catch(() => null);
+  const tasks: any[] = Array.isArray(list) ? list : Array.isArray(list?.tasks) ? list.tasks : [];
+  let task = tasks.find((t) => t?.name === name && !t?.deleted);
+  if (!task) task = await call('/v1/task', { method: 'POST', body: JSON.stringify({ name, language: 'typescript', description, code: codeBase64, browserConfiguration }) });
+  const version = await call(`/v1/task/${encodeURIComponent(task.id)}/deploy`, { method: 'POST', body: JSON.stringify({ code: codeBase64, language: 'typescript', description, browserConfiguration }) });
+  if (!/^\d+$/.test(String(version?.version))) throw new AnchorError(502, 'anchor_invalid_task_response');
+  return `code:${task.id}:${version.version}`;
 }
 
 /** Configured job boards: ANCHOR_APPLICATIONS = {"site.example.com":"<anchor application id>", ...} */

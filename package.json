@@ -19,7 +19,8 @@
     "check:pipeline": "node scripts/check-application-pipeline.cjs",
     "check:automation": "node scripts/check-automation-worker.cjs && deno test --no-lock --allow-env supabase/functions/_shared/automation/worker.test.ts supabase/functions/_shared/anchor.test.ts supabase/functions/anchor-connect/handler.test.ts supabase/functions/skillsurger-automation/handler.test.ts && node scripts/check-automation-browser.cjs && node scripts/check-automation-e2e.cjs",
     "check:automation:ui": "node scripts/check-automation-ui.cjs",
-    "check:anchor:live": "node scripts/check-anchor-session.cjs"
+    "check:anchor:live": "node scripts/check-anchor-session.cjs",
+    "check:test-board": "node scripts/check-test-board-db.cjs && node --experimental-strip-types --no-warnings scripts/check-test-board-task.mjs"
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.2.0",
