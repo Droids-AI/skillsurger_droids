@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import ApplicationExecution from './ApplicationExecution';
 
 // Per-job pipeline (agent-platform plan 4.3, manual handoff until browser automation exists):
 // 1. tailored CV from profile facts only, shown against the source facts, user approves
@@ -8,7 +9,7 @@ import { supabase } from '../lib/supabase';
 
 const FN = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/skillsurger-agent`;
 
-async function call<T = any>(route: string, body: Record<string, unknown> = {}): Promise<T> {
+async function call<T = unknown>(route: string, body: Record<string, unknown> = {}): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Please sign in again');
   const response = await fetch(`${FN}${route}`, {
@@ -24,12 +25,12 @@ async function call<T = any>(route: string, body: Record<string, unknown> = {}):
 interface Fact { id: string; label: string; text: string }
 interface Item { text: string; evidence: string[] }
 interface CV { id: string; version: number; status: string; facts: Fact[]; content: { headline: string; summary: Item | null; sections: { heading: string; items: Item[] }[] }; dropped: { text: string; reason: string }[]; questions: string[]; created_at: string }
-interface Action { id: string; state: string; payload: any; payload_hash: string }
+interface Action { id: string; state: string; payload: { destination: string; execution_mode?: string; application_url?: string; cover_note?: string; answers?: Record<string, string>; questions_for_user?: string[] }; payload_hash: string }
 interface Sequence { id: string; contact_name: string; contact_role: string; channel: string; status: string; stop_reason: string | null }
 interface Message { id: string; sequence_id: string; step: string; body: string; status: string }
 
 const STEP_LABEL: Record<string, string> = { connection_note: 'Connection note', referral_ask: 'Referral ask', follow_up_1: 'Follow-up 1', follow_up_2: 'Follow-up 2' };
-const STATE_LABEL: Record<string, string> = { needs_approval: 'Waiting for your approval', queued: 'Approved: apply on the site, then confirm', done: 'Applied', failed: 'Closed' };
+const STATE_LABEL: Record<string, string> = { needs_approval: 'Waiting for your approval', queued: 'Approved', running: 'In progress', needs_you: 'Needs your attention', reconciling: 'Checking submission outcome', done: 'Applied', failed: 'Closed' };
 
 export default function ApplicationPipeline({ job }: { job: { id: string; title: string; company: string } }) {
   const [cvs, setCvs] = useState<CV[]>([]);
@@ -39,23 +40,26 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
   const [contact, setContact] = useState({ name: '', role: '', channel: 'linkedin' });
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
+  const [applicationUrl, setApplicationUrl] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     const [c, a, s] = await Promise.all([
       supabase.from('skillsurger_tailored_cvs').select('*').eq('saved_job_id', job.id).order('version', { ascending: false }),
       supabase.from('agent_action_ledger').select('id,state,payload,payload_hash').eq('action_type', 'apply_job').eq('payload->>saved_job_id', job.id).order('created_at', { ascending: false }).limit(1),
       supabase.from('skillsurger_outreach_sequences').select('*').eq('saved_job_id', job.id).order('created_at'),
     ]);
+    if (c.error || a.error || s.error) throw new Error('Could not load this application. Refresh before taking any action.');
     setCvs((c.data as CV[]) || []);
     setAction(((a.data as Action[]) || [])[0] || null);
     const seqs = (s.data as Sequence[]) || [];
     setSequences(seqs);
     if (seqs.length) {
       const m = await supabase.from('skillsurger_outreach_messages').select('*').in('sequence_id', seqs.map((q) => q.id));
+      if (m.error) throw new Error('Could not load your outreach drafts.');
       setMessages(((m.data as Message[]) || []).sort((x, y) => Object.keys(STEP_LABEL).indexOf(x.step) - Object.keys(STEP_LABEL).indexOf(y.step)));
     } else setMessages([]);
-  }
-  useEffect(() => { void load(); }, [job.id]);
+  }, [job.id]);
+  useEffect(() => { setApplicationUrl(''); void load().catch(e => setError(e.message)); }, [load]);
 
   const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key); setError('');
@@ -69,7 +73,7 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
     const { error: rpcError } = await supabase.rpc('agent_decide_approval', { p_action_id: action!.id, p_decision: 'approved', p_payload_hash: action!.payload_hash });
     if (rpcError) throw new Error(rpcError.message.includes('mismatch') ? 'The application changed since you opened it. Reload and review again.' : 'Could not approve.');
   });
-  const btn = 'rounded-lg px-3 py-2 text-sm disabled:opacity-50';
+  const btn = 'min-h-11 rounded-lg px-3 py-2 text-sm disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
 
   return (
     <div className="mt-3 space-y-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
@@ -128,26 +132,39 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
         {!approved ? (
           <p className="mt-1 text-gray-600">Approve a tailored CV first.</p>
         ) : !action || action.state === 'failed' ? (
-          <button type="button" disabled={!!busy} onClick={() => void run('app', () => call('/application', { savedJobId: job.id }))} className={`${btn} mt-2 bg-blue-600 text-white`}>
+          <div className="mt-2 space-y-2">
+          {action?.state === 'failed' && <p role="status" className="text-gray-700">Your previous draft is closed. A new draft will need a new approval.</p>}
+          <label className="block font-medium" htmlFor={`application-url-${job.id}`}>Exact application link (optional for manual applications)</label>
+          <input id={`application-url-${job.id}`} type="url" inputMode="url" value={applicationUrl} onChange={event => setApplicationUrl(event.target.value)}
+            placeholder="https://…" className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2" />
+          <p className="text-gray-600">Use the link for this specific job. Browser applications are available only on supported, verified boards.</p>
+          <button type="button" disabled={!!busy} onClick={() => void run('app', () => call('/application', { savedJobId: job.id, applicationUrl: applicationUrl.trim() }))} className={`${btn} mt-2 bg-blue-600 text-white`}>
             {busy === 'app' ? 'Preparing…' : 'Prepare application'}
           </button>
+          </div>
         ) : (
           <div className="mt-2 rounded-lg bg-white p-3">
             <p className="text-xs text-gray-500">{STATE_LABEL[action.state] || action.state}</p>
-            <p className="mt-1"><span className="font-medium">Where:</span> {action.payload.destination}</p>
+            <p className="mt-1 break-words"><span className="font-medium">Where:</span> {action.payload.destination}</p>
+            <p className="mt-1 text-gray-600">{action.payload.execution_mode === 'anchor' ? 'Skillsurger can run this application through Anchor after your approval and the account checks below.' : 'Manual application: you complete and submit the form on the job board.'}</p>
             {action.payload.cover_note && <p className="mt-2 whitespace-pre-wrap"><span className="font-medium">Cover note:</span> {action.payload.cover_note}</p>}
             <dl className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
               {Object.entries(action.payload.answers || {}).map(([k, v]) => <div key={k}><dt className="inline font-medium capitalize">{k.replace(/_/g, ' ')}: </dt><dd className="inline">{String(v)}</dd></div>)}
             </dl>
-            {action.payload.questions_for_user?.length > 0 && (
-              <ul className="mt-2 list-disc pl-5 text-amber-900">{action.payload.questions_for_user.map((q: string) => <li key={q}>{q}</li>)}</ul>
+            {(action.payload.questions_for_user?.length ?? 0) > 0 && (
+              <ul className="mt-2 list-disc pl-5 text-amber-900">{(action.payload.questions_for_user || []).map((q: string) => <li key={q}>{q}</li>)}</ul>
             )}
             {action.state === 'needs_approval' && (
               <button type="button" disabled={!!busy} onClick={() => void approveApplication()} className={`${btn} mt-3 bg-green-600 text-white`}>Approve this application</button>
             )}
-            {action.state === 'queued' && (
+            {action.payload.execution_mode === 'anchor' && <ApplicationExecution actionId={action.id} actionState={action.state} onUpdate={load} />}
+            {['needs_approval','queued'].includes(action.state) && <button type="button" disabled={!!busy}
+              onClick={() => void run('close',() => call('/application-close',{actionId:action.id}))} className={`${btn} mt-3 border border-gray-300`}>Discard unstarted draft</button>}
+            {action.state === 'queued' && action.payload.execution_mode !== 'anchor' && (
               <div className="mt-3 space-y-2">
                 <p>Apply on {job.company}'s site using your approved CV and the details above. Skillsurger does not submit anything for you.</p>
+                {typeof action.payload.application_url === 'string' && /^https:\/\//.test(action.payload.application_url) &&
+                  <a href={action.payload.application_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center underline">Open application form</a>}
                 <button type="button" disabled={!!busy} onClick={() => void run('applied', () => call('/applied', { actionId: action.id }))} className={`${btn} bg-green-600 text-white`}>I've applied</button>
               </div>
             )}
@@ -200,8 +217,9 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
 }
 
 export function WeeklyReport() {
-  const [data, setData] = useState<any>(null);
-  useEffect(() => { void call('/report').then(setData).catch(() => setData(null)); }, []);
+  interface Report { applications: { applied: number; awaiting_approval: number; approved_not_applied: number; failed: number }; messages_sent: number; pipeline: Record<string, number> }
+  const [data, setData] = useState<Report | null>(null);
+  useEffect(() => { void call<Report>('/report').then(setData).catch(() => setData(null)); }, []);
   if (!data) return null;
   const a = data.applications;
   return (

@@ -21,6 +21,8 @@ Deno.serve(request => handle(request, {
     return error || !data.user ? null : data.user.id;
   },
   sites: anchor.configuredSites,
+  operatorFromRequest: req => req.headers.get('authorization') === `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+  readiness: anchor.readiness,
   randomState: () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''),
   anchor,
   db: {
@@ -33,10 +35,13 @@ Deno.serve(request => handle(request, {
       return (rows?.[0] as any) || null;
     },
     async identityClaimed(id) {
-      return (check(await admin.from('agent_external_identity').select('id').eq('anchor_identity_id', id).limit(1)) || []).length > 0;
+      return (check(await admin.from('agent_external_identity').select('id').eq('anchor_identity_id', id).limit(1)) as unknown[] || []).length > 0;
     },
     async removeConnection(userId, site) {
       check(await admin.from('agent_external_identity').delete().eq('user_id', userId).eq('product', 'skillsurger').eq('site', site));
+    },
+    async prepareDisconnect(userId,site) {
+      check(await admin.rpc('skillsurger_prepare_disconnect',{p_user_id:userId,p_site:site}));
     },
     async clearInactive(userId, site) {
       check(await admin.from('agent_external_identity').delete().eq('user_id', userId).eq('product', 'skillsurger').eq('site', site).in('status', ['deleted', 'failed']));

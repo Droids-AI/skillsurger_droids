@@ -1,4 +1,4 @@
-// Application pipeline without browser automation (agent-platform plan 4.3).
+// CV/application preparation; browser execution lives in skillsurger-automation.
 //   POST /tailor            {savedJobId}                  -> new tailored CV draft (validated, cited)
 //   POST /cv-decision       {cvId, decision}              -> approve / reject a draft
 //   POST /application       {savedJobId}                  -> application action (needs approval) from approved CV
@@ -10,6 +10,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { textCompletion } from '../_shared/skillsurger/openai.js';
 import { buildFacts, validateTailored, tailorPrompt, TAILOR_SYSTEM, type Fact } from '../_shared/skillsurger/tailoring.ts';
+import { chooseExecution, publicApplicationUrl } from '../_shared/automation/contracts.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -86,10 +87,24 @@ async function application(userId: string, token: string, body: any) {
   const job = await ownJob(userId, body.savedJobId);
   const cv = must(await admin.from('skillsurger_tailored_cvs').select('*').eq('saved_job_id', job.id).eq('user_id', userId).eq('status', 'approved').maybeSingle()) as any;
   if (!cv) throw new HttpError(409, 'Approve a tailored CV for this job first.');
+  const applicationUrl = publicApplicationUrl(body.applicationUrl || job.application_url);
+  if (body.applicationUrl && !applicationUrl) throw new HttpError(400, 'Use the complete HTTPS application link, without a password or fragment.');
+  let board: any = null;
+  // Older deployments remain usable with automation off, before its migration is installed.
+  if (applicationUrl && Deno.env.get('FF_SKILLSURGER_AUTOMATION') === 'true') {
+    board = must(await admin.from('skillsurger_automation_boards').select('*').eq('site', new URL(applicationUrl).hostname).eq('enabled', true).maybeSingle()) as any;
+    const policy = must(await admin.from('skillsurger_automation_policy').select('enabled,max_run_credits,weekly_credits').eq('user_id',userId).maybeSingle()) as any;
+    if (!policy?.enabled || Number(policy.max_run_credits)<Number(board?.max_run_credits || 0) || Number(policy.weekly_credits)<Number(board?.max_run_credits || 0)) board=null;
+  }
+  const execution = chooseExecution(applicationUrl, board, Deno.env.get('FF_SKILLSURGER_AUTOMATION') === 'true');
   // S2: never a second application to the same job.
   const done = must(await admin.from('agent_action_ledger').select('id').eq('user_id', userId).eq('action_type', 'apply_job')
     .eq('payload->>saved_job_id', job.id).eq('state', 'done').limit(1)) as any[];
   if (done.length) throw new HttpError(409, 'You have already applied to this job.');
+  const prior = must(await admin.from('agent_action_ledger').select('id,state,payload,payload_hash,created_at').eq('user_id',userId).eq('action_type','apply_job')
+    .eq('payload->>saved_job_id',job.id).eq('payload->>cv_version_id',cv.id).order('created_at',{ascending:false})) as any[];
+  const existing = prior.find(a=>a.state!=='failed' && (a.payload.application_url || null)===applicationUrl);
+  if (existing) return {action:existing,created:false};
   const profile = must(await admin.from('profiles').select('full_name,email,phone,city,country,current_role,years_of_experience,linkedin_url').eq('id', userId).maybeSingle()) as any || {};
   const facts: Fact[] = cv.facts;
   const sources = facts.map((f) => f.text).join(' ') + ' ' + [job.title, job.company, job.description].join(' ');
@@ -110,11 +125,15 @@ async function application(userId: string, token: string, body: any) {
   questions.push('Notice period and expected salary are not in your profile: answer these on the form yourself.');
   const payload = {
     saved_job_id: job.id, cv_version_id: cv.id, job_title: job.title, company: job.company,
-    destination: `${job.company} – ${job.title} (apply on the employer's site)`, cover_note: coverNote, answers, questions_for_user: [...new Set(questions)],
+    destination: applicationUrl || `${job.company} – ${job.title} (apply on the employer's site)`,
+    application_url: applicationUrl, cv_content: cv.content, ...execution,
+    cover_note: coverNote, answers, questions_for_user: [...new Set(questions)],
   };
   const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } });
   const created = must(await userClient.rpc('agent_create_action', {
-    p_product: 'skillsurger', p_action_type: 'apply_job', p_intent_key: `apply_job:${userId}:${job.id}:${cv.id}`, p_destination: payload.destination, p_payload: payload,
+    p_product: 'skillsurger', p_action_type: 'apply_job',
+    p_intent_key: `apply_job:${userId}:${job.id}:${cv.id}:${await urlFingerprint(applicationUrl || 'manual')}:${prior.filter(a=>a.state==='failed').length}`,
+    p_destination: payload.destination, p_payload: payload,
   }), 'Could not prepare the application.') as any[];
   const action = must(await admin.from('agent_action_ledger').select('id,state,payload,payload_hash,created_at').eq('id', created[0].action_id).single());
   return { action, created: created[0].created };
@@ -124,6 +143,9 @@ async function applied(userId: string, body: any) {
   const action = must(await admin.from('agent_action_ledger').select('*').eq('id', body.actionId).eq('user_id', userId).maybeSingle()) as any;
   if (!action || action.action_type !== 'apply_job') throw new HttpError(404, 'Application not found.');
   if (action.state === 'done') return { action };
+  if (action.payload.execution_mode === 'anchor') throw new HttpError(409, 'Check the browser application status. An automated run cannot be marked applied through the manual flow.');
+  const cv = must(await admin.from('skillsurger_tailored_cvs').select('id').eq('id', action.payload.cv_version_id).eq('user_id', userId).eq('status', 'approved').maybeSingle());
+  if (!cv) throw new HttpError(409, 'Your approved CV changed. Prepare a new application.');
   // Same execution precondition as automated runs: a matching, unexpired, unrevoked approval.
   const claimed = must(await admin.rpc('agent_claim_action', { p_action_id: action.id }));
   if (!claimed) throw new HttpError(409, 'Approve this application before marking it applied.');
@@ -132,6 +154,10 @@ async function applied(userId: string, body: any) {
   }).eq('id', action.id).select('*').single());
   must(await admin.from('saved_jobs').update({ status: 'applied', status_updated_at: new Date().toISOString() }).eq('id', action.payload.saved_job_id).eq('user_id', userId).eq('status', 'saved'));
   return { action: done };
+}
+
+async function urlFingerprint(value: string): Promise<string> {
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
 }
 
 async function outreach(userId: string, body: any) {
@@ -219,6 +245,13 @@ Deno.serve(async (request) => {
       case '/tailor': return json({ cv: await tailor(userId, body) });
       case '/cv-decision': return json({ cv: await cvDecision(userId, body) });
       case '/application': return json(await application(userId, token, body));
+      case '/application-close': {
+        const action = must(await admin.from('agent_action_ledger').select('id').eq('id',body.actionId).eq('user_id',userId).maybeSingle());
+        if (!action) throw new HttpError(404,'Application not found.');
+        const closed = must(await admin.rpc('skillsurger_close_application',{p_action_id:body.actionId,p_user_id:userId}));
+        if (!closed) throw new HttpError(409,'This application has already started. Check its outcome before taking another action.');
+        return json({closed:true});
+      }
       case '/applied': return json(await applied(userId, body));
       case '/outreach': return json(await outreach(userId, body));
       case '/outreach-event': return json(await outreachEvent(userId, body));

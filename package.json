@@ -16,7 +16,10 @@
     "postbuild": "node scripts/render-fde-page.cjs && node scripts/render-route-metadata.cjs",
     "check:qa-report": "node scripts/check-qa-report-contracts.cjs && node scripts/check-tracker-database.cjs && node scripts/check-tracker-edge.cjs && node scripts/check-qa-report-browser.cjs",
     "check:agent": "node scripts/check-agent-platform.cjs",
-    "check:pipeline": "node scripts/check-application-pipeline.cjs"
+    "check:pipeline": "node scripts/check-application-pipeline.cjs",
+    "check:automation": "node scripts/check-automation-worker.cjs && deno test --no-lock --allow-env supabase/functions/_shared/automation/worker.test.ts supabase/functions/_shared/anchor.test.ts supabase/functions/anchor-connect/handler.test.ts supabase/functions/skillsurger-automation/handler.test.ts && node scripts/check-automation-browser.cjs && node scripts/check-automation-e2e.cjs",
+    "check:automation:ui": "node scripts/check-automation-ui.cjs",
+    "check:anchor:live": "node scripts/check-anchor-session.cjs"
   },
   "dependencies": {
     "@mistralai/mistralai": "^1.2.0",

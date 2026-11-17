@@ -1,5 +1,6 @@
 // Minimal Anchor Browser REST client (https://api.anchorbrowser.io, `anchor-api-key` header).
 // Secret: ANCHOR_API_KEY. Only the calls the connect flow needs.
+import type { TaskStatus } from './automation/contracts.ts';
 
 const BASE = 'https://api.anchorbrowser.io';
 
@@ -13,10 +14,11 @@ async function call(path: string, init: RequestInit = {}): Promise<any> {
   const response = await fetch(`${BASE}${path}`, {
     ...init,
     headers: { 'anchor-api-key': key, 'Content-Type': 'application/json', ...(init.headers || {}) },
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(15000), redirect: 'error',
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new AnchorError(response.status, response.status === 404 ? 'anchor_not_found' : 'anchor_request_failed');
+  if (!response.ok) throw new AnchorError(response.status, response.status === 404 ? 'anchor_not_found' : response.status === 401 || response.status === 403 ? 'anchor_auth_rejected' : 'anchor_request_failed');
+  if (body === null && !(init.method === 'DELETE' && response.status === 204)) throw new AnchorError(502, 'anchor_invalid_response');
   // Anchor wraps most responses as { data: ... }
   return body && typeof body === 'object' && 'data' in body ? body.data : body;
 }
@@ -53,12 +55,76 @@ export async function deleteIdentity(identityId: string): Promise<void> {
   }
 }
 
+function validTaskStatus(value: any): TaskStatus {
+  if (typeof value?.run_id !== 'string' || !/^[A-Za-z0-9_-]{1,150}$/.test(value.run_id) ||
+    !['queued','running','success','failure','timeout','cancelled'].includes(value.status)) throw new AnchorError(502,'anchor_invalid_task_response');
+  return { run_id: value.run_id, status: value.status, result: value.result && typeof value.result === 'object' ? value.result : undefined };
+}
+/** v2 Tasks: no retries on this POST; the caller owns the dispatch tombstone. */
+export async function runTask(taskId: string, identityId: string, inputs: Record<string,string>): Promise<TaskStatus> {
+  return validTaskStatus(await call(`/v2/tasks/${encodeURIComponent(taskId)}/run`, {
+    method:'POST', body:JSON.stringify({ input_params:inputs,identity_id:identityId,identity_skip_validation:false,cleanup_sessions:true,sync:false }),
+  }));
+}
+export async function taskStatus(runId: string): Promise<TaskStatus> {
+  return validTaskStatus(await call(`/v2/tasks/runs/${encodeURIComponent(runId)}/status`));
+}
+
 /** Configured job boards: ANCHOR_APPLICATIONS = {"site.example.com":"<anchor application id>", ...} */
 export function configuredSites(): Record<string, string> {
+  return parseConfiguredSites(Deno.env.get('ANCHOR_APPLICATIONS') || '{}');
+}
+
+export function parseConfiguredSites(raw: string): Record<string, string> {
   try {
-    const parsed = JSON.parse(Deno.env.get('ANCHOR_APPLICATIONS') || '{}');
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const sites: Record<string, string> = {};
+    for (const [site, id] of Object.entries(parsed)) {
+      if (/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(site) &&
+        typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id)) sites[site] = id;
+    }
+    return sites;
   } catch {
     return {};
   }
+}
+
+/** Operator-only probe. GETs only: never opens a browser, creates an identity or runs a task. */
+export async function readiness(): Promise<Record<string, unknown>> {
+  const configured = configuredSites();
+  const configuration = {
+    api_key: !!Deno.env.get('ANCHOR_API_KEY'),
+    webhook_secret: !!Deno.env.get('ANCHOR_WEBHOOK_SECRET'),
+    connect_enabled: Deno.env.get('FF_SKILLSURGER_CONNECT') === 'true',
+    sites: Object.keys(configured).sort(),
+  };
+  if (!configuration.api_key) return { configuration, authentication: 'unconfigured', pilot_ready: false };
+  const probe = async (path: string) => {
+    try { return { ok: true as const, data: await call(path) }; }
+    catch (error) {
+      return { ok: false as const, code: error instanceof AnchorError ? error.code : 'anchor_unreachable', http_status: error instanceof AnchorError ? error.status : null };
+    }
+  };
+  const [billing, apps] = await Promise.all([probe('/v1/billing'), probe('/v1/applications')]);
+  const list = apps.ok && Array.isArray(apps.data?.applications) ? apps.data.applications : null;
+  const safeHost = (value: unknown) => { try { return new URL(String(value)).hostname; } catch { return null; } };
+  return {
+    configuration,
+    billing: billing.ok ? {
+      ok: true, tier: typeof billing.data?.tier === 'string' ? billing.data.tier : null,
+      credits: typeof billing.data?.credits === 'number' ? billing.data.credits : null,
+      included_credits: typeof billing.data?.included_credits === 'number' ? billing.data.included_credits : null,
+      credits_used: typeof billing.data?.credits_used === 'number' ? billing.data.credits_used : null,
+      cost_limit: typeof billing.data?.cost_limit === 'number' ? billing.data.cost_limit : null,
+    } : billing,
+    applications: apps.ok ? {
+      ok: list !== null,
+      available: list?.map((app: { url?: unknown }) => ({ host: safeHost(app.url) })) ?? [],
+      configured: Object.entries(configured).map(([site, id]) => ({ site, found: !!list?.some((app: { id?: string }) => app.id === id) })),
+    } : apps,
+    // These remain separate gates even when the provider accepts the key and the account is paid.
+    pilot_ready: false,
+    remaining_gates: ['job_board_and_terms_verified', 'identity_ownership_verified', 'owner_usage_budget', 'test_account_walkthrough'],
+  };
 }

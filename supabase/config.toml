@@ -31,3 +31,7 @@ verify_jwt = false
 
 [functions.skillsurger-agent]
 verify_jwt = false
+
+[functions.skillsurger-automation]
+# JWT ownership / service-only operator routes are verified inside the function.
+verify_jwt = false

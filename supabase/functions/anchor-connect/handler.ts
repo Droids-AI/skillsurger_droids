@@ -20,13 +20,14 @@ export interface Deps {
   callbackBase: string;       // .../functions/v1/anchor-connect/callback
   allowedOrigins: string[];
   userFromRequest(request: Request): Promise<string | null>;
+  operatorFromRequest?(request: Request): boolean;
+  readiness?(): Promise<Record<string, unknown>>;
   sites(): Record<string, string>;
   randomState(): string;
   anchor: {
     createIdentityToken(applicationId: string, callbackUrl: string): Promise<{ token: string; expiresAt: string | null; tokenHash: string | null }>;
     getIdentity(identityId: string): Promise<{ id: string }>;
     applicationHasIdentity(applicationId: string, identityId: string): Promise<boolean>;
-    updateIdentityMetadata(identityId: string, name: string, metadata: Record<string, unknown>): Promise<void>;
     deleteIdentity(identityId: string): Promise<void>;
   };
   db: {
@@ -35,6 +36,7 @@ export interface Deps {
     consumeState(state: string): Promise<ConsumedState | null>;
     identityClaimed(anchorIdentityId: string): Promise<boolean>;
     removeConnection(userId: string, site: string): Promise<void>;
+    prepareDisconnect?(userId: string, site: string): Promise<void>;
     clearInactive(userId: string, site: string): Promise<void>;
     insertIdentity(row: { user_id: string; product: string; site: string; anchor_identity_id: string }): Promise<'ok' | 'conflict'>;
   };
@@ -63,6 +65,12 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
   if (origin && !deps.allowedOrigins.includes(origin)) return json({ error: { code: 'origin_not_allowed' } }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+  // Works while the customer feature is disabled. No billing/config details for user JWTs.
+  if (path === '/readiness' && request.method === 'GET') {
+    if (!deps.operatorFromRequest?.(request)) return json({ error: { code: 'not_authorized' } }, 403);
+    if (!deps.readiness) return json({ error: { code: 'readiness_unavailable' } }, 503);
+    return json(await deps.readiness());
+  }
   if (!deps.enabled) return json({ error: { code: 'connect_disabled', message: 'Job board connections are not available yet.' } }, 404);
 
   const userId = await deps.userFromRequest(request);
@@ -81,7 +89,7 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
   let body: { site?: unknown };
   try { body = await request.json(); } catch { return json({ error: { code: 'invalid_json' } }, 400); }
   const site = typeof body?.site === 'string' ? body.site : '';
-  const applicationId = sites[site];
+  const applicationId = Object.hasOwn(sites, site) ? sites[site] : null;
   if (!applicationId) return json({ error: { code: 'unknown_site', message: 'That job board is not available.' } }, 400);
 
   if (path === '/start') {
@@ -100,7 +108,13 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
 
   if (path === '/disconnect') {
     const rows = (await deps.db.connections(userId)).filter(r => r.site === site && r.status !== 'deleted');
-    for (const row of rows) await deps.anchor.deleteIdentity(row.anchor_identity_id);
+    await deps.db.prepareDisconnect?.(userId,site);
+    // A pending callback is an untrusted claim, not proof of identity ownership.
+    // Never mutate or delete that vendor identity on the basis of the claim alone.
+    for (const row of rows) {
+      if (row.status === 'active') await deps.anchor.deleteIdentity(row.anchor_identity_id);
+      else deps.log({ code: 'unverified_identity_cleanup_requires_operator', site });
+    }
     await deps.db.removeConnection(userId, site);
     deps.log({ code: 'connect_removed', site });
     return json({ removed: rows.length });
@@ -135,10 +149,8 @@ async function handleCallback(state: string, url: URL, deps: Deps): Promise<Resp
     await deps.db.clearInactive(consumed.user_id, consumed.site); // an earlier deleted/failed row for this site; a live one makes the insert conflict
     const inserted = await deps.db.insertIdentity({ user_id: consumed.user_id, product: consumed.product, site: consumed.site, anchor_identity_id: identityId });
     if (inserted === 'conflict') return land('failed');
-    // Tag the identity at Anchor so an operator can match it to our user during manual verification.
-    await deps.anchor.updateIdentityMetadata(identityId, `skillsurger:${consumed.user_id}`, {
-      externalUserId: consumed.user_id, product: consumed.product, site: consumed.site, connectState: state, connectedAt: new Date().toISOString(),
-    }).catch(() => deps.log({ code: 'connect_metadata_failed', site: consumed.site }));
+    // Do not tag the vendor identity with our user ID until ownership is independently
+    // verified. Same-application membership alone does not prove it belongs to this user.
     deps.log({ code: 'connect_pending_verification', site: consumed.site });
     return land('pending_verification');
   } catch {

@@ -87,7 +87,7 @@ export default function ApplicationTracker() {
         <h2 id="application-tracker-heading" className="text-lg font-semibold text-gray-900">My applications</h2>
       </div>
       <p className="text-sm text-gray-600 mb-4">
-        Track each saved job as you apply. You update the status yourself; nothing is applied for you.
+        Track each saved job, review your CV and approve applications. Browser submissions require a supported board and your explicit approval; other applications stay manual.
       </p>
 
       {error && <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>}

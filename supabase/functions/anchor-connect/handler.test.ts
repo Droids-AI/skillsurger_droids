@@ -21,7 +21,6 @@ function world(overrides: Partial<Deps> = {}) {
       createIdentityToken: async (app, cb) => { calls.push(`token:${app}:${cb}`); return { token: 'raw-token', expiresAt: new Date(Date.now() + 900_000).toISOString(), tokenHash: 'hash-1' }; },
       getIdentity: async id => { if (!anchorIdentities.has(id)) throw new Error('404'); return { id }; },
       applicationHasIdentity: async (app, id) => anchorIdentities.get(id) === app,
-      updateIdentityMetadata: async (id, name) => { calls.push(`meta:${id}:${name}`); },
       deleteIdentity: async id => { calls.push(`delete:${id}`); },
     },
     db: {
@@ -77,7 +76,7 @@ Deno.test('start requires sign-in and a configured site; stores only the token h
   assert(w.calls[0].endsWith(`/callback/${state}`), 'callback URL carries the state in the path');
 });
 
-Deno.test('callback binds the identity as pending_verification, tags it, and is single-use', async () => {
+Deno.test('callback stores an unverified claim without changing the vendor identity and is single-use', async () => {
   const w = world();
   const { state } = await start(w);
   const r = await handle(callback(state, 'identity_id=ident-a&status=success'), w.deps);
@@ -86,7 +85,7 @@ Deno.test('callback binds the identity as pending_verification, tags it, and is 
   assertEquals(w.identities.length, 1);
   assertEquals(w.identities[0].status, 'pending_verification');
   assertEquals(w.identities[0].user_id, A);
-  assert(w.calls.includes(`meta:ident-a:skillsurger:${A}`));
+  assertEquals(w.calls.filter(c => c.startsWith('meta:') || c.startsWith('delete:')), []);
   assertEquals(landing(await handle(callback(state, 'identity_id=ident-a&status=success'), w.deps)), 'expired', 'replay does nothing');
   assertEquals((await handle(post('/start', 'Bearer a', { site: 'jobs.example.com' }), w.deps)).status, 409, 'already connected');
 });
@@ -120,14 +119,55 @@ Deno.test('expired state is refused', async () => {
   assertEquals(landing(await handle(callback(state, 'identity_id=ident-a&status=success'), w.deps)), 'expired');
 });
 
-Deno.test('disconnect removes the identity at Anchor and here; reconnect then works', async () => {
+Deno.test('disconnect removes a pending claim locally without deleting an unverified vendor identity', async () => {
   const w = world();
   await handle(callback((await start(w)).state, 'identity_id=ident-a&status=success'), w.deps);
   const r = await handle(post('/disconnect', 'Bearer a', { site: 'jobs.example.com' }), w.deps);
   assertEquals((await r.json()).removed, 1);
-  assert(w.calls.includes('delete:ident-a'));
+  assertEquals(w.calls.filter(c => c.startsWith('delete:')), []);
   assertEquals(w.identities.length, 0);
   assertEquals(landing(await handle(callback((await start(w)).state, 'identity_id=ident-b&status=success'), w.deps)), 'pending_verification');
+});
+
+Deno.test('disconnect deletes an independently activated identity and preserves it locally on provider failure', async () => {
+  const w = world();
+  await handle(callback((await start(w)).state, 'identity_id=ident-a&status=success'), w.deps);
+  w.identities[0].status = 'active'; // trusted operator activation, never a callback
+  w.deps.anchor.deleteIdentity = async () => { throw new Error('provider unavailable'); };
+  let failed = false;
+  try { await handle(post('/disconnect', 'Bearer a', { site: 'jobs.example.com' }), w.deps); } catch { failed = true; }
+  assert(failed);
+  assertEquals(w.identities.length, 1, 'keep the mapping so deletion can be retried');
+  w.deps.anchor.deleteIdentity = async id => { w.calls.push(`delete:${id}`); };
+  await handle(post('/disconnect', 'Bearer a', { site: 'jobs.example.com' }), w.deps);
+  assert(w.calls.includes('delete:ident-a'));
+  assertEquals(w.identities.length, 0);
+});
+
+Deno.test('readiness is private to an operator, including when connections are disabled', async () => {
+  let probes = 0;
+  const w = world({ enabled: false,
+    operatorFromRequest: req => req.headers.get('authorization') === 'Bearer operator',
+    readiness: async () => { probes++; return { pilot_ready: false }; },
+  });
+  for (const auth of [null, 'Bearer a', 'Bearer b']) {
+    const req = new Request(`${BASE}/readiness`, { headers: auth ? { authorization: auth } : {} });
+    assertEquals((await handle(req, w.deps)).status, 403);
+  }
+  assertEquals(probes, 0, 'denied requests must not contact Anchor');
+  const response = await handle(new Request(`${BASE}/readiness`, { headers: { authorization: 'Bearer operator' } }), w.deps);
+  assertEquals(response.status, 200);
+  assertEquals(response.headers.get('cache-control'), 'no-store');
+  assertEquals(await response.json(), { pilot_ready: false });
+  assertEquals(probes, 1);
+});
+
+Deno.test('prototype property names cannot select an unconfigured application', async () => {
+  const w = world();
+  for (const site of ['toString', 'constructor', '__proto__']) {
+    assertEquals((await handle(post('/start', 'Bearer a', { site }), w.deps)).status, 400);
+  }
+  assertEquals(w.calls.length, 0);
 });
 
 Deno.test('disallowed browser origin is refused', async () => {

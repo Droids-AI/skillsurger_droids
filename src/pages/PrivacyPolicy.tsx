@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
           
           <div className="prose max-w-none">
             <p className="text-gray-600 mb-6">
-              Last updated: 10 November 2026
+              Last updated: 17 November 2026
             </p>
 
             <section className="mb-8">
@@ -76,7 +76,7 @@ export default function PrivacyPolicy() {
                 <li>Google Ads, Microsoft Clarity and Hotjar: advertising measurement and site analytics, as described above.</li>
               </ul>
               <p className="text-gray-700 mt-4">
-                If we add a new kind of processing, such as automating actions on job sites for you, we will update this policy and ask for your consent before it applies to you.
+                If you enable browser applications, Anchor Browser processes the approved CV, application answers and job-board session needed to carry out your approved application. The destination job board receives the details you approve. Skillsurger records your permission and requires a separate approval for each application. You can withdraw browser permission in the application controls to block new submissions; a task already dispatched may finish. Job-board sign-in takes place through Anchor's hosted sign-in flow.
               </p>
             </section>
 
