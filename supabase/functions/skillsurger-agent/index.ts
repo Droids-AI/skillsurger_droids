@@ -147,7 +147,8 @@ async function applied(userId: string, body: any) {
   const cv = must(await admin.from('skillsurger_tailored_cvs').select('id').eq('id', action.payload.cv_version_id).eq('user_id', userId).eq('status', 'approved').maybeSingle());
   if (!cv) throw new HttpError(409, 'Your approved CV changed. Prepare a new application.');
   // Same execution precondition as automated runs: a matching, unexpired, unrevoked approval.
-  const claimed = must(await admin.rpc('agent_claim_action', { p_action_id: action.id }));
+  // needs_you: an AI agent run stopped without submitting; the user applied themselves.
+  const claimed = must(await admin.rpc(action.state === 'needs_you' ? 'skillsurger_agent_claim' : 'agent_claim_action', { p_action_id: action.id }));
   if (!claimed) throw new HttpError(409, 'Approve this application before marking it applied.');
   const done = must(await admin.from('agent_action_ledger').update({
     state: 'done', evidence: { method: 'manual_handoff', applied_at: new Date().toISOString(), confirmed_by: 'user' },

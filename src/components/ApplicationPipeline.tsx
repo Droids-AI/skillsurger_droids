@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Check, ChevronDown, Copy, FileText, Send, Users } from 'lucide-react';
 import ApplicationExecution from './ApplicationExecution';
+import AgentApply from './AgentApply';
 
 // Per-job pipeline (agent-platform plan 4.3, manual handoff until browser automation exists):
 // 1. tailored CV from profile facts only, shown against the source facts, user approves
@@ -204,7 +205,9 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
                 onClick={() => void run('close',() => call('/application-close',{actionId:action.id}))} className={secondary}>Discard draft</button>}
             </div>
             {action.payload.execution_mode === 'anchor' && <ApplicationExecution actionId={action.id} actionState={action.state} onUpdate={load} />}
-            {action.state === 'queued' && action.payload.execution_mode !== 'anchor' && (
+            {action.payload.execution_mode !== 'anchor' && typeof action.payload.application_url === 'string' && ['queued', 'running', 'needs_you', 'reconciling', 'done'].includes(action.state) &&
+              <AgentApply actionId={action.id} actionState={action.state} onUpdate={load} />}
+            {['queued', 'needs_you'].includes(action.state) && action.payload.execution_mode !== 'anchor' && (
               <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50 p-4">
                 <p>Apply on {job.company}'s site using your approved CV and the details above. Skillsurger doesn't submit anything for you.</p>
                 <div className="flex flex-wrap gap-2">

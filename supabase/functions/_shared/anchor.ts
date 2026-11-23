@@ -191,3 +191,44 @@ export async function readiness(): Promise<Record<string, unknown>> {
     remaining_gates: ['job_board_and_terms_verified', 'identity_ownership_verified', 'owner_usage_budget', 'test_account_walkthrough'],
   };
 }
+
+// ---------- AI browser agent sessions (skillsurger-browser-agent) ----------
+/**
+ * Headful session with an interactive live view (the user can type a login, OTP or solve a CAPTCHA
+ * themselves). A per-user persistent profile keeps their site logins between runs.
+ */
+export async function createAgentSession(profileName: string): Promise<{ id: string; liveViewUrl: string | null }> {
+  const body = {
+    session: { recording: { active: false }, timeout: { max_duration: 45, idle_timeout: 15 }, live_view: { read_only: false } },
+    browser: { headless: { active: false }, profile: { name: profileName, persist: true }, popup_blocker: { active: false } },
+  };
+  let data: any;
+  try { data = await call('/v1/sessions', { method: 'POST', body: JSON.stringify(body) }); }
+  catch (error) {
+    // First run for this user: the profile may need to exist first on some accounts; retry without it.
+    if (!(error instanceof AnchorError) || error.status !== 400 && error.status !== 404) throw error;
+    data = await call('/v1/sessions', { method: 'POST', body: JSON.stringify({ ...body, browser: { headless: { active: false } } }) });
+  }
+  if (typeof data?.id !== 'string') throw new AnchorError(502, 'anchor_invalid_session');
+  return { id: data.id, liveViewUrl: typeof data.live_view_url === 'string' ? data.live_view_url : null };
+}
+
+export async function endSession(sessionId: string): Promise<void> {
+  try { await call(`/v1/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' }); }
+  catch (error) { if (!(error instanceof AnchorError && (error.status === 404 || error.status === 401))) throw error; }
+}
+
+/** Puts a file into the session's upload sandbox; returns its path for anchor_file_upload. */
+export async function uploadSessionFile(sessionId: string, name: string, bytes: Uint8Array, type: string): Promise<string> {
+  const key = Deno.env.get('ANCHOR_API_KEY');
+  if (!key) throw new AnchorError(503, 'anchor_not_configured');
+  const form = new FormData();
+  form.append('file', new Blob([bytes as Uint8Array<ArrayBuffer>], { type }), name);
+  const response = await fetch(`${BASE}/v1/sessions/${encodeURIComponent(sessionId)}/uploads?extract=false`, {
+    method: 'POST', headers: { 'anchor-api-key': key }, body: form, signal: AbortSignal.timeout(30000), redirect: 'error',
+  });
+  const body = await response.json().catch(() => null);
+  const paths = body?.data?.file_paths ?? body?.file_paths;
+  if (!response.ok || !Array.isArray(paths) || typeof paths[0] !== 'string') throw new AnchorError(response.ok ? 502 : response.status, 'anchor_upload_failed');
+  return paths[0];
+}

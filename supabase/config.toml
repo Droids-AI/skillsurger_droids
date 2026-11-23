@@ -39,3 +39,7 @@ verify_jwt = false
 [functions.skillsurger-test-board]
 # Public test-job inbox; the database accepts only submit-authorized automated runs.
 verify_jwt = false
+
+[functions.skillsurger-browser-agent]
+# User JWT and operator checks happen inside the function.
+verify_jwt = false
