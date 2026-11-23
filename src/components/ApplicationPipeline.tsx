@@ -49,15 +49,17 @@ function Step({ n, title, icon, badge, done, children }: { n: number; title: str
 );
 }
 
-export default function ApplicationPipeline({ job }: { job: { id: string; title: string; company: string } }) {
+export default function ApplicationPipeline({ job }: { job: { id: string; title: string; company: string; application_url?: string | null } }) {
   const [cvs, setCvs] = useState<CV[]>([]);
   const [action, setAction] = useState<Action | null>(null);
+  const [agentAvailable, setAgentAvailable] = useState(false);
   const [sequences, setSequences] = useState<Sequence[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [contact, setContact] = useState({ name: '', role: '', channel: 'linkedin' });
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const [applicationUrl, setApplicationUrl] = useState('');
+  const [applicationUrl, setApplicationUrl] = useState(job.application_url || '');
+  const [editingLink, setEditingLink] = useState(false);
 
   const load = useCallback(async () => {
     const [c, a, s] = await Promise.all([
@@ -76,7 +78,7 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
       setMessages(((m.data as Message[]) || []).sort((x, y) => Object.keys(STEP_LABEL).indexOf(x.step) - Object.keys(STEP_LABEL).indexOf(y.step)));
     } else setMessages([]);
   }, [job.id]);
-  useEffect(() => { setApplicationUrl(''); void load().catch(e => setError(e.message)); }, [load]);
+  useEffect(() => { setApplicationUrl(job.application_url || ''); setEditingLink(false); void load().catch(e => setError(e.message)); }, [load, job.application_url]);
 
   const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key); setError('');
@@ -173,10 +175,12 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
           <div className="space-y-3">
             {action?.state === 'failed' && <p role="status" className="rounded-lg bg-gray-50 px-3 py-2 text-gray-700">Your previous draft is closed. A new draft needs a new approval.</p>}
             <div>
-              <label className="mb-1 block font-medium text-gray-900" htmlFor={`application-url-${job.id}`}>Application link <span className="font-normal text-gray-500">(optional for manual applications)</span></label>
+              <label className="mb-1 block font-medium text-gray-900" htmlFor={`application-url-${job.id}`}>Application link</label>
               <input id={`application-url-${job.id}`} type="url" inputMode="url" value={applicationUrl} onChange={event => setApplicationUrl(event.target.value)}
                 placeholder="https://…" className={field} />
-              <p className="mt-1 text-xs text-gray-500">Use the link for this specific job. Browser applications work only on supported, verified boards.</p>
+              <p className="mt-1 text-xs text-gray-500">{job.application_url && applicationUrl.trim() === job.application_url
+                ? 'Taken from this job\'s Apply button. Change it if you want to apply on a different page.'
+                : 'The page where you apply for this specific job (https). Leave it empty to apply manually.'}</p>
             </div>
             <button type="button" disabled={!!busy} onClick={() => void run('app', () => call('/application', { savedJobId: job.id, applicationUrl: applicationUrl.trim() }))} className={primary}>
               {busy === 'app' ? 'Preparing…' : 'Prepare application'}
@@ -185,8 +189,24 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
         ) : (
           <div className="space-y-3">
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-              <p className="break-words"><span className="font-medium text-gray-900">Where:</span> {action.payload.destination}</p>
-              <p className="mt-1 text-gray-600">{action.payload.execution_mode === 'anchor' ? 'Skillsurger will fill and submit this form in a secure browser after your approval.' : 'Manual application: you complete and submit the form on the job board.'}</p>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="min-w-0 break-words"><span className="font-medium text-gray-900">Where:</span> {action.payload.destination}</p>
+                {['needs_approval', 'queued', 'needs_you'].includes(action.state) && !editingLink &&
+                  <button type="button" disabled={!!busy} className="shrink-0 text-sm font-medium text-blue-700 underline-offset-2 hover:underline disabled:opacity-50"
+                    onClick={() => { setApplicationUrl(action.payload.application_url || job.application_url || ''); setEditingLink(true); }}>Change link</button>}
+              </div>
+              {editingLink && <div className="mt-2 space-y-2 rounded-lg border border-blue-100 bg-white p-3">
+                <label className="block font-medium text-gray-900" htmlFor={`change-url-${job.id}`}>New application link</label>
+                <input id={`change-url-${job.id}`} type="url" inputMode="url" value={applicationUrl} onChange={event => setApplicationUrl(event.target.value)} placeholder="https://…" className={field} />
+                <p className="text-xs text-gray-500">Changing the link closes this draft and prepares a new one for you to approve.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={!!busy || !applicationUrl.trim() || applicationUrl.trim() === action.payload.application_url} className={primary}
+                    onClick={() => void run('app', async () => { await call('/application-close', { actionId: action.id }); await call('/application', { savedJobId: job.id, applicationUrl: applicationUrl.trim() }); setEditingLink(false); })}>
+                    {busy === 'app' ? 'Updating…' : 'Use this link'}</button>
+                  <button type="button" disabled={!!busy} className={secondary} onClick={() => setEditingLink(false)}>Cancel</button>
+                </div>
+              </div>}
+              <p className="mt-1 text-gray-600">{action.payload.execution_mode === 'anchor' ? 'Skillsurger will fill and submit this form in a secure browser after your approval.' : agentAvailable ? 'Apply yourself on the job board, or let the AI agent below do it with your review before it submits.' : 'Manual application: you complete and submit the form on the job board.'}</p>
               {action.payload.cover_note && <p className="mt-3 whitespace-pre-wrap"><span className="font-medium text-gray-900">Cover note:</span> {action.payload.cover_note}</p>}
               {Object.keys(action.payload.answers || {}).length > 0 && (
                 <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
@@ -206,10 +226,10 @@ export default function ApplicationPipeline({ job }: { job: { id: string; title:
             </div>
             {action.payload.execution_mode === 'anchor' && <ApplicationExecution actionId={action.id} actionState={action.state} onUpdate={load} />}
             {action.payload.execution_mode !== 'anchor' && typeof action.payload.application_url === 'string' && ['queued', 'running', 'needs_you', 'reconciling', 'done'].includes(action.state) &&
-              <AgentApply actionId={action.id} actionState={action.state} onUpdate={load} />}
+              <AgentApply actionId={action.id} actionState={action.state} onUpdate={load} onAvailable={setAgentAvailable} />}
             {['queued', 'needs_you'].includes(action.state) && action.payload.execution_mode !== 'anchor' && (
               <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                <p>Apply on {job.company}'s site using your approved CV and the details above. Skillsurger doesn't submit anything for you.</p>
+                <p>{agentAvailable ? `Prefer to apply yourself? Use your approved CV and the details above on ${job.company}'s site, then tap "I've applied".` : `Apply on ${job.company}'s site using your approved CV and the details above. Skillsurger doesn't submit anything for you.`}</p>
                 <div className="flex flex-wrap gap-2">
                   {typeof action.payload.application_url === 'string' && /^https:\/\//.test(action.payload.application_url) &&
                     <a href={action.payload.application_url} target="_blank" rel="noreferrer" className={secondary}>Open application form</a>}

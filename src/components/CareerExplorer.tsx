@@ -19,6 +19,9 @@ import {
   generateCVSuggestions
 } from '../lib/careerServices';
 import { cleanTruncatedDescription } from '../lib/utils';
+
+// The job's own Apply link (https only), kept on the saved job so the application step can pre-fill it.
+const applyLink = (url?: string) => (url && /^https:\/\//i.test(url) && url.length <= 2000 ? url : null);
 import { useUser } from '../context/UserContext';
 
 interface AcceptedSuggestions {
@@ -253,7 +256,9 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
         .single();
 
       if (existingJob) {
-        console.log('Job already exists in database');
+        // Older saves had no apply link: fill it in when we have one.
+        const link = applyLink(job.applicationUrl);
+        if (link) await supabase.from('saved_jobs').update({ application_url: link }).eq('id', existingJob.id).is('application_url', null);
         return;
       }
 
@@ -266,7 +271,8 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
         description: job.description,
         requirements: job.requirements,
         type: job.type,
-        salary: job.salary
+        salary: job.salary,
+        application_url: applyLink(job.applicationUrl)
       };
 
       const { error } = await supabase
@@ -296,7 +302,8 @@ export default function CareerExplorer({ onGenerateLearningPath, jobs, setJobs, 
         description: job.description,
         requirements: job.requirements,
         type: job.type,
-        salary: job.salary
+        salary: job.salary,
+        application_url: applyLink(job.applicationUrl)
       };
 
       const { error } = await supabase

@@ -53,7 +53,7 @@ const primary = `${btn} bg-blue-600 text-white hover:bg-blue-700`;
 const secondary = `${btn} border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`;
 const input = 'w-full min-h-10 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200';
 
-export default function AgentApply({ actionId, actionState, onUpdate }: { actionId: string; actionState: string; onUpdate: () => Promise<void> }) {
+export default function AgentApply({ actionId, actionState, onUpdate, onAvailable }: { actionId: string; actionState: string; onUpdate: () => Promise<void>; onAvailable?: (available: boolean) => void }) {
   const [ctx, setCtx] = useState<Context | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -62,7 +62,7 @@ export default function AgentApply({ actionId, actionState, onUpdate }: { action
   const [values, setValues] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState('');
   const [control, setControl] = useState(false); // user is typing in the live browser
-  const stepsEnd = useRef<HTMLLIElement>(null);
+  const stepsList = useRef<HTMLOListElement>(null);
   const run = ctx?.run ?? null;
   const live = !!run && LIVE.includes(run.status);
 
@@ -86,11 +86,14 @@ export default function AgentApply({ actionId, actionState, onUpdate }: { action
   }, [runId, status, onUpdate]);
   const requestId = run?.request?.id;
   useEffect(() => { setValues({}); setFeedback(''); setControl(run?.request?.kind === 'takeover'); }, [requestId, run?.request?.kind]);
-  useEffect(() => { stepsEnd.current?.scrollIntoView({ block: 'nearest' }); }, [run?.steps.length]);
+  // Keep the newest step in view inside the list only (never scroll the page itself).
+  useEffect(() => { const el = stepsList.current; if (el) el.scrollTop = el.scrollHeight; }, [run?.steps.length]);
+  const available = !!ctx?.enabled && !!ctx?.allowed;
+  useEffect(() => { onAvailable?.(available); }, [available, onAvailable]);
 
   const act = async (fn: () => Promise<{ run?: Run } | undefined>) => {
     setBusy(true); setError('');
-    try { const d = await fn(); if (d?.run) setCtx((p) => (p ? { ...p, run: d.run } : p)); }
+    try { const d = await fn(); const next = d?.run; if (next) setCtx((p) => (p ? { ...p, run: next } : p)); }
     catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong.'); }
     finally { setBusy(false); }
   };
@@ -120,7 +123,7 @@ export default function AgentApply({ actionId, actionState, onUpdate }: { action
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
     {canStart && <div className="space-y-2">
-      {run && <p className="rounded-lg bg-white px-3 py-2 text-sm text-gray-700">Last run: {run.activity || run.status}. Nothing was submitted.</p>}
+      {run && <p className="rounded-lg bg-white px-3 py-2 text-sm text-gray-700">Last run: {run.activity || run.status}</p>}
       <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm text-gray-700">
         <input type="checkbox" checked={consent} disabled={busy} className="mt-1 h-5 w-5 shrink-0" onChange={(e) => setConsent(e.target.checked)} />
         <span>I allow Skillsurger's AI agent to open this job in an Anchor browser and use my approved CV and details there. Page content is processed by Anchor and OpenAI. Passwords and codes I give are hidden from the AI and deleted after the run. <a href="/privacy" target="_blank" rel="noreferrer" className="underline">Privacy details</a>.</span>
@@ -183,8 +186,8 @@ export default function AgentApply({ actionId, actionState, onUpdate }: { action
       {/* Step-by-step log */}
       <details open={live} className="rounded-lg bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium text-gray-900">What the agent did ({run.steps.length})</summary>
-        <ol className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1 text-sm">
-          {run.steps.map((s, i) => <li key={s.id} ref={i === run.steps.length - 1 ? stepsEnd : undefined} className="flex gap-2">
+        <ol ref={stepsList} className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1 text-sm">
+          {run.steps.map((s) => <li key={s.id} className="flex gap-2">
             <span className={`mt-0.5 shrink-0 ${s.kind === 'error' ? 'text-red-600' : s.kind === 'ask' ? 'text-amber-600' : 'text-violet-600'}`} aria-hidden="true">{STEP_ICON[s.kind] || STEP_ICON.info}</span>
             <span className="min-w-0">
               <span className="break-words text-gray-800">{s.summary}</span>

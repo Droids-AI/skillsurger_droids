@@ -23,6 +23,7 @@ interface TrackedJob {
   status: Status;
   status_updated_at: string | null;
   created_at: string;
+  application_url: string | null;
 }
 
 const STATUS_STYLE: Record<Status, string> = {
@@ -50,7 +51,7 @@ export default function ApplicationTracker() {
       if (!user) return;
       const { data, error: loadError } = await supabase
         .from('saved_jobs')
-        .select('id, title, company, location, status, status_updated_at, created_at')
+        .select('id, title, company, location, status, status_updated_at, created_at, application_url')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (loadError) throw loadError;
