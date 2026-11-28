@@ -152,8 +152,9 @@ export const authRejected = (message: string) =>
 export const isLinkedIn = (url: string | null | undefined) => { try { return /(^|\.)linkedin\.com$/i.test(new URL(String(url)).hostname); } catch { return false; } };
 
 export function pageInfo(text: string): { url: string | null; title: string | null } {
-  const url = /Page URL:\s*(\S+)/i.exec(text)?.[1] ?? null;
-  const title = /Page Title:\s*(.+)/i.exec(text)?.[1]?.trim() ?? null;
+  // [ \t]* not \s*: an empty title must not swallow the next line ("- Anchor session ID: …").
+  const url = /Page URL:[ \t]*(\S+)/i.exec(text)?.[1] ?? null;
+  const title = /Page Title:[ \t]*([^\n]*)/i.exec(text)?.[1]?.trim() || null;
   return { url: url && url.length <= 2000 ? url : null, title: title ? title.slice(0, 300) : null };
 }
 

@@ -88,3 +88,7 @@ Deno.test('password/code questions become secure requests; rejected logins are r
   assert(authRejected("Login page returned 'Your username is invalid!'"));
   assert(!authRejected('Application submitted successfully.'));
 });
+
+Deno.test('an empty page title does not pick up the next line', () => {
+  assertEquals(pageInfo('- Page URL: https://www.linkedin.com/jobs/view/1\n- Page Title: \n- Anchor session ID: abc\n'), { url: 'https://www.linkedin.com/jobs/view/1', title: null });
+});
