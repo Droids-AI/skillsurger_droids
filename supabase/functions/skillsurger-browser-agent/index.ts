@@ -9,7 +9,7 @@ import { anchorBrowserMcp, McpClient, McpError, textOf, type McpResult } from '.
 import { cvParagraphs, textPdf } from '../_shared/automation/cvpdf.ts';
 import { attachFile } from '../_shared/cdp.ts';
 import {
-  cleanFields, confirmed, guardSubmit, isLinkedIn, pageInfo, parseArgs, redact, safeUrl, SECRET_TYPES, stepKind,
+  cleanFields, confirmed, guardSubmit, isLinkedIn, maskUsername, pageInfo, parseArgs, redact, safeUrl, SECRET_TYPES, siteOf, stepKind,
   systemPrompt, taskMessage, TOOLS, trimHistory, type Msg, type ToolCall,
 } from '../_shared/browser-agent/core.ts';
 
@@ -43,14 +43,30 @@ function secretKey() {
 }
 const b64 = (b: Uint8Array) => btoa(String.fromCharCode(...b));
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-async function encrypt(value: string) {
+// `aad` binds a ciphertext to its owner (saved logins: user + site), so a row copied elsewhere won't decrypt.
+const gcm = (iv: Uint8Array, aad?: string) => ({ name: 'AES-GCM', iv, ...(aad ? { additionalData: new TextEncoder().encode(aad) } : {}) });
+async function encrypt(value: string, aad?: string) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await secretKey(), new TextEncoder().encode(value)));
+  const ct = new Uint8Array(await crypto.subtle.encrypt(gcm(iv, aad), await secretKey(), new TextEncoder().encode(value)));
   return b64(iv) + '.' + b64(ct);
 }
-async function decrypt(value: string) {
+async function decrypt(value: string, aad?: string) {
   const [iv, ct] = value.split('.');
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(iv) }, await secretKey(), unb64(ct)));
+  return new TextDecoder().decode(await crypto.subtle.decrypt(gcm(unb64(iv), aad), await secretKey(), unb64(ct)));
+}
+
+// ---------- saved site logins (user ticked "Remember"; reused instead of asking again) ----------
+type SavedField = { name: string; label: string; type: string; value: string };
+const loginAad = (userId: string, site: string) => `skillsurger-login|${userId}|${site}`;
+async function savedLogin(userId: string, site: string): Promise<{ id: string; fields: SavedField[] } | null> {
+  const row: any = must(await admin.from('skillsurger_agent_logins').select('id,ciphertext').eq('user_id', userId).eq('site', site).maybeSingle());
+  if (!row) return null;
+  try { return { id: row.id, fields: JSON.parse(await decrypt(row.ciphertext, loginAad(userId, site))) }; } catch { return null; }
+}
+async function saveLogin(userId: string, site: string, fields: SavedField[]) {
+  const hint = maskUsername(fields.find((f) => !SECRET_TYPES.includes(f.type))?.value || '');
+  must(await admin.from('skillsurger_agent_logins').upsert({ user_id: userId, site, username_hint: hint,
+    ciphertext: await encrypt(JSON.stringify(fields), loginAad(userId, site)), updated_at: new Date().toISOString() }, { onConflict: 'user_id,site' }));
 }
 
 // ---------- access checks ----------
@@ -96,7 +112,7 @@ async function view(run: any) {
   if (!run) return null;
   const steps: any[] = must(await admin.from('skillsurger_agent_steps').select('id,kind,summary,page_url,page_title,screenshot_path,created_at')
     .eq('run_id', run.id).order('id', { ascending: false }).limit(80)) || [];
-  const req: any = must(await admin.from('skillsurger_agent_requests').select('id,kind,message,fields,screenshot_path,created_at')
+  const req: any = must(await admin.from('skillsurger_agent_requests').select('id,kind,message,fields,site,screenshot_path,created_at')
     .eq('run_id', run.id).eq('status', 'pending').order('created_at', { ascending: false }).limit(1).maybeSingle());
   const lastShot = steps.find((s) => s.screenshot_path)?.screenshot_path ?? null;
   return {
@@ -106,7 +122,7 @@ async function view(run: any) {
     live_view_url: LIVE.includes(run.status) ? run.live_view_url : null,
     last_screenshot_url: await signed(lastShot),
     steps: steps.reverse().map(({ screenshot_path, ...s }) => ({ ...s, has_screenshot: !!screenshot_path })),
-    request: req ? { id: req.id, kind: req.kind, message: req.message, fields: req.fields, screenshot_url: await signed(req.screenshot_path), created_at: req.created_at } : null,
+    request: req ? { id: req.id, kind: req.kind, message: req.message, fields: req.fields, site: req.site ?? null, screenshot_url: await signed(req.screenshot_path), created_at: req.created_at } : null,
   };
 }
 
@@ -199,7 +215,7 @@ async function llm(messages: Msg[]): Promise<Msg> {
   return { role: 'assistant', content: msg.content ?? null, ...(msg.tool_calls?.length ? { tool_calls: msg.tool_calls.slice(0, 1) } : {}) };
 }
 
-type Outcome = { content: string; pause?: boolean; end?: boolean; page?: { url: string | null; title: string | null } };
+type Outcome = { content: string; pause?: boolean; end?: boolean; quiet?: boolean; page?: { url: string | null; title: string | null } };
 
 async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boolean): Promise<Outcome> {
   const a = parseArgs(call.function.arguments);
@@ -264,8 +280,37 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
       const kind = ['login', 'otp', 'new_account', 'question'].includes(a.kind) ? a.kind : 'question';
       const fields = cleanFields(a.fields);
       if (!fields.length) fields.push({ name: 'answer', label: 'Your answer', type: kind === 'otp' ? 'otp' : 'text' });
-      must(await admin.from('skillsurger_agent_requests').insert({ run_id: run.id, tool_call_id: call.id, kind, message: String(a.message || '').slice(0, 1000), fields }));
-      await patch(run.id, { status: 'waiting_user', activity: String(a.message || 'Waiting for you').slice(0, 300) });
+      let message = String(a.message || '').slice(0, 1000);
+      if (['login', 'new_account'].includes(kind)) {
+        // A login is the account name plus the password: always ask for both, so a remembered login is complete.
+        if (!fields.some((f) => f.type === 'password')) fields.push({ name: 'password', label: 'Password', type: 'password' });
+        if (!fields.some((f) => !SECRET_TYPES.includes(f.type))) fields.unshift({ name: 'username', label: 'Email or username for this site', type: 'text' });
+      }
+      const site = ['login', 'new_account'].includes(kind) ? siteOf(run.current_url) : null;
+      if (site) {
+        const saved = await savedLogin(run.user_id, site);
+        const tried = saved && (must(await admin.from('skillsurger_agent_requests').select('id').eq('run_id', run.id).contains('answer', { saved_login: site }).limit(1)) as any[]).length > 0;
+        if (saved && !tried) {
+          // Answer from the saved login without pausing; passwords go through fill_secret as usual.
+          const values: Record<string, string> = {};
+          const secretFields = saved.fields.filter((f) => SECRET_TYPES.includes(f.type));
+          for (const f of saved.fields) if (!SECRET_TYPES.includes(f.type)) values[f.name] = f.value;
+          const req: any = must(await admin.from('skillsurger_agent_requests').insert({ run_id: run.id, tool_call_id: call.id, kind, message, site,
+            fields: saved.fields.map(({ value: _v, ...f }) => f), status: 'answered', answer: { saved_login: site, ...values }, answered_at: new Date().toISOString() }).select('id').single());
+          const secrets: Record<string, string> = {};
+          for (const f of secretFields) {
+            must(await admin.from('skillsurger_agent_secrets').upsert({ request_id: req.id, field: f.name, ciphertext: await encrypt(f.value) }));
+            secrets[f.name] = `secret:${req.id}:${f.name}`;
+          }
+          must(await admin.from('skillsurger_agent_logins').update({ last_used_at: new Date().toISOString() }).eq('id', saved.id));
+          await step(run.id, 'info', `Signing in with your saved login for ${site}`, { url: run.current_url, title: run.current_title });
+          return { content: JSON.stringify({ answered: true, from_saved_login: true, site, fields: saved.fields.map((f) => ({ name: f.name, label: f.label, type: f.type })), values, secrets,
+            note: (kind === 'new_account' ? 'The user already has a saved login for this site: sign in with it instead of creating an account. ' : '') + 'Clear the sign-in fields and type EVERY value above into its matching field (values with type_text, secrets with fill_secret), replacing anything already typed. If the site rejects it, call ask_user kind "login" again instead of finishing.' }), quiet: true };
+        }
+        if (saved && kind === 'login') message = `Your saved login for ${site} didn't work. ${message}`.slice(0, 1000);
+      }
+      must(await admin.from('skillsurger_agent_requests').insert({ run_id: run.id, tool_call_id: call.id, kind, message, fields, site }));
+      await patch(run.id, { status: 'waiting_user', activity: message.slice(0, 300) || 'Waiting for you' });
       return { content: '', pause: true };
     }
     case 'ask_user_takeover': {
@@ -360,8 +405,8 @@ async function work(runId: string) {
       if (!out.pause) messages.push({ role: 'tool', tool_call_id: call.id, content: out.content.slice(0, 60000) });
       const page = out.page?.url ? out.page : { url: run.current_url, title: run.current_title };
       run.current_url = page.url; run.current_title = page.title;
-      if (!out.pause) await step(run.id, out.content.startsWith('Blocked') ? 'info' : stepKind(call.function.name), out.content.startsWith('Blocked') ? (out.content.includes('already clicked') ? 'Prevented a second submit' : 'Held back the final submit until you review it') : noteText, page);
-      else if (call.function.name !== 'request_submit_review') await step(run.id, 'ask', noteText, page);
+      if (!out.pause && !out.quiet) await step(run.id, out.content.startsWith('Blocked') ? 'info' : stepKind(call.function.name), out.content.startsWith('Blocked') ? (out.content.includes('already clicked') ? 'Prevented a second submit' : 'Held back the final submit until you review it') : noteText, page);
+      else if (out.pause && call.function.name !== 'request_submit_review') await step(run.id, 'ask', noteText, page);
       await admin.from('skillsurger_agent_runs').update({
         messages, step_count: run.step_count, current_url: run.current_url, current_title: run.current_title,
         ...(out.pause ? {} : { activity: noteText }), updated_at: new Date().toISOString(),
@@ -419,6 +464,16 @@ export async function handle(request: Request) {
       must(await admin.from('skillsurger_agent_consent').upsert({ user_id: uid, policy_version: POLICY, granted_at: now,
         revoked_at: body.enabled ? null : now, linkedin_risk_accepted_at: body.enabled && body.linkedin === true ? now : null }));
       return json(await consentOf(uid));
+    }
+    if (route === '/logins') {
+      const rows = must(await admin.from('skillsurger_agent_logins').select('id,site,username_hint,created_at,updated_at,last_used_at')
+        .eq('user_id', uid).order('site')) || [];
+      return json({ logins: rows });
+    }
+    if (route === '/logins/delete') {
+      if (typeof body.id !== 'string' || !UUID.test(body.id)) throw new RequestError(400, 'login_not_found');
+      must(await admin.from('skillsurger_agent_logins').delete().eq('id', body.id).eq('user_id', uid));
+      return json({ deleted: true });
     }
     if (route === '/context') {
       const a = await ownAction(uid, body.actionId);
@@ -508,6 +563,14 @@ export async function handle(request: Request) {
           } else stored[f.name] = v.slice(0, 4000);
         }
         if (!Object.keys(stored).length && !Object.keys(secrets).length) throw new RequestError(400, 'answer_required');
+        if (body.remember === true && ['login', 'new_account'].includes(req.kind) && req.site && Object.keys(secrets).length) {
+          const keep: SavedField[] = (req.fields as SavedField[]).filter((f) => f.type !== 'otp' && typeof values[f.name] === 'string' && values[f.name].trim())
+            .map((f) => ({ name: f.name, label: String(f.label || f.name).slice(0, 120), type: f.type, value: String(values[f.name]).slice(0, 500) }));
+          if (keep.some((f) => f.type === 'password') && keep.some((f) => !SECRET_TYPES.includes(f.type))) {
+            await saveLogin(uid, req.site, keep);
+            await step(run.id, 'info', `Saved your login for ${req.site}. Next time the agent signs in without asking`);
+          }
+        }
         toolResult = JSON.stringify({ answered: true, values: stored, secrets, note: Object.keys(secrets).length ? 'Type secrets with fill_secret using these ids.' : undefined });
         await step(run.id, 'info', Object.keys(secrets).length ? 'You sent your details (passwords are hidden from the AI)' : 'You answered the question');
       }

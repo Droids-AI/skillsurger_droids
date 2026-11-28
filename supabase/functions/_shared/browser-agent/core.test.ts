@@ -61,3 +61,13 @@ Deno.test('resume field is preferred over cover letter / photo fields', () => {
   assert(resumeScore(['type', 'file', 'name', 'resume', 'accept', '.pdf,.doc']) > resumeScore(['type', 'file', 'name', 'cover_letter']));
   assert(resumeScore(['type', 'file', 'id', 'photo', 'accept', 'image/*']) < 0);
 });
+
+import { maskUsername, siteOf } from './core.ts';
+Deno.test('saved logins are keyed by site and usernames are masked', () => {
+  assertEquals(siteOf('https://www.LinkedIn.com/login?x=1'), 'linkedin.com');
+  assertEquals(siteOf('https://acme.wd5.myworkdayjobs.com/en-US/careers/login'), 'acme.wd5.myworkdayjobs.com');
+  assertEquals(siteOf('http://acme.com/'), null);
+  assertEquals(siteOf('nonsense'), null);
+  assertEquals(maskUsername('alex@example.com'), 'al**@example.com');
+  assertEquals(maskUsername('jo'), 'j*');
+});

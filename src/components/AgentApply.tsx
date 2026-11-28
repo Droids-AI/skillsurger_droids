@@ -8,12 +8,13 @@ import { supabase } from '../lib/supabase';
 
 interface Field { name: string; label: string; type: 'text' | 'email' | 'password' | 'otp' | 'long_text' | 'choice'; options?: string[] }
 interface Step { id: number; kind: string; summary: string; page_url: string | null; page_title: string | null; created_at: string }
-interface Request { id: string; kind: 'login' | 'otp' | 'new_account' | 'question' | 'takeover' | 'submit_review'; message: string; fields: unknown[]; screenshot_url: string | null }
+interface Request { id: string; kind: 'login' | 'otp' | 'new_account' | 'question' | 'takeover' | 'submit_review'; message: string; fields: unknown[]; site?: string | null; screenshot_url: string | null }
 interface Run {
   id: string; status: string; activity: string | null; current_url: string | null; current_title: string | null;
   step_count: number; max_steps: number; error: string | null; result: { message?: string; confirmation?: string | null } | null;
   live_view_url: string | null; last_screenshot_url: string | null; steps: Step[]; request: Request | null;
 }
+interface SavedLogin { id: string; site: string; username_hint: string; last_used_at: string | null }
 interface Context { enabled: boolean; allowed: boolean; consent: { ok: boolean; linkedin: boolean }; linkedin_url: boolean; run: Run | null }
 
 const FN = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/skillsurger-browser-agent`;
@@ -126,7 +127,7 @@ export default function AgentApply({ actionId, actionState, onUpdate, onAvailabl
       {run && <p className="rounded-lg bg-white px-3 py-2 text-sm text-gray-700">Last run: {run.activity || run.status}</p>}
       <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm text-gray-700">
         <input type="checkbox" checked={consent} disabled={busy} className="mt-1 h-5 w-5 shrink-0" onChange={(e) => setConsent(e.target.checked)} />
-        <span>I allow Skillsurger's AI agent to open this job in an Anchor browser and use my approved CV and details there. Page content is processed by Anchor and OpenAI. Passwords and codes I give are hidden from the AI and deleted after the run. <a href="/privacy" target="_blank" rel="noreferrer" className="underline">Privacy details</a>.</span>
+        <span>I allow Skillsurger's AI agent to open this job in an Anchor browser and use my approved CV and details there. Page content is processed by Anchor and OpenAI. Passwords and codes I give are hidden from the AI and deleted after the run, unless I choose to remember a site login. <a href="/privacy" target="_blank" rel="noreferrer" className="underline">Privacy details</a>.</span>
       </label>
       {ctx.linkedin_url && <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
         <input type="checkbox" checked={linkedin} disabled={busy} className="mt-1 h-5 w-5 shrink-0" onChange={(e) => setLinkedin(e.target.checked)} />
@@ -164,7 +165,7 @@ export default function AgentApply({ actionId, actionState, onUpdate, onAvailabl
       </div>}
 
       {/* What the agent needs from the user */}
-      {run.request && <RequestPanel request={run.request} busy={busy} values={values} setValues={setValues} feedback={feedback} setFeedback={setFeedback}
+      {run.request && <RequestPanel key={run.request.id} request={run.request} busy={busy} values={values} setValues={setValues} feedback={feedback} setFeedback={setFeedback}
         onAnswer={answer} onTypeInBrowser={() => setControl(true)} inControl={control} />}
 
       {run.status === 'check_needed' && <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
@@ -201,7 +202,36 @@ export default function AgentApply({ actionId, actionState, onUpdate, onAvailabl
         <Square className="h-4 w-4" />Stop the agent
       </button>}
     </div>}
+    <SavedLogins refreshKey={`${run?.status}-${run?.steps.length ?? 0}`} />
   </section>;
+}
+
+/** Site logins the user chose to remember. The agent signs in with these instead of asking. */
+function SavedLogins({ refreshKey }: { refreshKey: string }) {
+  const [logins, setLogins] = useState<SavedLogin[]>([]);
+  const [error, setError] = useState('');
+  const [removing, setRemoving] = useState<string | null>(null);
+  const load = useCallback(() => call('/logins', {}).then((d) => setLogins(d.logins || [])).catch(() => {}), []);
+  useEffect(() => { void load(); }, [load, refreshKey]);
+  if (!logins.length) return null;
+  const remove = async (id: string) => {
+    setRemoving(id); setError('');
+    try { await call('/logins/delete', { id }); setLogins((l) => l.filter((x) => x.id !== id)); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Could not remove it.'); }
+    finally { setRemoving(null); }
+  };
+  return <details className="rounded-lg bg-white p-3 text-sm">
+    <summary className="cursor-pointer font-medium text-gray-900">Saved logins ({logins.length})</summary>
+    <p className="mt-1 text-gray-600">The agent signs in to these sites without asking you. They are stored encrypted, and the AI never sees the passwords.</p>
+    {error && <p role="alert" className="mt-1 text-red-700">{error}</p>}
+    <ul className="mt-2 divide-y divide-gray-100">
+      {logins.map((l) => <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+        <span className="min-w-0"><span className="block break-all font-medium text-gray-800">{l.site}</span>
+          <span className="block text-xs text-gray-500">{l.username_hint || 'Saved login'}{l.last_used_at ? ` · last used ${new Date(l.last_used_at).toLocaleDateString()}` : ''}</span></span>
+        <button type="button" className={secondary} disabled={removing === l.id} onClick={() => void remove(l.id)}>Remove</button>
+      </li>)}
+    </ul>
+  </details>;
 }
 
 function RequestPanel({ request, busy, values, setValues, feedback, setFeedback, onAnswer, onTypeInBrowser, inControl }: {
@@ -209,6 +239,7 @@ function RequestPanel({ request, busy, values, setValues, feedback, setFeedback,
   feedback: string; setFeedback: (v: string) => void; onAnswer: (b: Record<string, unknown>) => Promise<void>;
   onTypeInBrowser: () => void; inControl: boolean;
 }) {
+  const [remember, setRemember] = useState(true);
   const box = 'space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm';
   if (request.kind === 'submit_review') {
     const answers = (request.fields || []) as { question: string; answer: string }[];
@@ -235,8 +266,9 @@ function RequestPanel({ request, busy, values, setValues, feedback, setFeedback,
   </div>;
   const fields = (request.fields || []) as Field[];
   const secret = fields.some((f) => f.type === 'password' || f.type === 'otp');
+  const canRemember = (request.kind === 'login' || request.kind === 'new_account') && !!request.site && fields.some((f) => f.type === 'password');
   const title = { login: 'Sign-in needed', otp: 'Verification code needed', new_account: 'Create an account?', question: 'Question from the form' }[request.kind];
-  return <form className={box} onSubmit={(e) => { e.preventDefault(); void onAnswer({ values }); }}>
+  return <form className={box} onSubmit={(e) => { e.preventDefault(); void onAnswer({ values, remember: canRemember && remember }); }}>
     <p className="flex items-center gap-2 font-medium text-gray-900"><KeyRound className="h-4 w-4" />{title}</p>
     <p className="whitespace-pre-wrap text-gray-800">{request.message}</p>
     {fields.map((f) => <label key={f.name} className="block space-y-1">
@@ -248,7 +280,11 @@ function RequestPanel({ request, busy, values, setValues, feedback, setFeedback,
           autoComplete={f.type === 'otp' ? 'one-time-code' : f.type === 'password' ? (request.kind === 'new_account' ? 'new-password' : 'current-password') : f.type === 'email' ? 'email' : 'off'}
           value={values[f.name] || ''} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} />}
     </label>)}
-    {secret && <p className="text-xs text-gray-600">Passwords and codes go straight into the page. The AI never sees them, and they are deleted when the run ends.</p>}
+    {canRemember && <label className="flex min-h-11 cursor-pointer items-start gap-3 text-gray-700">
+      <input type="checkbox" checked={remember} className="mt-0.5 h-5 w-5 shrink-0" onChange={(e) => setRemember(e.target.checked)} />
+      <span>Remember this login for <span className="break-all font-medium">{request.site}</span>, so the agent signs in next time without asking. You can remove it any time under Saved logins.</span>
+    </label>}
+    {secret && <p className="text-xs text-gray-600">Passwords and codes go straight into the page and the AI never sees them. {canRemember && remember ? 'This login is stored encrypted for this site; codes are deleted when the run ends.' : 'They are deleted when the run ends.'}</p>}
     <div className="flex flex-wrap gap-2">
       <button type="submit" className={primary} disabled={busy}>Send to agent</button>
       {(request.kind === 'login' || request.kind === 'otp' || request.kind === 'new_account') && (inControl
