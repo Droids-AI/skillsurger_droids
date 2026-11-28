@@ -71,3 +71,20 @@ Deno.test('saved logins are keyed by site and usernames are masked', () => {
   assertEquals(maskUsername('alex@example.com'), 'al**@example.com');
   assertEquals(maskUsername('jo'), 'j*');
 });
+
+import { askKind, authRejected, isSecretField } from './core.ts';
+Deno.test('password and code fields only take secrets', () => {
+  for (const e of ['Password', 'Confirm Password textbox', 'OTP code', 'Enter the 6-digit verification code', 'One-time passcode', 'Code'])
+    assert(isSecretField(e), e);
+  for (const e of ['Username', 'Email', 'Zip code', 'Postal code', 'Country code', 'Full name', 'Referral code'])
+    assert(!isSecretField(e), e);
+});
+Deno.test('password/code questions become secure requests; rejected logins are recognised', () => {
+  assertEquals(askKind('question', 'Please provide the password you would like to use', [], 'https://x.com/register'), 'new_account');
+  assertEquals(askKind('question', 'What password should I use?', [], 'https://x.com/login'), 'login');
+  assertEquals(askKind('question', 'Enter the verification code sent to your email', [], null), 'otp');
+  assertEquals(askKind('question', 'Years of experience?', [], null), 'question');
+  assert(authRejected('The OTP code was rejected as incorrect.'));
+  assert(authRejected("Login page returned 'Your username is invalid!'"));
+  assert(!authRejected('Application submitted successfully.'));
+});

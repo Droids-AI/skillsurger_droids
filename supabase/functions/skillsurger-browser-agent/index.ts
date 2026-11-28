@@ -9,7 +9,7 @@ import { anchorBrowserMcp, McpClient, McpError, textOf, type McpResult } from '.
 import { cvParagraphs, textPdf } from '../_shared/automation/cvpdf.ts';
 import { attachFile } from '../_shared/cdp.ts';
 import {
-  cleanFields, confirmed, guardSubmit, isLinkedIn, maskUsername, pageInfo, parseArgs, redact, safeUrl, SECRET_TYPES, siteOf, stepKind,
+  askKind, authRejected, cleanFields, confirmed, guardSubmit, isSecretField, isLinkedIn, maskUsername, pageInfo, parseArgs, redact, safeUrl, SECRET_TYPES, siteOf, stepKind,
   systemPrompt, taskMessage, TOOLS, trimHistory, type Msg, type ToolCall,
 } from '../_shared/browser-agent/core.ts';
 
@@ -58,10 +58,10 @@ async function decrypt(value: string, aad?: string) {
 // ---------- saved site logins (user ticked "Remember"; reused instead of asking again) ----------
 type SavedField = { name: string; label: string; type: string; value: string };
 const loginAad = (userId: string, site: string) => `skillsurger-login|${userId}|${site}`;
-async function savedLogin(userId: string, site: string): Promise<{ id: string; fields: SavedField[] } | null> {
-  const row: any = must(await admin.from('skillsurger_agent_logins').select('id,ciphertext').eq('user_id', userId).eq('site', site).maybeSingle());
+async function savedLogin(userId: string, site: string): Promise<{ id: string; updated_at: string; fields: SavedField[] } | null> {
+  const row: any = must(await admin.from('skillsurger_agent_logins').select('id,ciphertext,updated_at').eq('user_id', userId).eq('site', site).maybeSingle());
   if (!row) return null;
-  try { return { id: row.id, fields: JSON.parse(await decrypt(row.ciphertext, loginAad(userId, site))) }; } catch { return null; }
+  try { return { id: row.id, updated_at: row.updated_at, fields: JSON.parse(await decrypt(row.ciphertext, loginAad(userId, site))) }; } catch { return null; }
 }
 async function saveLogin(userId: string, site: string, fields: SavedField[]) {
   const hint = maskUsername(fields.find((f) => !SECRET_TYPES.includes(f.type))?.value || '');
@@ -215,7 +215,17 @@ async function llm(messages: Msg[]): Promise<Msg> {
   return { role: 'assistant', content: msg.content ?? null, ...(msg.tool_calls?.length ? { tool_calls: msg.tool_calls.slice(0, 1) } : {}) };
 }
 
+const LOGIN_NUDGE = 'Not finished yet.';
+const AUTH_PAGE = /log-?in|sign-?in|sign-?up|regist|create-?account|\/auth|\/account|\/session|\/join|otp/i;
 type Outcome = { content: string; pause?: boolean; end?: boolean; quiet?: boolean; page?: { url: string | null; title: string | null } };
+
+/** Non-secret values (username/email) from the latest login or sign-up answer in this run. */
+async function loginValues(runId: string): Promise<string[]> {
+  // Only while the latest answer is that login/sign-up (not after a later code or question).
+  const r: any = must(await admin.from('skillsurger_agent_requests').select('kind,answer').eq('run_id', runId).eq('status', 'answered')
+    .order('answered_at', { ascending: false }).limit(1).maybeSingle());
+  return r?.answer && ['login', 'new_account'].includes(r.kind) ? Object.entries(r.answer).filter(([k, v]) => k !== 'saved_login' && typeof v === 'string' && v).map(([, v]) => String(v)) : [];
+}
 
 async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boolean): Promise<Outcome> {
   const a = parseArgs(call.function.arguments);
@@ -236,7 +246,19 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
     case 'click': {
       const g = guardSubmit(String(a.element), !!run.submit_approved_at, !!run.submit_clicked_at);
       if (!g.allow) return { content: g.reason };
+      // On a sign-in/sign-up form, every account value the user just gave must be typed before submitting it.
+      if (AUTH_PAGE.test(String(run.current_url || '')) && /log ?in|sign|regist|create|continue|next|join/i.test(String(a.element))) {
+        const missing = (await loginValues(run.id)).filter((v) => !(run._typed || []).includes(v));
+        if (missing.length) return { content: `Blocked: type the account details the user gave first (${missing.map((v) => JSON.stringify(v)).join(', ')}), replacing what is in that field, then click again.` };
+      }
+      const before = run.current_url;
       const out = await mcpCall('anchor_click', { element: String(a.element), ref: String(a.ref) });
+      // An approval covers the form the user reviewed. If another click moves to a new page first,
+      // it lapses, so a later "Submit application" always needs a fresh review.
+      if (run.submit_approved_at && !run.submit_clicked_at && !g.marksSubmit && out.page?.url && before && out.page.url !== before) {
+        run.submit_approved_at = null; await patch(run.id, { submit_approved_at: null });
+        out.content = 'Note: the page changed, so the user\'s approval no longer applies. Call request_submit_review again before the final submit.\n' + out.content;
+      }
       // Count the submit only when the click actually ran (a stale ref fails before clicking).
       if (g.marksSubmit && !out.content.startsWith('ERROR')) { run.submit_clicked_at = new Date().toISOString(); await patch(run.id, { submit_clicked_at: run.submit_clicked_at }); }
       return out;
@@ -244,7 +266,16 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
     case 'type_text': {
       const g = guardSubmit(String(a.element), !!run.submit_approved_at, !!run.submit_clicked_at, !!a.press_enter);
       if (!g.allow) return { content: g.reason };
-      return mcpCall('anchor_type', { element: String(a.element), ref: String(a.ref), text: String(a.text ?? '').slice(0, 10000), submit: !!a.press_enter });
+      if (/user ?name|e-?mail|login|account|user ?id/i.test(String(a.element)) && AUTH_PAGE.test(String(run.current_url || ''))) {
+        const given = await loginValues(run.id);
+        if (given.length && !given.includes(String(a.text ?? '')))
+          return { content: `Blocked: on this sign-in/sign-up form use exactly what the user gave: ${given.map((v) => JSON.stringify(v)).join(' or ')}.` };
+      }
+      if (isSecretField(String(a.element)))
+        return { content: 'Blocked: passwords and codes can only come from the user. Call ask_user (kind "login", "new_account" or "otp"), then type the value with fill_secret. Never use a password or code shown on the page.' };
+      const typed = await mcpCall('anchor_type', { element: String(a.element), ref: String(a.ref), text: String(a.text ?? '').slice(0, 10000), submit: !!a.press_enter });
+      if (!typed.content.startsWith('ERROR')) (run._typed ??= []).push(String(a.text ?? ''));
+      return typed;
     }
     case 'fill_secret': {
       const m = /^secret:([0-9a-f-]{36}):([a-z0-9_]{1,40})$/i.exec(String(a.secret || ''));
@@ -277,8 +308,11 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
     case 'tabs': return typeof a.switch_to === 'number' ? mcpCall('anchor_tab_select', { index: a.switch_to }) : mcpCall('anchor_tab_list', {});
     case 'handle_dialog': return mcpCall('anchor_handle_dialog', { accept: !!a.accept });
     case 'ask_user': {
-      const kind = ['login', 'otp', 'new_account', 'question'].includes(a.kind) ? a.kind : 'question';
       const fields = cleanFields(a.fields);
+      const kind = askKind(['login', 'otp', 'new_account', 'question'].includes(a.kind) ? a.kind : 'question', String(a.message || ''), fields, run.current_url);
+      // A secure request never collects the password or code as plain text.
+      if (kind === 'otp') { for (const f of fields) if (/code|otp|pin/i.test(f.name + f.label)) f.type = 'otp'; if (!fields.some((f) => f.type === 'otp')) fields.splice(0, fields.length, { name: 'code', label: 'Verification code', type: 'otp' }); }
+      if (kind === 'login' || kind === 'new_account') for (const f of fields) if (/pass ?word/i.test(f.name + ' ' + f.label)) f.type = 'password';
       if (!fields.length) fields.push({ name: 'answer', label: 'Your answer', type: kind === 'otp' ? 'otp' : 'text' });
       let message = String(a.message || '').slice(0, 1000);
       if (['login', 'new_account'].includes(kind)) {
@@ -288,7 +322,9 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
       }
       const site = ['login', 'new_account'].includes(kind) ? siteOf(run.current_url) : null;
       if (site) {
-        const saved = await savedLogin(run.user_id, site);
+        // Only a login saved before this run counts: one given in this run is what the site just rejected.
+        const found = await savedLogin(run.user_id, site);
+        const saved = found && Date.parse(found.updated_at) < Date.parse(run.created_at) ? found : null;
         const tried = saved && (must(await admin.from('skillsurger_agent_requests').select('id').eq('run_id', run.id).contains('answer', { saved_login: site }).limit(1)) as any[]).length > 0;
         if (saved && !tried) {
           // Answer from the saved login without pausing; passwords go through fill_secret as usual.
@@ -307,7 +343,7 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
           return { content: JSON.stringify({ answered: true, from_saved_login: true, site, fields: saved.fields.map((f) => ({ name: f.name, label: f.label, type: f.type })), values, secrets,
             note: (kind === 'new_account' ? 'The user already has a saved login for this site: sign in with it instead of creating an account. ' : '') + 'Clear the sign-in fields and type EVERY value above into its matching field (values with type_text, secrets with fill_secret), replacing anything already typed. If the site rejects it, call ask_user kind "login" again instead of finishing.' }), quiet: true };
         }
-        if (saved && kind === 'login') message = `Your saved login for ${site} didn't work. ${message}`.slice(0, 1000);
+        if (saved && kind === 'login' && tried) message = `Your saved login for ${site} didn't work. ${message}`.slice(0, 1000);
       }
       must(await admin.from('skillsurger_agent_requests').insert({ run_id: run.id, tool_call_id: call.id, kind, message, fields, site }));
       await patch(run.id, { status: 'waiting_user', activity: message.slice(0, 300) || 'Waiting for you' });
@@ -319,6 +355,8 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
       return { content: '', pause: true };
     }
     case 'request_submit_review': {
+      if (AUTH_PAGE.test(String(run.current_url || '')) && !/apply|application|job|career/i.test(String(run.current_url || '')))
+        return { content: 'This is a sign-in / sign-up / verification form, not the job application. Click its button yourself; ask for review only on the application form.' };
       if (run.submit_clicked_at) return { content: 'Submit was already clicked. Read the page and call finish.' };
       const shot = await screenshot(mcp, run);
       const answers = (Array.isArray(a.answers) ? a.answers : []).slice(0, 60).map((x: any) => ({ question: String(x?.question || '').slice(0, 300), answer: String(x?.answer || '').slice(0, 2000) }));
@@ -329,6 +367,11 @@ async function runTool(call: ToolCall, run: any, mcp: McpClient, linkedinOk: boo
       return { content: '', pause: true };
     }
     case 'finish': {
+      if (a.outcome !== 'submitted' && !run.submit_clicked_at && !run.login_nudged && !(run.messages || []).some((m: any) => m.role === 'tool' && String(m.content).startsWith(LOGIN_NUDGE))) {
+        // A sign-in, sign-up or code was rejected and the agent is giving up: let the user give corrected details once.
+        if (authRejected(String(a.message || '')))
+          { run.login_nudged = true; return { content: `${LOGIN_NUDGE} If sign-in or sign-up was rejected, do not finish: call ask_user (kind "login", "new_account" for a failed sign-up, or "otp" for a rejected code) quoting the site's error so the user can give corrected details. If the problem is something else, call finish again.`, quiet: true }; }
+      }
       const shot = await screenshot(mcp, run);
       const result = { outcome: a.outcome, message: String(a.message || '').slice(0, 1500), confirmation: a.confirmation ? String(a.confirmation).slice(0, 500) : null, page_url: run.current_url };
       await step(run.id, 'done', result.message || 'Finished', { url: run.current_url, title: run.current_title }, shot);
@@ -405,7 +448,7 @@ async function work(runId: string) {
       if (!out.pause) messages.push({ role: 'tool', tool_call_id: call.id, content: out.content.slice(0, 60000) });
       const page = out.page?.url ? out.page : { url: run.current_url, title: run.current_title };
       run.current_url = page.url; run.current_title = page.title;
-      if (!out.pause && !out.quiet) await step(run.id, out.content.startsWith('Blocked') ? 'info' : stepKind(call.function.name), out.content.startsWith('Blocked') ? (out.content.includes('already clicked') ? 'Prevented a second submit' : 'Held back the final submit until you review it') : noteText, page);
+      if (!out.pause && !out.quiet) await step(run.id, out.content.startsWith('Blocked') ? 'info' : stepKind(call.function.name), out.content.startsWith('Blocked') ? (out.content.includes('already clicked') ? 'Prevented a second submit' : /account details|sign-in\/sign-up form|passwords and codes/.test(out.content) ? 'Checked the sign-in details before continuing' : 'Held back the final submit until you review it') : noteText, page);
       else if (out.pause && call.function.name !== 'request_submit_review') await step(run.id, 'ask', noteText, page);
       await admin.from('skillsurger_agent_runs').update({
         messages, step_count: run.step_count, current_url: run.current_url, current_title: run.current_title,
@@ -571,7 +614,8 @@ export async function handle(request: Request) {
             await step(run.id, 'info', `Saved your login for ${req.site}. Next time the agent signs in without asking`);
           }
         }
-        toolResult = JSON.stringify({ answered: true, values: stored, secrets, note: Object.keys(secrets).length ? 'Type secrets with fill_secret using these ids.' : undefined });
+        const typeAll = ['login', 'new_account'].includes(req.kind) ? 'Type EVERY value above into its matching field (values with type_text, secrets with fill_secret), replacing anything already typed there. ' : '';
+        toolResult = JSON.stringify({ answered: true, values: stored, secrets, note: typeAll + (Object.keys(secrets).length ? 'Type secrets with fill_secret using these ids.' : '') || undefined });
         await step(run.id, 'info', Object.keys(secrets).length ? 'You sent your details (passwords are hidden from the AI)' : 'You answered the question');
       }
       must(await admin.from('skillsurger_agent_requests').update({ status: 'answered', answer: stored, answered_at: new Date().toISOString() }).eq('id', req.id));
